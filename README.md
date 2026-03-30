@@ -34,10 +34,16 @@ O projeto é executado em containers e orquestrado com Kubernetes, usando infrae
 - Isaac Fonseca
 - Bruno Ildo 
 - Weslley Wender
+
+<br>
+<br>
+<br>
  
- # Cronograma
+ # **Cronograma**
+ 
  ## Parte 1 – Configuração Inicial do Projeto
 Período: 25/03/2026 – 06/04/2026
+-
 Nesta etapa, foi realizada a preparação do ambiente de desenvolvimento e a criação da
 estrutura inicial da API da Clínica Veterinária utilizando o framework FastAPI.
 
@@ -64,8 +70,14 @@ Foram incluídas as seguintes informações:
 - Instruções de execução
 - Estrutura inicial do sistema
 
+
+<br>
+<br>
+<br>
+
 ## Parte 2 – Prototipação da Interface (Canva)
 Período: 10/04/2026 – 24/04/2026
+-
 Nesta etapa, foi realizada a criação de um protótipo visual da aplicação, utilizando a
 ferramenta Canva, com o objetivo de simular a interface do sistema da Clínica
 Veterinária antes do desenvolvimento completo.
