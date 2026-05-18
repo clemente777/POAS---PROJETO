@@ -14,3 +14,27 @@ def home():
         html = arquivo.read()
 
     return HTMLResponse(content=html)
+
+
+@app.post("/register")
+def register():
+
+    return {
+        "mensagem": "Usuário cadastrado"
+    }
+
+
+@app.post("/login")
+def login():
+
+    return {
+        "mensagem": "Login realizado"
+    }
+
+
+@app.get("/produtos")
+def produtos():
+
+    return {
+        "produtos": []
+    }
