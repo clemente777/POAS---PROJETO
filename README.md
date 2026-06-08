@@ -39,68 +39,102 @@ O projeto é executado em containers e orquestrado com Kubernetes, usando infrae
 <br>
 <br>
  
- # **Cronograma**
- 
- ## Parte 1 – Configuração Inicial do Projeto
-Período: 25/03/2026 – 06/04/2026
--
-Nesta etapa, foi realizada a preparação do ambiente de desenvolvimento e a criação da
-estrutura inicial da API da Clínica Veterinária utilizando o framework FastAPI.
+# **Cronograma**
 
-Instalação das Dependências
-Foram instaladas as bibliotecas necessárias para o funcionamento do projeto
-- FastAPI → criação da API
-- Uvicorn → servidor para executar a aplicação
-- MySQL Connector / SQLAlchemy → conexão com o banco de dados
+## 1º Bimestre – Planejamento e Estruturação do Projeto
 
-Planejamento
-- Definir o objetivo do sistema
-- Listar funcionalidades principais:
-- Cadastro de clientes
-- Cadastro de animais
-- Agendamento/atendimentos
+**Período:** 12/03/2026 – 18/05/2026
 
-Atualização do README.md
-Foi criado e atualizado o arquivo README.md no repositório do GitHub, com o objetivo de
-documentar o projeto.
-Foram incluídas as seguintes informações:
-- Descrição do projeto
-- Objetivo da API
-- Tecnologias a ser utilizadas
-- Instruções de execução
-- Estrutura inicial do sistema
+Nesta etapa foi realizado o planejamento do sistema e a organização inicial do projeto.
 
+### 12/03/2026 – 10/04/2026 | Planejamento e Documentação
 
-<br>
-<br>
-<br>
+* Definição do objetivo do sistema;
+* Levantamento dos requisitos funcionais;
+* Escolha das tecnologias utilizadas;
+* Criação do repositório no GitHub;
+* Elaboração e atualização do README.md.
 
-## Parte 2 – Prototipação da Interface (Canva)
-Período: 10/04/2026 – 24/04/2026
--
-Nesta etapa, foi realizada a criação de um protótipo visual da aplicação, utilizando a
-ferramenta Canva, com o objetivo de simular a interface do sistema da Clínica
-Veterinária antes do desenvolvimento completo.
+### 11/04/2026 – 18/05/2026 | Prototipação e Estrutura Inicial
 
-Planejamento das Telas
-Inicialmente, foram definidas as principais telas que o sistema deve possuir:
-- Tela inicial (home)
-- Tela de cadastro de clientes
-- Tela de cadastro de animais
-- Tela de atendimentos
-- Tela de listagem de dados
+* Desenvolvimento dos protótipos utilizando Canva;
+* Planejamento das telas do sistema;
+* Definição do fluxo de navegação;
+* Configuração do ambiente de desenvolvimento;
+* Estruturação inicial da API REST;
+* Configuração do banco de dados;
+* Implementação da autenticação JWT.
 
-Foi utilizado o Canva para desenvolver um modelo visual do sistema, simulando um
-site/sistema real.
-Foram criados layouts com:
-- Botões
-- Campos de formulário
-- Listas de informações
-- Estrutura de navegação
+---
 
-Organização da Navegação
-Foi definida a forma de navegação entre as telas, pensando na experiência do
-usuário:
-- Menu principal
-- Acesso rápido às funcionalidades
-- Fluxo entre cadastro → listagem → edição
+## 2º Bimestre – Desenvolvimento dos Módulos Principais
+
+**Período:** 19/05/2026 – 20/07/2026
+
+Nesta fase serão desenvolvidas as principais funcionalidades da clínica veterinária.
+
+### 19/05/2026 – 20/06/2026 | Backend
+
+* Cadastro de usuários;
+* Login e logout;
+* Cadastro de clientes;
+* Cadastro de animais;
+* Implementação das regras de negócio;
+* Testes dos endpoints.
+
+### 21/06/2026 – 20/07/2026 | Consultas e Serviços
+
+* Agendamento de consultas;
+* Agendamento de banho e tosa;
+* Registro de atendimentos;
+* Histórico de consultas e serviços;
+* Correção de erros encontrados.
+
+---
+
+## 3º Bimestre – Frontend e Módulo Pet Shop
+
+**Período:** 10/08/2026 – 13/10/2026
+
+Nesta etapa serão desenvolvidas as interfaces do sistema e as funcionalidades de venda de produtos.
+
+### 10/08/2026 – 10/09/2026 | Desenvolvimento do Frontend
+
+* Página inicial;
+* Tela de login e cadastro;
+* Telas de clientes, animais e agendamentos;
+* Integração entre frontend e backend.
+
+### 11/09/2026 – 13/10/2026 | Módulo Pet Shop
+
+* Cadastro de produtos;
+* Busca e listagem de produtos;
+* Implementação do carrinho de compras;
+* Integração das funcionalidades de compra;
+* Ajustes visuais e responsividade.
+
+---
+
+## 4º Bimestre – Infraestrutura e Entrega Final
+
+**Período:** 14/10/2026 – 18/12/2026
+
+Nesta fase será realizada a implantação da aplicação e a preparação para a entrega final.
+
+### 14/10/2026 – 15/11/2026 | Infraestrutura
+
+* Containerização com Docker;
+* Configuração dos containers;
+* Criação dos arquivos YAML;
+* Implantação utilizando Kubernetes;
+* Testes de implantação.
+
+### 16/11/2026 – 18/12/2026 | Finalização
+
+* Testes finais do sistema;
+* Correção de bugs;
+* Atualização da documentação;
+* Organização do repositório;
+* Criação dos slides;
+* Preparação da apresentação;
+* Entrega final do projeto.
