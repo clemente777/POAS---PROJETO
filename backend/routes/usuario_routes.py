@@ -1,60 +1,48 @@
-# routes/usuario_routes.py
-from fastapi import APIRouter, HTTPException
-from backend.schemas.usuario_schema import UsuarioCreate, UsuarioUpdate
-from backend.services.usuario_service import (
-    criar_usuario,
-    listar_usuarios,
-    buscar_usuario,
-    atualizar_usuario,
-    deletar_usuario
-)
 
-router = APIRouter(prefix="/usuarios", tags=["Usuários"])
+from backend.models.models import Usuarios
+from backend.database.database import get_session
+from backend.routes.login_router import UsuarioLogado
+from typing import Annotated    
+from fastapi import Depends, APIRouter
+from pwdlib import PasswordHash
+from sqlmodel import Session
 
+SessionDep = Annotated[Session, Depends(get_session)]
+router = APIRouter(prefix="/usuarios", tags=["usuarios"])
 
-@router.post("/")
-def create_usuario(usuario: UsuarioCreate):
-    result = criar_usuario(usuario)
+senha_context = PasswordHash.recommended()
 
-    if result is None:
-        raise HTTPException(status_code=400, detail="Email já cadastrado")
+@router.get("/", response_model=list[Usuarios])
+def get_usuarios(session: SessionDep, usuario: UsuarioLogado):
+    return session.query(Usuarios).all()
 
-    return result
+@router.get("/{id}", response_model=Usuarios)
+def get_usuario_by_id(id: int, session: SessionDep, usuario: UsuarioLogado):
+    return session.query(Usuarios).get(id)
 
+@router.post("/", response_model=Usuarios)
+def create_usuario(usuario: Usuarios, session: SessionDep):
+    usuario.senha_hash = senha_context.hash(usuario.senha_hash)
+    session.add(usuario)
+    session.commit()
+    session.refresh(usuario)
+    return usuario
 
-@router.get("/")
-def get_usuarios():
-    return listar_usuarios()
+@router.delete("/{id}")
+def delete_usuario(id: int, session: SessionDep, usuario_logado: UsuarioLogado):
+    usuario = session.query(Usuarios).get(id)
+    if not usuario:
+        return {"erro":"Usuário não encontrado"}
+    session.delete(usuario)
+    session.commit()
+    return {"mensagem":"Usuário removido"}
 
-
-@router.get("/{usuario_id}")
-def get_usuario(usuario_id: int):
-    result = buscar_usuario(usuario_id)
-
-    if not result:
-        raise HTTPException(status_code=404, detail="Usuário não encontrado")
-
-    return result
-
-
-@router.put("/{usuario_id}")
-def update_usuario(usuario_id: int, usuario: UsuarioUpdate):
-    result = atualizar_usuario(usuario_id, usuario)
-
-    if result is None:
-        raise HTTPException(status_code=404, detail="Usuário não encontrado")
-
-    if result == "email_duplicado":
-        raise HTTPException(status_code=400, detail="Email já está em uso")
-
-    return result
-
-
-@router.delete("/{usuario_id}")
-def delete_usuario(usuario_id: int):
-    result = deletar_usuario(usuario_id)
-
-    if not result:
-        raise HTTPException(status_code=404, detail="Usuário não encontrado")
-
-    return {"mensagem": "Usuário removido com sucesso"}
+@router.put("/{id}")
+def update_usuario(id: int, usuario: Usuarios,
+                   session: SessionDep,
+                   usuario_logado: UsuarioLogado):
+    session.query(Usuarios).filter(
+        Usuarios.id == id
+    ).update(usuario.model_dump())
+    session.commit()
+    return {"mensagem":"Usuário atualizado"}
