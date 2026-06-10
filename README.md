@@ -62,8 +62,8 @@ Nesta etapa foi realizado o planejamento do sistema e a organização inicial do
 * Definição do fluxo de navegação;
 * Configuração do ambiente de desenvolvimento;
 * Estruturação inicial da API REST;
-* Configuração do banco de dados;
-* Implementação da autenticação JWT.
+
+
 
 ---
 
@@ -79,6 +79,7 @@ Nesta fase serão desenvolvidas as principais funcionalidades da clínica veteri
 * Login e logout;
 * Cadastro de clientes;
 * Cadastro de animais;
+* Implementação da autenticação JWT.
 * Implementação das regras de negócio;
 * Testes dos endpoints.
 
@@ -89,6 +90,7 @@ Nesta fase serão desenvolvidas as principais funcionalidades da clínica veteri
 * Registro de atendimentos;
 * Histórico de consultas e serviços;
 * Correção de erros encontrados.
+* Configuração do banco de dados;
 
 ---
 
