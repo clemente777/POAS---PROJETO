@@ -9,6 +9,7 @@ password = os.getenv("DB_PASSWORD")
 port = os.getenv("DB_PORT")
 database = os.getenv("DB_DATABASE")
 
+
 DATABASE_URL = f"mysql+pymysql://{user}:{password}@{host}:{port}/{database}"
 engine = create_engine(DATABASE_URL, echo=True)
 
