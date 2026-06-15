@@ -1,15 +1,24 @@
 from fastapi import FastAPI
 
+from backend.database.database import create_db_and_tables
+
 from backend.routes import (
     usuario_routes,
     login_router,
     cliente_routes,
     animal_routes,
     agendamento_routes,
-    atendimento_routes
+    atendimento_routes,
+    produto_routes,
+    carrinho_routes,
+    item_carrinho_routes
 )
 
-app = FastAPI(  )
+app = FastAPI()
+
+@app.on_event("startup")
+def startup():
+    create_db_and_tables()
 
 app.include_router(usuario_routes.router)
 app.include_router(login_router.router)
@@ -17,6 +26,9 @@ app.include_router(cliente_routes.router)
 app.include_router(animal_routes.router)
 app.include_router(agendamento_routes.router)
 app.include_router(atendimento_routes.router)
+app.include_router(produto_routes.router)
+app.include_router(carrinho_routes.router)
+app.include_router(item_carrinho_routes.router)
 
 if __name__ == "__main__":
     import uvicorn
