@@ -44,7 +44,6 @@ class Agendamentos(SQLModel, table=True):
     data_agendamento: datetime = Field(nullable=False)
     descricao: str = Field(nullable=False)
     status: str = Field(default="Pendente")
-
     animal_id: int = Field(foreign_key="animais.id")
 
     animal: Optional["Animais"] = Relationship(back_populates="agendamentos")
@@ -61,3 +60,33 @@ class Atendimentos(SQLModel, table=True):
 
     animal: Optional["Animais"] = Relationship(back_populates="atendimentos")
     usuario: Optional["Usuarios"] = Relationship(back_populates="atendimentos")
+    
+
+
+class Produtos(SQLModel, table=True):
+    id: int = Field(default=None, primary_key=True)
+    nome: str = Field(nullable=False)
+    descricao: str = Field(nullable=False)
+    preco: float = Field(nullable=False)
+    estoque: int = Field(default=0)
+
+    itens_carrinho: List["ItensCarrinho"] = Relationship( back_populates="produto")
+
+
+class Carrinhos(SQLModel, table=True):
+    id: int = Field(default=None, primary_key=True)
+    data_criacao: datetime = Field(default_factory=datetime.now)
+    cliente_id: int = Field(foreign_key="clientes.id")
+    
+    cliente: Optional["Clientes"] = Relationship()
+    itens: List["ItensCarrinho"] = Relationship(back_populates="carrinho")
+
+
+class ItensCarrinho(SQLModel, table=True):
+    id: int = Field(default=None, primary_key=True)
+    quantidade: int = Field(default=1)
+    carrinho_id: int = Field(foreign_key="carrinhos.id")
+    produto_id: int = Field(foreign_key="produtos.id")
+
+    carrinho: Optional["Carrinhos"] = Relationship(back_populates="itens")
+    produto: Optional["Produtos"] = Relationship(back_populates="itens_carrinho")

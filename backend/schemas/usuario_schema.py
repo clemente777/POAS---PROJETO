@@ -1,26 +1,22 @@
-from pydantic import BaseModel
-from typing import Optional, List
+from datetime import datetime
+from pydantic import EmailStr
+from sqlmodel import SQLModel
 
 
-class UsuarioCreate(BaseModel):
+class UsuarioCreate(SQLModel):
     nome: str
-    email: str
-    senha: str
+    email: EmailStr
+    senha_hash: str
 
 
-class UsuarioUpdate(BaseModel):
-    nome: Optional[str] = None
-    email: Optional[str] = None
-    senha: Optional[str] = None
+class UsuarioUpdate(SQLModel):
+    nome: str | None = None
+    email: EmailStr | None = None
+    senha_hash: str | None = None
 
 
-class AnimalResponse(BaseModel):
-    id: int
-    nome_popular: str
-
-
-class UsuarioResponse(BaseModel):
+class UsuarioResponse(SQLModel):
     id: int
     nome: str
-    email: str
-    animais: List[AnimalResponse] = []
+    email: EmailStr
+    criado_em: datetime

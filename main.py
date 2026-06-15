@@ -1,16 +1,29 @@
-
 from fastapi import FastAPI
+
 from backend.routes import (
-    usuario_routes, 
-    login_router, 
-    cliente_routes
+    usuario_routes,
+    login_router,
+    cliente_routes,
+    animal_routes,
+    agendamento_routes,
+    atendimento_routes
 )
 
-app = FastAPI()
+app = FastAPI(  )
 
 app.include_router(usuario_routes.router)
 app.include_router(login_router.router)
 app.include_router(cliente_routes.router)
+app.include_router(animal_routes.router)
+app.include_router(agendamento_routes.router)
+app.include_router(atendimento_routes.router)
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True
+    )
