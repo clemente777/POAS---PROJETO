@@ -8,8 +8,9 @@ from backend.schemas.carrinho_schema import (
     CarrinhoResponse
 )
 from backend.services.implementations.carrinho_service_impl import CarrinhoServiceImpl
-
-router = APIRouter(prefix="/carrinhos", tags=["Carrinhos"])
+from fastapi import APIRouter, Depends
+from backend.auth.dependencies import get_current_user
+router = APIRouter(prefix="/carrinhos", tags=["Carrinhos"], dependencies=[Depends(get_current_user)])
 
 
 def get_service(session: Session = Depends(get_session)):

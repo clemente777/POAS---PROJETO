@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-
+from backend.models import *
 from backend.database.database import create_db_and_tables
 
 from backend.routes import (

@@ -9,8 +9,13 @@ from backend.schemas.animal_schema import (
 )
 from backend.services.implementations.animal_service_impl import AnimalServiceImpl
 
-router = APIRouter(prefix="/animais", tags=["Animais"])
+from backend.auth.dependencies import get_current_user
 
+router = APIRouter(
+    prefix="/animais",
+    tags=["Animais"],
+    dependencies=[Depends(get_current_user)]  # 🔒 protege tudo aqui
+)
 
 def get_service(session: Session = Depends(get_session)):
     return AnimalServiceImpl(session)

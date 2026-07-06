@@ -8,8 +8,8 @@ from backend.schemas.atendimento_schema import (
     AtendimentoResponse
 )
 from backend.services.implementations.atendimento_service_impl import AtendimentoServiceImpl
-
-router = APIRouter(prefix="/atendimentos", tags=["Atendimentos"])
+from backend.auth.dependencies import get_current_user
+router = APIRouter(prefix="/atendimentos", tags=["Atendimentos"], dependencies=[Depends(get_current_user)])
 
 
 def get_service(session: Session = Depends(get_session)):

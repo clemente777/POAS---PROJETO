@@ -8,8 +8,8 @@ from backend.schemas.usuario_schema import (
     UsuarioResponse
 )
 from backend.services.implementations.usuario_service_impl import UsuarioServiceImpl
-
-router = APIRouter(prefix="/usuarios", tags=["Usuarios"])
+from backend.auth.dependencies import get_current_user
+router = APIRouter(prefix="/usuarios", tags=["Usuarios"], dependencies=[Depends(get_current_user)])
 
 
 def get_service(session: Session = Depends(get_session)):

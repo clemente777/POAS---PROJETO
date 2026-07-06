@@ -9,7 +9,8 @@ from backend.schemas.agendamento_schema import (
 )
 from backend.services.implementations.agendamento_service_impl import AgendamentoServiceImpl
 
-router = APIRouter(prefix="/agendamentos", tags=["Agendamentos"])
+from backend.auth.dependencies import get_current_user
+router = APIRouter(prefix="/agendamentos", tags=["Agendamentos"], dependencies=[Depends(get_current_user)])
 
 
 def get_service(session: Session = Depends(get_session)):

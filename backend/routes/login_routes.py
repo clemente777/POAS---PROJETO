@@ -7,15 +7,16 @@ from sqlalchemy.orm import Session
 
 from backend.database.database import get_session
 from backend.models.usuario_model import Usuarios
-from backend.security.token_service import (
+from backend.auth.token import (
     create_access_token,
     decode_token,
 )
 from backend.services.implementations.usuario_service_impl import UsuarioServiceImpl
+from fastapi import APIRouter, Depends
 
 router = APIRouter(
     prefix="/login",
-    tags=["Login"],
+    tags=["Login"]
 )
 
 senha_context = PasswordHash.recommended()
