@@ -1,77 +1,67 @@
-from backend.models.models import Atendimentos
-from backend.services.interfaces.atendimento_service import (
-    AtendimentoService
-)
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from backend.models.atendimento_model import Atendimentos
+from backend.schemas.atendimento_schema import AtendimentoCreate, AtendimentoUpdate
 
 
-class AtendimentoServiceImpl(
-    AtendimentoService
-):
+class AtendimentoServiceImpl:
 
-    def __init__(self, session):
+    def __init__(self, session: Session):
         self.session = session
 
-    def listar_atendimentos(self):
-        return self.session.query(
-            Atendimentos
-        ).all()
+    # CREATE
+    def criar(self, atendimento: AtendimentoCreate):
 
-    def buscar_atendimento_por_id(
-        self,
-        id
-    ):
-        return self.session.query(
-            Atendimentos
-        ).get(id)
+        db = Atendimentos(**atendimento.model_dump())
 
-    def criar_atendimento(
-        self,
-        atendimento
-    ):
-        self.session.add(atendimento)
+        self.session.add(db)
         self.session.commit()
-        self.session.refresh(atendimento)
+        self.session.refresh(db)
 
-        return atendimento
+        return db
 
-    def atualizar_atendimento(
-        self,
-        id,
-        atendimento
-    ):
+    # LIST
+    def listar(self):
+        return self.session.scalars(select(Atendimentos)).all()
 
-        atendimento_db = self.session.query(
-            Atendimentos
-        ).get(id)
+    # GET BY ID
+    def buscar_por_id(self, id: int):
+        return self.session.scalars(
+            select(Atendimentos).where(Atendimentos.id == id)
+        ).first()
 
-        if not atendimento_db:
+    # UPDATE
+    def atualizar(self, id: int, atendimento: AtendimentoUpdate):
+
+        db = self.session.scalars(
+            select(Atendimentos).where(Atendimentos.id == id)
+        ).first()
+
+        if not db:
             return None
 
-        self.session.query(
-            Atendimentos
-        ).filter(
-            Atendimentos.id == id
-        ).update(
-            atendimento.model_dump()
-        )
+        dados = atendimento.model_dump(exclude_unset=True)
+
+        for k, v in dados.items():
+            setattr(db, k, v)
 
         self.session.commit()
+        self.session.refresh(db)
 
-        return atendimento
+        return db
 
-    def deletar_atendimento(
-        self,
-        id
-    ):
+    # DELETE
+    def deletar(self, id: int) -> bool:
 
-        atendimento = self.session.query(
-            Atendimentos
-        ).get(id)
+        db = self.session.scalars(
+            select(Atendimentos).where(Atendimentos.id == id)
+        ).first()
 
-        if not atendimento:
+        if not db:
             return False
 
-        self.session.delete(atendimento)
+        self.session.delete(db)
         self.session.commit()
 
         return True

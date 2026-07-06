@@ -1,56 +1,41 @@
-from backend.models.models import Produtos
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
 from backend.database.database import get_session
-from backend.routes.login_router import UsuarioLogado
+from backend.schemas.produto_schema import (
+    ProdutoCreate,
+    ProdutoUpdate,
+    ProdutoResponse,
+)
 from backend.services.implementations.produto_service_impl import ProdutoServiceImpl
 
-from typing import Annotated
-from fastapi import Depends, APIRouter
-from sqlmodel import Session
+router = APIRouter(prefix="/produtos", tags=["Produtos"])
 
-SessionDep = Annotated[Session, Depends(get_session)]
 
-router = APIRouter(
-    prefix="/produtos",
-    tags=["produtos"]
-)
+def get_service(session: Session = Depends(get_session)):
+    return ProdutoServiceImpl(session)
 
-@router.get("/", response_model=list[Produtos])
-def get_produtos(session: SessionDep,
-                 usuario: UsuarioLogado):
-    return ProdutoServiceImpl(session).listar_produtos()
 
-@router.get("/{id}", response_model=Produtos)
-def get_produto_by_id(id: int,
-                      session: SessionDep,
-                      usuario: UsuarioLogado):
-    return ProdutoServiceImpl(session).buscar_produto_por_id(id)
+@router.post("/", response_model=ProdutoResponse)
+def criar(produto: ProdutoCreate, service=Depends(get_service)):
+    return service.criar(produto)
 
-@router.post("/", response_model=Produtos)
-def create_produto(produto: Produtos,
-                   session: SessionDep):
-    return ProdutoServiceImpl(session).criar_produto(produto)
 
-@router.put("/{id}")
-def update_produto(id: int,
-                   produto: Produtos,
-                   session: SessionDep,
-                   usuario: UsuarioLogado):
+@router.get("/", response_model=list[ProdutoResponse])
+def listar(service=Depends(get_service)):
+    return service.listar()
 
-    service = ProdutoServiceImpl(session)
 
-    if not service.atualizar_produto(id, produto):
-        return {"erro":"Produto não encontrado"}
+@router.get("/{id}", response_model=ProdutoResponse)
+def buscar(id: int, service=Depends(get_service)):
+    return service.buscar_por_id(id)
 
-    return {"mensagem":"Produto atualizado"}
+
+@router.put("/{id}", response_model=ProdutoResponse)
+def atualizar(id: int, produto: ProdutoUpdate, service=Depends(get_service)):
+    return service.atualizar(id, produto)
+
 
 @router.delete("/{id}")
-def delete_produto(id: int,
-                   session: SessionDep,
-                   usuario: UsuarioLogado):
-
-    service = ProdutoServiceImpl(session)
-
-    if not service.deletar_produto(id):
-        return {"erro":"Produto não encontrado"}
-
-    return {"mensagem":"Produto removido"}
+def deletar(id: int, service=Depends(get_service)):
+    return {"success": service.deletar(id)}

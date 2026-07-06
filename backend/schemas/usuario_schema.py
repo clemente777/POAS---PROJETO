@@ -1,21 +1,20 @@
 from datetime import datetime
-from pydantic import EmailStr
-from sqlmodel import SQLModel
+from pydantic import BaseModel, EmailStr
 
 
-class UsuarioCreate(SQLModel):
+class UsuarioCreate(BaseModel):
     nome: str
     email: EmailStr
-    senha_hash: str
+    senha: str  # melhor nome do que senha_hash no input
 
 
-class UsuarioUpdate(SQLModel):
+class UsuarioUpdate(BaseModel):
     nome: str | None = None
     email: EmailStr | None = None
-    senha_hash: str | None = None
+    senha: str | None = None
 
 
-class UsuarioResponse(SQLModel):
+class UsuarioResponse(BaseModel):
     id: int
     nome: str
     email: EmailStr

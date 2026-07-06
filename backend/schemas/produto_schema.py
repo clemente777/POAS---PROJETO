@@ -1,21 +1,30 @@
-from sqlmodel import SQLModel
+from pydantic import BaseModel
 
 
-class ProdutoCreate(SQLModel):
+# =========================
+# CREATE
+# =========================
+class ProdutoCreate(BaseModel):
     nome: str
     descricao: str
     preco: float
     estoque: int
 
 
-class ProdutoUpdate(SQLModel):
+# =========================
+# UPDATE
+# =========================
+class ProdutoUpdate(BaseModel):
     nome: str | None = None
     descricao: str | None = None
     preco: float | None = None
     estoque: int | None = None
 
 
-class ProdutoResponse(SQLModel):
+# =========================
+# RESPONSE
+# =========================
+class ProdutoResponse(BaseModel):
     id: int
     nome: str
     descricao: str

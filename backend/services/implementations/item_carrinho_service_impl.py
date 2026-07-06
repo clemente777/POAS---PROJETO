@@ -1,65 +1,67 @@
-from backend.models.models import ItensCarrinho
-from backend.services.interfaces.item_carrinho_service import (
-    ItemCarrinhoService
-)
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from backend.models.item_carrinho_model import ItensCarrinho
+from backend.schemas.item_carrinho_schema import ItemCarrinhoCreate, ItemCarrinhoUpdate
 
 
-class ItemCarrinhoServiceImpl(
-    ItemCarrinhoService
-):
+class ItemCarrinhoServiceImpl:
 
-    def __init__(self, session):
+    def __init__(self, session: Session):
         self.session = session
 
-    def listar_itens(self):
-        return self.session.query(
-            ItensCarrinho
-        ).all()
+    # CREATE
+    def criar(self, item: ItemCarrinhoCreate):
 
-    def buscar_item_por_id(self, id):
-        return self.session.query(
-            ItensCarrinho
-        ).get(id)
+        db = ItensCarrinho(**item.model_dump())
 
-    def criar_item(self, item):
-
-        self.session.add(item)
+        self.session.add(db)
         self.session.commit()
-        self.session.refresh(item)
+        self.session.refresh(db)
 
-        return item
+        return db
 
-    def atualizar_item(self, id, item):
+    # LIST
+    def listar(self):
+        return self.session.scalars(select(ItensCarrinho)).all()
 
-        item_db = self.session.query(
-            ItensCarrinho
-        ).get(id)
+    # GET BY ID
+    def buscar_por_id(self, id: int):
+        return self.session.scalars(
+            select(ItensCarrinho).where(ItensCarrinho.id == id)
+        ).first()
 
-        if not item_db:
+    # UPDATE
+    def atualizar(self, id: int, item: ItemCarrinhoUpdate):
+
+        db = self.session.scalars(
+            select(ItensCarrinho).where(ItensCarrinho.id == id)
+        ).first()
+
+        if not db:
             return None
 
-        self.session.query(
-            ItensCarrinho
-        ).filter(
-            ItensCarrinho.id == id
-        ).update(
-            item.model_dump()
-        )
+        dados = item.model_dump(exclude_unset=True)
+
+        for k, v in dados.items():
+            setattr(db, k, v)
 
         self.session.commit()
+        self.session.refresh(db)
 
-        return item
+        return db
 
-    def deletar_item(self, id):
+    # DELETE
+    def deletar(self, id: int) -> bool:
 
-        item = self.session.query(
-            ItensCarrinho
-        ).get(id)
+        db = self.session.scalars(
+            select(ItensCarrinho).where(ItensCarrinho.id == id)
+        ).first()
 
-        if not item:
+        if not db:
             return False
 
-        self.session.delete(item)
+        self.session.delete(db)
         self.session.commit()
 
         return True

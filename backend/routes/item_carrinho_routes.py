@@ -1,99 +1,41 @@
-from typing import Annotated
-
 from fastapi import APIRouter, Depends
-from sqlmodel import Session
+from sqlalchemy.orm import Session
 
 from backend.database.database import get_session
-from backend.routes.login_router import UsuarioLogado
-
-from backend.models.models import ItensCarrinho
-
-from backend.services.implementations.item_carrinho_service_impl import (
-    ItemCarrinhoServiceImpl
+from backend.schemas.item_carrinho_schema import (
+    ItemCarrinhoCreate,
+    ItemCarrinhoUpdate,
+    ItemCarrinhoResponse
 )
+from backend.services.implementations.item_carrinho_service_impl import ItemCarrinhoServiceImpl
 
-SessionDep = Annotated[
-    Session,
-    Depends(get_session)
-]
-
-router = APIRouter(
-    prefix="/itens-carrinho",
-    tags=["itens-carrinho"]
-)
+router = APIRouter(prefix="/itens-carrinho", tags=["Itens Carrinho"])
 
 
-@router.get("/", response_model=list[ItensCarrinho])
-def get_itens_carrinho(
-    session: SessionDep,
-    usuario: UsuarioLogado
-):
-    return ItemCarrinhoServiceImpl(
-        session
-    ).listar_itens()
+def get_service(session: Session = Depends(get_session)):
+    return ItemCarrinhoServiceImpl(session)
 
 
-@router.get("/{id}", response_model=ItensCarrinho)
-def get_item_carrinho_by_id(
-    id: int,
-    session: SessionDep,
-    usuario: UsuarioLogado
-):
-    return ItemCarrinhoServiceImpl(
-        session
-    ).buscar_item_por_id(id)
+@router.post("/", response_model=ItemCarrinhoResponse)
+def criar(item: ItemCarrinhoCreate, service=Depends(get_service)):
+    return service.criar(item)
 
 
-@router.post("/", response_model=ItensCarrinho)
-def create_item_carrinho(
-    item: ItensCarrinho,
-    session: SessionDep,
-    usuario: UsuarioLogado
-):
-    return ItemCarrinhoServiceImpl(
-        session
-    ).criar_item(item)
+@router.get("/", response_model=list[ItemCarrinhoResponse])
+def listar(service=Depends(get_service)):
+    return service.listar()
 
 
-@router.put("/{id}")
-def update_item_carrinho(
-    id: int,
-    item: ItensCarrinho,
-    session: SessionDep,
-    usuario: UsuarioLogado
-):
-    atualizado = ItemCarrinhoServiceImpl(
-        session
-    ).atualizar_item(
-        id,
-        item
-    )
+@router.get("/{id}", response_model=ItemCarrinhoResponse)
+def buscar(id: int, service=Depends(get_service)):
+    return service.buscar_por_id(id)
 
-    if not atualizado:
-        return {
-            "erro": "Item não encontrado"
-        }
 
-    return {
-        "mensagem": "Item atualizado"
-    }
+@router.put("/{id}", response_model=ItemCarrinhoResponse)
+def atualizar(id: int, item: ItemCarrinhoUpdate, service=Depends(get_service)):
+    return service.atualizar(id, item)
 
 
 @router.delete("/{id}")
-def delete_item_carrinho(
-    id: int,
-    session: SessionDep,
-    usuario: UsuarioLogado
-):
-    deletado = ItemCarrinhoServiceImpl(
-        session
-    ).deletar_item(id)
-
-    if not deletado:
-        return {
-            "erro": "Item não encontrado"
-        }
-
-    return {
-        "mensagem": "Item removido"
-    }
+def deletar(id: int, service=Depends(get_service)):
+    return {"success": service.deletar(id)}

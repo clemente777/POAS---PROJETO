@@ -1,85 +1,79 @@
-from sqlmodel import Session
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from backend.models.usuario_model import Usuarios
+from backend.schemas.usuario_schema import UsuarioCreate, UsuarioUpdate
 from pwdlib import PasswordHash
 
-from backend.models.models import Usuarios
-from backend.services.interfaces.usuario_service import UsuarioService
 
 senha_context = PasswordHash.recommended()
 
 
-class UsuarioServiceImpl(UsuarioService):
+class UsuarioServiceImpl:
 
     def __init__(self, session: Session):
         self.session = session
 
-    def listar_usuarios(self):
-        return self.session.query(
-            Usuarios
-        ).all()
+    # CREATE
+    def criar(self, usuario: UsuarioCreate):
 
-    def buscar_usuario_por_id(self, id):
-        return self.session.query(
-            Usuarios
-        ).get(id)
-
-    def criar_usuario(self, usuario_schema):
-
-        usuario = Usuarios(
-            nome=usuario_schema.nome,
-            email=usuario_schema.email,
-            senha_hash=senha_context.hash(
-                usuario_schema.senha_hash
-            )
+        db = Usuarios(
+            nome=usuario.nome,
+            email=usuario.email,
+            senha_hash=senha_context.hash(usuario.senha)
         )
 
-        self.session.add(usuario)
+        self.session.add(db)
         self.session.commit()
-        self.session.refresh(usuario)
+        self.session.refresh(db)
 
-        return usuario
+        return db
 
-    def atualizar_usuario(
-        self,
-        id,
-        usuario_schema
-    ):
+    # LIST
+    def listar(self):
+        return self.session.scalars(select(Usuarios)).all()
 
-        usuario = self.session.query(
-            Usuarios
-        ).get(id)
+    # GET
+    def buscar_por_id(self, id: int):
+        return self.session.scalars(
+            select(Usuarios).where(Usuarios.id == id)
+        ).first()
 
-        if not usuario:
+    # UPDATE
+    def atualizar(self, id: int, usuario: UsuarioUpdate):
+
+        db = self.session.scalars(
+            select(Usuarios).where(Usuarios.id == id)
+        ).first()
+
+        if not db:
             return None
 
-        dados = usuario_schema.model_dump(
-            exclude_unset=True
-        )
+        dados = usuario.model_dump(exclude_unset=True)
 
-        if "senha_hash" in dados:
-            dados["senha_hash"] = senha_context.hash(
-                dados["senha_hash"]
-            )
+        if "senha" in dados:
+            db.senha_hash = senha_context.hash(dados["senha"])
+            del dados["senha"]
 
-        self.session.query(
-            Usuarios
-        ).filter(
-            Usuarios.id == id
-        ).update(dados)
+        for k, v in dados.items():
+            setattr(db, k, v)
 
         self.session.commit()
+        self.session.refresh(db)
 
-        return usuario
+        return db
 
-    def deletar_usuario(self, id):
+    # DELETE
+    def deletar(self, id: int) -> bool:
 
-        usuario = self.session.query(
-            Usuarios
-        ).get(id)
+        db = self.session.scalars(
+            select(Usuarios).where(Usuarios.id == id)
+        ).first()
 
-        if not usuario:
+        if not db:
             return False
 
-        self.session.delete(usuario)
+        self.session.delete(db)
         self.session.commit()
 
         return True

@@ -1,17 +1,26 @@
-from sqlmodel import SQLModel
+from pydantic import BaseModel
 
 
-class ItemCarrinhoCreate(SQLModel):
+# =========================
+# CREATE
+# =========================
+class ItemCarrinhoCreate(BaseModel):
     carrinho_id: int
     produto_id: int
     quantidade: int
 
 
-class ItemCarrinhoUpdate(SQLModel):
+# =========================
+# UPDATE
+# =========================
+class ItemCarrinhoUpdate(BaseModel):
     quantidade: int | None = None
 
 
-class ItemCarrinhoResponse(SQLModel):
+# =========================
+# RESPONSE
+# =========================
+class ItemCarrinhoResponse(BaseModel):
     id: int
     carrinho_id: int
     produto_id: int

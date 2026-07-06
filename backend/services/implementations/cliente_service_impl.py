@@ -1,40 +1,67 @@
-from sqlmodel import Session
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
-from backend.models.models import Clientes
-from backend.services.interfaces.cliente_service import ClienteService
+from backend.models.cliente_model import Clientes
+from backend.schemas.cliente_schema import ClienteCreate, ClienteUpdate
 
-class ClienteServiceImpl(ClienteService):
+
+class ClienteServiceImpl:
 
     def __init__(self, session: Session):
         self.session = session
 
-    def listar_clientes(self):
-        return self.session.query(Clientes).all()
+    # CREATE
+    def criar(self, cliente: ClienteCreate):
 
-    def buscar_cliente_por_id(self, id):
-        return self.session.query(Clientes).get(id)
+        db = Clientes(**cliente.model_dump())
 
-    def criar_cliente(self, cliente):
-        self.session.add(cliente)
+        self.session.add(db)
         self.session.commit()
-        self.session.refresh(cliente)
+        self.session.refresh(db)
 
-        return cliente
+        return db
 
-    def atualizar_cliente(self, id, cliente):
-        self.session.query(Clientes).filter(
-            Clientes.id == id
-        ).update(cliente.model_dump())
+    # LIST
+    def listar(self):
+        return self.session.scalars(select(Clientes)).all()
+
+    # GET BY ID
+    def buscar_por_id(self, id: int):
+        return self.session.scalars(
+            select(Clientes).where(Clientes.id == id)
+        ).first()
+
+    # UPDATE
+    def atualizar(self, id: int, cliente: ClienteUpdate):
+
+        db = self.session.scalars(
+            select(Clientes).where(Clientes.id == id)
+        ).first()
+
+        if not db:
+            return None
+
+        dados = cliente.model_dump(exclude_unset=True)
+
+        for k, v in dados.items():
+            setattr(db, k, v)
 
         self.session.commit()
+        self.session.refresh(db)
 
-        return cliente
+        return db
 
-    def deletar_cliente(self, id):
-        cliente = self.session.query(Clientes).get(id)
+    # DELETE
+    def deletar(self, id: int) -> bool:
 
-        if cliente:
-            self.session.delete(cliente)
-            self.session.commit()
+        db = self.session.scalars(
+            select(Clientes).where(Clientes.id == id)
+        ).first()
 
-        return cliente
+        if not db:
+            return False
+
+        self.session.delete(db)
+        self.session.commit()
+
+        return True

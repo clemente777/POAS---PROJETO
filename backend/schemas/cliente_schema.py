@@ -1,8 +1,10 @@
-from pydantic import EmailStr
-from sqlmodel import SQLModel
+from pydantic import BaseModel, EmailStr
 
 
-class ClienteCreate(SQLModel):
+# =========================
+# CREATE
+# =========================
+class ClienteCreate(BaseModel):
     nome: str
     cpf: str
     telefone: str
@@ -10,7 +12,10 @@ class ClienteCreate(SQLModel):
     endereco: str
 
 
-class ClienteUpdate(SQLModel):
+# =========================
+# UPDATE
+# =========================
+class ClienteUpdate(BaseModel):
     nome: str | None = None
     cpf: str | None = None
     telefone: str | None = None
@@ -18,10 +23,13 @@ class ClienteUpdate(SQLModel):
     endereco: str | None = None
 
 
-class ClienteResponse(SQLModel):
+# =========================
+# RESPONSE
+# =========================
+class ClienteResponse(BaseModel):
     id: int
     nome: str
     cpf: str
     telefone: str
     email: EmailStr
-    endereco: str   
+    endereco: str

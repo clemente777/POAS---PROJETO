@@ -1,56 +1,41 @@
-from backend.models.models import Atendimentos
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
 from backend.database.database import get_session
-from backend.routes.login_router import UsuarioLogado
+from backend.schemas.atendimento_schema import (
+    AtendimentoCreate,
+    AtendimentoUpdate,
+    AtendimentoResponse
+)
 from backend.services.implementations.atendimento_service_impl import AtendimentoServiceImpl
 
-from typing import Annotated
-from fastapi import Depends, APIRouter
-from sqlmodel import Session
+router = APIRouter(prefix="/atendimentos", tags=["Atendimentos"])
 
-SessionDep = Annotated[Session, Depends(get_session)]
 
-router = APIRouter(
-    prefix="/atendimentos",
-    tags=["atendimentos"]
-)
+def get_service(session: Session = Depends(get_session)):
+    return AtendimentoServiceImpl(session)
 
-@router.get("/", response_model=list[Atendimentos])
-def get_atendimentos(session: SessionDep,
-                     usuario: UsuarioLogado):
-    return AtendimentoServiceImpl(session).listar_atendimentos()
 
-@router.get("/{id}", response_model=Atendimentos)
-def get_atendimento_by_id(id: int,
-                          session: SessionDep,
-                          usuario: UsuarioLogado):
-    return AtendimentoServiceImpl(session).buscar_atendimento_por_id(id)
+@router.post("/", response_model=AtendimentoResponse)
+def criar(atendimento: AtendimentoCreate, service=Depends(get_service)):
+    return service.criar(atendimento)
 
-@router.post("/", response_model=Atendimentos)
-def create_atendimento(atendimento: Atendimentos,
-                       session: SessionDep):
-    return AtendimentoServiceImpl(session).criar_atendimento(atendimento)
 
-@router.put("/{id}")
-def update_atendimento(id: int,
-                       atendimento: Atendimentos,
-                       session: SessionDep,
-                       usuario: UsuarioLogado):
+@router.get("/", response_model=list[AtendimentoResponse])
+def listar(service=Depends(get_service)):
+    return service.listar()
 
-    service = AtendimentoServiceImpl(session)
 
-    if not service.atualizar_atendimento(id, atendimento):
-        return {"erro":"Atendimento não encontrado"}
+@router.get("/{id}", response_model=AtendimentoResponse)
+def buscar(id: int, service=Depends(get_service)):
+    return service.buscar_por_id(id)
 
-    return {"mensagem":"Atendimento atualizado"}
+
+@router.put("/{id}", response_model=AtendimentoResponse)
+def atualizar(id: int, atendimento: AtendimentoUpdate, service=Depends(get_service)):
+    return service.atualizar(id, atendimento)
+
 
 @router.delete("/{id}")
-def delete_atendimento(id: int,
-                       session: SessionDep,
-                       usuario: UsuarioLogado):
-
-    service = AtendimentoServiceImpl(session)
-
-    if not service.deletar_atendimento(id):
-        return {"erro":"Atendimento não encontrado"}
-
-    return {"mensagem":"Atendimento removido"}
+def deletar(id: int, service=Depends(get_service)):
+    return {"success": service.deletar(id)}

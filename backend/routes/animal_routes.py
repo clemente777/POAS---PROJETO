@@ -1,80 +1,41 @@
-from backend.models.models import Animais
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
 from backend.database.database import get_session
-from backend.routes.login_router import UsuarioLogado
-
-from backend.services.implementations.animal_service_impl import (
-    AnimalServiceImpl
+from backend.schemas.animal_schema import (
+    AnimalCreate,
+    AnimalUpdate,
+    AnimalResponse
 )
+from backend.services.implementations.animal_service_impl import AnimalServiceImpl
 
-from typing import Annotated
-from fastapi import Depends, APIRouter
-from sqlmodel import Session
-
-SessionDep = Annotated[
-    Session,
-    Depends(get_session)
-]
-
-router = APIRouter(
-    prefix="/animais",
-    tags=["animais"]
-)
-
-@router.get("/", response_model=list[Animais])
-def get_animais(
-    session: SessionDep,
-    usuario: UsuarioLogado
-):
-    service = AnimalServiceImpl(session)
-    return service.listar_animais()
+router = APIRouter(prefix="/animais", tags=["Animais"])
 
 
-@router.get("/{id}", response_model=Animais)
-def get_animal_by_id(
-    id: int,
-    session: SessionDep,
-    usuario: UsuarioLogado
-):
-    service = AnimalServiceImpl(session)
-    return service.buscar_animal_por_id(id)
+def get_service(session: Session = Depends(get_session)):
+    return AnimalServiceImpl(session)
 
 
-@router.post("/", response_model=Animais)
-def create_animal(
-    animal: Animais,
-    session: SessionDep
-):
-    service = AnimalServiceImpl(session)
-    return service.criar_animal(animal)
+@router.post("/", response_model=AnimalResponse)
+def criar(animal: AnimalCreate, service=Depends(get_service)):
+    return service.criar(animal)
 
 
-@router.put("/{id}")
-def update_animal(
-    id: int,
-    animal: Animais,
-    session: SessionDep,
-    usuario: UsuarioLogado
-):
-    service = AnimalServiceImpl(session)
+@router.get("/", response_model=list[AnimalResponse])
+def listar(service=Depends(get_service)):
+    return service.listar()
 
-    if not service.atualizar_animal(
-        id,
-        animal
-    ):
-        return {"erro": "Animal não encontrado"}
 
-    return {"mensagem": "Animal atualizado"}
+@router.get("/{id}", response_model=AnimalResponse)
+def buscar(id: int, service=Depends(get_service)):
+    return service.buscar_por_id(id)
+
+
+@router.put("/{id}", response_model=AnimalResponse)
+def atualizar(id: int, animal: AnimalUpdate, service=Depends(get_service)):
+    return service.atualizar(id, animal)
 
 
 @router.delete("/{id}")
-def delete_animal(
-    id: int,
-    session: SessionDep,
-    usuario: UsuarioLogado
-):
-    service = AnimalServiceImpl(session)
-
-    if not service.deletar_animal(id):
-        return {"erro": "Animal não encontrado"}
-
-    return {"mensagem": "Animal removido"}
+def deletar(id: int, service=Depends(get_service)):
+    return {"success": service.deletar(id)}

@@ -1,51 +1,70 @@
-from backend.models.models import Agendamentos
-from backend.services.interfaces.agendamento_service import AgendamentoService
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
-class AgendamentoServiceImpl(AgendamentoService):
+from backend.models.agendamento_model import Agendamentos
+from backend.schemas.agendamento_schema import AgendamentoCreate, AgendamentoUpdate
 
-    def __init__(self, session):
+
+class AgendamentoServiceImpl:
+
+    def __init__(self, session: Session):
         self.session = session
 
-    def listar_agendamentos(self):
-        return self.session.query(
-            Agendamentos
-        ).all()
+    # CREATE
+    def criar(self, agendamento: AgendamentoCreate):
 
-    def buscar_agendamento_por_id(self, id):
-        return self.session.query(
-            Agendamentos
-        ).get(id)
-
-    def criar_agendamento(self, agendamento):
-        self.session.add(agendamento)
-        self.session.commit()
-        self.session.refresh(agendamento)
-        return agendamento
-
-    def atualizar_agendamento(self, id, agendamento):
-
-        self.session.query(
-            Agendamentos
-        ).filter(
-            Agendamentos.id == id
-        ).update(
-            agendamento.model_dump()
+        db = Agendamentos(
+            **agendamento.model_dump(),
+            status="Pendente"
         )
 
+        self.session.add(db)
         self.session.commit()
+        self.session.refresh(db)
 
-        return agendamento
+        return db
 
-    def deletar_agendamento(self, id):
+    # LIST
+    def listar(self):
+        return self.session.scalars(select(Agendamentos)).all()
 
-        agendamento = self.session.query(
-            Agendamentos
-        ).get(id)
+    # GET BY ID
+    def buscar_por_id(self, id: int):
+        return self.session.scalars(
+            select(Agendamentos).where(Agendamentos.id == id)
+        ).first()
 
-        if not agendamento:
+    # UPDATE
+    def atualizar(self, id: int, agendamento: AgendamentoUpdate):
+
+        db = self.session.scalars(
+            select(Agendamentos).where(Agendamentos.id == id)
+        ).first()
+
+        if not db:
+            return None
+
+        dados = agendamento.model_dump(exclude_unset=True)
+
+        for k, v in dados.items():
+            setattr(db, k, v)
+
+        self.session.commit()
+        self.session.refresh(db)
+
+        return db
+
+    # DELETE
+    def deletar(self, id: int) -> bool:
+
+        db = self.session.scalars(
+            select(Agendamentos).where(Agendamentos.id == id)
+        ).first()
+
+        if not db:
             return False
 
-        self.session.delete(agendamento)
+        self.session.delete(db)
         self.session.commit()
 
         return True

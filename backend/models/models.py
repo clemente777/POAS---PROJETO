@@ -1,92 +1,221 @@
-from datetime import datetime
-from typing import Optional, List
-from pydantic import EmailStr
-from sqlmodel import SQLModel, Field, Relationship
+# from __future__ import annotations
+
+# from datetime import datetime
+
+# from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, func
+# from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+# from backend.database.database import Base
 
 
-class Usuarios(SQLModel, table=True):
-    id: int = Field(default=None, primary_key=True)
-    nome: str = Field(default=None, nullable=False)
-    email: EmailStr = Field(default=None, nullable=False, unique=True)
-    senha_hash: str = Field(default=None, nullable=False)
-    criado_em: datetime = Field(default_factory=datetime.now)
+# # =========================================================
+# # USUÁRIOS
+# # =========================================================
+# class Usuarios(Base):
+#     __tablename__ = "usuarios"
 
-    atendimentos: List["Atendimentos"] = Relationship(back_populates="usuario")
+#     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+#     nome: Mapped[str] = mapped_column(String(100), nullable=False)
+#     email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
+#     senha_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+#     criado_em: Mapped[datetime] = mapped_column(
+#         DateTime, server_default=func.now(), nullable=False
+#     )
 
-
-class Clientes(SQLModel, table=True):
-    id: int = Field(default=None, primary_key=True)
-    nome: str = Field(default=None, nullable=False)
-    cpf: str = Field(default=None, nullable=False, unique=True)
-    telefone: str = Field(default=None, nullable=False)
-    email: EmailStr = Field(default=None, nullable=False, unique=True)
-    endereco: str = Field(default=None, nullable=False)
-
-    animais: List["Animais"] = Relationship(back_populates="cliente")
-
-
-class Animais(SQLModel, table=True):
-    id: int = Field(default=None, primary_key=True)
-    nome: str = Field(nullable=False)
-    especie: str = Field(nullable=False)
-    raca: str = Field(nullable=False)
-    idade: int = Field(nullable=False)
-
-    cliente_id: int = Field(foreign_key="clientes.id")
-
-    cliente: Optional["Clientes"] = Relationship(back_populates="animais")
-    agendamentos: List["Agendamentos"] = Relationship(back_populates="animal")
-    atendimentos: List["Atendimentos"] = Relationship(back_populates="animal")
+#     atendimentos: Mapped[list["Atendimentos"]] = relationship(
+#         back_populates="usuario",
+#         lazy="selectin"
+#     )
 
 
-class Agendamentos(SQLModel, table=True):
-    id: int = Field(default=None, primary_key=True)
-    data_agendamento: datetime = Field(nullable=False)
-    descricao: str = Field(nullable=False)
-    status: str = Field(default="Pendente")
-    animal_id: int = Field(foreign_key="animais.id")
+# # =========================================================
+# # CLIENTES
+# # =========================================================
+# class Clientes(Base):
+#     __tablename__ = "clientes"
 
-    animal: Optional["Animais"] = Relationship(back_populates="agendamentos")
+#     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+#     nome: Mapped[str] = mapped_column(String(100), nullable=False)
+#     cpf: Mapped[str] = mapped_column(String(14), unique=True, index=True, nullable=False)
+#     telefone: Mapped[str] = mapped_column(String(20), nullable=False)
+#     email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
+#     endereco: Mapped[str] = mapped_column(String(255), nullable=False)
 
+#     animais: Mapped[list["Animais"]] = relationship(
+#         back_populates="cliente",
+#         lazy="selectin"
+#     )
 
-class Atendimentos(SQLModel, table=True):
-    id: int = Field(default=None, primary_key=True)
-    data_atendimento: datetime = Field(default_factory=datetime.now)
-    diagnostico: str = Field(nullable=False)
-    observacoes: str = Field(default="")
-
-    animal_id: int = Field(foreign_key="animais.id")
-    usuario_id: int = Field(foreign_key="usuarios.id")
-
-    animal: Optional["Animais"] = Relationship(back_populates="atendimentos")
-    usuario: Optional["Usuarios"] = Relationship(back_populates="atendimentos")
-    
-
-
-class Produtos(SQLModel, table=True):
-    id: int = Field(default=None, primary_key=True)
-    nome: str = Field(nullable=False)
-    descricao: str = Field(nullable=False)
-    preco: float = Field(nullable=False)
-    estoque: int = Field(default=0)
-
-    itens_carrinho: List["ItensCarrinho"] = Relationship( back_populates="produto")
+#     carrinhos: Mapped[list["Carrinhos"]] = relationship(
+#         back_populates="cliente",
+#         lazy="selectin"
+#     )
 
 
-class Carrinhos(SQLModel, table=True):
-    id: int = Field(default=None, primary_key=True)
-    data_criacao: datetime = Field(default_factory=datetime.now)
-    cliente_id: int = Field(foreign_key="clientes.id")
-    
-    cliente: Optional["Clientes"] = Relationship()
-    itens: List["ItensCarrinho"] = Relationship(back_populates="carrinho")
+# # =========================================================
+# # ANIMAIS
+# # =========================================================
+# class Animais(Base):
+#     __tablename__ = "animais"
+
+#     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+#     nome: Mapped[str] = mapped_column(String(100), nullable=False)
+#     especie: Mapped[str] = mapped_column(String(100), nullable=False)
+#     raca: Mapped[str] = mapped_column(String(100), nullable=False)
+#     idade: Mapped[int] = mapped_column(Integer, nullable=False)
+
+#     cliente_id: Mapped[int] = mapped_column(
+#         ForeignKey("clientes.id", ondelete="CASCADE"),
+#         nullable=False
+#     )
+
+#     cliente: Mapped["Clientes"] = relationship(
+#         back_populates="animais",
+#         lazy="selectin"
+#     )
+
+#     agendamentos: Mapped[list["Agendamentos"]] = relationship(
+#         back_populates="animal",
+#         lazy="selectin"
+#     )
+
+#     atendimentos: Mapped[list["Atendimentos"]] = relationship(
+#         back_populates="animal",
+#         lazy="selectin"
+#     )
 
 
-class ItensCarrinho(SQLModel, table=True):
-    id: int = Field(default=None, primary_key=True)
-    quantidade: int = Field(default=1)
-    carrinho_id: int = Field(foreign_key="carrinhos.id")
-    produto_id: int = Field(foreign_key="produtos.id")
+# # =========================================================
+# # AGENDAMENTOS
+# # =========================================================
+# class Agendamentos(Base):
+#     __tablename__ = "agendamentos"
 
-    carrinho: Optional["Carrinhos"] = Relationship(back_populates="itens")
-    produto: Optional["Produtos"] = Relationship(back_populates="itens_carrinho")
+#     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+#     data_agendamento: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+#     descricao: Mapped[str] = mapped_column(String(255), nullable=False)
+#     status: Mapped[str] = mapped_column(String(30), default="Pendente", nullable=False)
+
+#     animal_id: Mapped[int] = mapped_column(
+#         ForeignKey("animais.id", ondelete="CASCADE"),
+#         nullable=False
+#     )
+
+#     animal: Mapped["Animais"] = relationship(
+#         back_populates="agendamentos",
+#         lazy="selectin"
+#     )
+
+
+# # =========================================================
+# # ATENDIMENTOS
+# # =========================================================
+# class Atendimentos(Base):
+#     __tablename__ = "atendimentos"
+
+#     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+#     data_atendimento: Mapped[datetime] = mapped_column(
+#         DateTime,
+#         server_default=func.now(),
+#         nullable=False
+#     )
+
+#     diagnostico: Mapped[str] = mapped_column(String(500), nullable=False)
+#     observacoes: Mapped[str] = mapped_column(String(1000), default="")
+
+#     animal_id: Mapped[int] = mapped_column(
+#         ForeignKey("animais.id", ondelete="CASCADE"),
+#         nullable=False
+#     )
+
+#     usuario_id: Mapped[int] = mapped_column(
+#         ForeignKey("usuarios.id", ondelete="SET NULL"),
+#         nullable=True
+#     )
+
+#     animal: Mapped["Animais"] = relationship(
+#         back_populates="atendimentos",
+#         lazy="selectin"
+#     )
+
+#     usuario: Mapped["Usuarios"] = relationship(
+#         back_populates="atendimentos",
+#         lazy="selectin"
+#     )
+
+
+# # =========================================================
+# # PRODUTOS
+# # =========================================================
+# class Produtos(Base):
+#     __tablename__ = "produtos"
+
+#     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+#     nome: Mapped[str] = mapped_column(String(100), nullable=False)
+#     descricao: Mapped[str] = mapped_column(String(255), nullable=False)
+#     preco: Mapped[float] = mapped_column(Float, nullable=False)
+#     estoque: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+
+#     itens_carrinho: Mapped[list["ItensCarrinho"]] = relationship(
+#         back_populates="produto",
+#         lazy="selectin"
+#     )
+
+
+# # =========================================================
+# # CARRINHOS
+# # =========================================================
+# class Carrinhos(Base):
+#     __tablename__ = "carrinhos"
+
+#     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+#     data_criacao: Mapped[datetime] = mapped_column(
+#         DateTime,
+#         server_default=func.now(),
+#         nullable=False
+#     )
+
+#     cliente_id: Mapped[int] = mapped_column(
+#         ForeignKey("clientes.id", ondelete="CASCADE"),
+#         nullable=False
+#     )
+
+#     cliente: Mapped["Clientes"] = relationship(
+#         back_populates="carrinhos",
+#         lazy="selectin"
+#     )
+
+#     itens: Mapped[list["ItensCarrinho"]] = relationship(
+#         back_populates="carrinho",
+#         lazy="selectin"
+#     )
+
+
+# # =========================================================
+# # ITENS CARRINHO
+# # =========================================================
+# class ItensCarrinho(Base):
+#     __tablename__ = "itens_carrinho"
+
+#     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+#     quantidade: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+
+#     carrinho_id: Mapped[int] = mapped_column(
+#         ForeignKey("carrinhos.id", ondelete="CASCADE"),
+#         nullable=False
+#     )
+
+#     produto_id: Mapped[int] = mapped_column(
+#         ForeignKey("produtos.id", ondelete="RESTRICT"),
+#         nullable=False
+#     )
+
+#     carrinho: Mapped["Carrinhos"] = relationship(
+#         back_populates="itens",
+#         lazy="selectin"
+#     )
+
+#     produto: Mapped["Produtos"] = relationship(
+#         back_populates="itens_carrinho",
+#         lazy="selectin"
+#     )

@@ -1,52 +1,67 @@
-from backend.models.models import Produtos
-from backend.services.interfaces.produto_service import ProdutoService
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from backend.models.produto_model import Produtos
+from backend.schemas.produto_schema import ProdutoCreate, ProdutoUpdate
 
 
-class ProdutoServiceImpl(ProdutoService):
+class ProdutoServiceImpl:
 
-    def __init__(self, session):
+    def __init__(self, session: Session):
         self.session = session
 
-    def listar_produtos(self):
-        return self.session.query(Produtos).all()
+    # CREATE
+    def criar(self, produto: ProdutoCreate):
 
-    def buscar_produto_por_id(self, id):
-        return self.session.query(Produtos).get(id)
+        db = Produtos(**produto.model_dump())
 
-    def criar_produto(self, produto):
-        self.session.add(produto)
+        self.session.add(db)
         self.session.commit()
-        self.session.refresh(produto)
+        self.session.refresh(db)
 
-        return produto
+        return db
 
-    def atualizar_produto(self, id, produto):
+    # LIST
+    def listar(self):
+        return self.session.scalars(select(Produtos)).all()
 
-        produto_db = self.session.query(
-            Produtos
-        ).get(id)
+    # GET BY ID
+    def buscar_por_id(self, id: int):
+        return self.session.scalars(
+            select(Produtos).where(Produtos.id == id)
+        ).first()
 
-        if not produto_db:
+    # UPDATE
+    def atualizar(self, id: int, produto: ProdutoUpdate):
+
+        db = self.session.scalars(
+            select(Produtos).where(Produtos.id == id)
+        ).first()
+
+        if not db:
             return None
 
-        self.session.query(Produtos).filter(
-            Produtos.id == id
-        ).update(produto.model_dump())
+        dados = produto.model_dump(exclude_unset=True)
+
+        for k, v in dados.items():
+            setattr(db, k, v)
 
         self.session.commit()
+        self.session.refresh(db)
 
-        return produto
+        return db
 
-    def deletar_produto(self, id):
+    # DELETE
+    def deletar(self, id: int) -> bool:
 
-        produto = self.session.query(
-            Produtos
-        ).get(id)
+        db = self.session.scalars(
+            select(Produtos).where(Produtos.id == id)
+        ).first()
 
-        if not produto:
+        if not db:
             return False
 
-        self.session.delete(produto)
+        self.session.delete(db)
         self.session.commit()
 
         return True

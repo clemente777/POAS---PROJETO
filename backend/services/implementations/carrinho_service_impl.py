@@ -1,61 +1,67 @@
-from backend.models.models import Carrinhos
-from backend.services.interfaces.carrinho_service import CarrinhoService
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from backend.models.carrinho_model import Carrinhos
+from backend.schemas.carrinho_schema import CarrinhoCreate, CarrinhoUpdate
 
 
-class CarrinhoServiceImpl(CarrinhoService):
+class CarrinhoServiceImpl:
 
-    def __init__(self, session):
+    def __init__(self, session: Session):
         self.session = session
 
-    def listar_carrinhos(self):
-        return self.session.query(
-            Carrinhos
-        ).all()
+    # CREATE
+    def criar(self, carrinho: CarrinhoCreate):
 
-    def buscar_carrinho_por_id(self, id):
-        return self.session.query(
-            Carrinhos
-        ).get(id)
+        db = Carrinhos(**carrinho.model_dump())
 
-    def criar_carrinho(self, carrinho):
-
-        self.session.add(carrinho)
+        self.session.add(db)
         self.session.commit()
-        self.session.refresh(carrinho)
+        self.session.refresh(db)
 
-        return carrinho
+        return db
 
-    def atualizar_carrinho(self, id, carrinho):
+    # LIST
+    def listar(self):
+        return self.session.scalars(select(Carrinhos)).all()
 
-        carrinho_db = self.session.query(
-            Carrinhos
-        ).get(id)
+    # GET BY ID
+    def buscar_por_id(self, id: int):
+        return self.session.scalars(
+            select(Carrinhos).where(Carrinhos.id == id)
+        ).first()
 
-        if not carrinho_db:
+    # UPDATE
+    def atualizar(self, id: int, carrinho: CarrinhoUpdate):
+
+        db = self.session.scalars(
+            select(Carrinhos).where(Carrinhos.id == id)
+        ).first()
+
+        if not db:
             return None
 
-        self.session.query(
-            Carrinhos
-        ).filter(
-            Carrinhos.id == id
-        ).update(
-            carrinho.model_dump()
-        )
+        dados = carrinho.model_dump(exclude_unset=True)
+
+        for k, v in dados.items():
+            setattr(db, k, v)
 
         self.session.commit()
+        self.session.refresh(db)
 
-        return carrinho
+        return db
 
-    def deletar_carrinho(self, id):
+    # DELETE
+    def deletar(self, id: int) -> bool:
 
-        carrinho = self.session.query(
-            Carrinhos
-        ).get(id)
+        db = self.session.scalars(
+            select(Carrinhos).where(Carrinhos.id == id)
+        ).first()
 
-        if not carrinho:
+        if not db:
             return False
 
-        self.session.delete(carrinho)
+        self.session.delete(db)
         self.session.commit()
 
         return True

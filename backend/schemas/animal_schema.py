@@ -1,7 +1,10 @@
-from sqlmodel import SQLModel
+from pydantic import BaseModel
 
 
-class AnimalCreate(SQLModel):
+# =========================
+# CREATE
+# =========================
+class AnimalCreate(BaseModel):
     nome: str
     especie: str
     raca: str
@@ -9,14 +12,20 @@ class AnimalCreate(SQLModel):
     cliente_id: int
 
 
-class AnimalUpdate(SQLModel):
+# =========================
+# UPDATE
+# =========================
+class AnimalUpdate(BaseModel):
     nome: str | None = None
     especie: str | None = None
     raca: str | None = None
     idade: int | None = None
 
 
-class AnimalResponse(SQLModel):
+# =========================
+# RESPONSE
+# =========================
+class AnimalResponse(BaseModel):
     id: int
     nome: str
     especie: str

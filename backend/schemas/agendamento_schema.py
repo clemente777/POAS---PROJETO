@@ -1,20 +1,29 @@
+from pydantic import BaseModel
 from datetime import datetime
-from sqlmodel import SQLModel
 
 
-class AgendamentoCreate(SQLModel):
+# =========================
+# CREATE
+# =========================
+class AgendamentoCreate(BaseModel):
     data_agendamento: datetime
     descricao: str
     animal_id: int
 
 
-class AgendamentoUpdate(SQLModel):
+# =========================
+# UPDATE
+# =========================
+class AgendamentoUpdate(BaseModel):
     data_agendamento: datetime | None = None
     descricao: str | None = None
     status: str | None = None
 
 
-class AgendamentoResponse(SQLModel):
+# =========================
+# RESPONSE
+# =========================
+class AgendamentoResponse(BaseModel):
     id: int
     data_agendamento: datetime
     descricao: str

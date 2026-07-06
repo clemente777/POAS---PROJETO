@@ -1,19 +1,28 @@
-from sqlmodel import SQLModel
+from pydantic import BaseModel
 
 
-class AtendimentoCreate(SQLModel):
+# =========================
+# CREATE
+# =========================
+class AtendimentoCreate(BaseModel):
     diagnostico: str
     observacoes: str
     animal_id: int
     usuario_id: int
 
 
-class AtendimentoUpdate(SQLModel):
+# =========================
+# UPDATE
+# =========================
+class AtendimentoUpdate(BaseModel):
     diagnostico: str | None = None
     observacoes: str | None = None
 
 
-class AtendimentoResponse(SQLModel):
+# =========================
+# RESPONSE
+# =========================
+class AtendimentoResponse(BaseModel):
     id: int
     diagnostico: str
     observacoes: str

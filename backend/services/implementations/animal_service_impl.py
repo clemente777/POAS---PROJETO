@@ -1,36 +1,67 @@
-from sqlmodel import Session
-from backend.models.models import Animais
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from backend.models.animal_model import Animais
+from backend.schemas.animal_schema import AnimalCreate, AnimalUpdate
+
 
 class AnimalServiceImpl:
 
     def __init__(self, session: Session):
         self.session = session
 
-    def listar_animais(self):
-        return self.session.query(Animais).all()
+    # CREATE
+    def criar(self, animal: AnimalCreate):
 
-    def buscar_animal_por_id(self, id):
-        return self.session.query(Animais).get(id)
+        db = Animais(**animal.model_dump())
 
-    def criar_animal(self, animal):
-        self.session.add(animal)
+        self.session.add(db)
         self.session.commit()
-        self.session.refresh(animal)
-        return animal
+        self.session.refresh(db)
 
-    def atualizar_animal(self, id, animal):
-        self.session.query(Animais).filter(
-            Animais.id == id
-        ).update(animal.model_dump(exclude_unset=True))
+        return db
+
+    # LIST
+    def listar(self):
+        return self.session.scalars(select(Animais)).all()
+
+    # GET BY ID
+    def buscar_por_id(self, id: int):
+        return self.session.scalars(
+            select(Animais).where(Animais.id == id)
+        ).first()
+
+    # UPDATE
+    def atualizar(self, id: int, animal: AnimalUpdate):
+
+        db = self.session.scalars(
+            select(Animais).where(Animais.id == id)
+        ).first()
+
+        if not db:
+            return None
+
+        dados = animal.model_dump(exclude_unset=True)
+
+        for k, v in dados.items():
+            setattr(db, k, v)
 
         self.session.commit()
+        self.session.refresh(db)
 
-    def deletar_animal(self, id):
-        animal = self.session.query(Animais).get(id)
+        return db
 
-        if animal:
-            self.session.delete(animal)
-            self.session.commit()
-            return True
+    # DELETE
+    def deletar(self, id: int) -> bool:
 
-        return False
+        db = self.session.scalars(
+            select(Animais).where(Animais.id == id)
+        ).first()
+
+        if not db:
+            return False
+
+        self.session.delete(db)
+        self.session.commit()
+
+        return True

@@ -4,7 +4,7 @@ from backend.database.database import create_db_and_tables
 
 from backend.routes import (
     usuario_routes,
-    login_router,
+    login_routes,
     cliente_routes,
     animal_routes,
     agendamento_routes,
@@ -21,7 +21,7 @@ def startup():
     create_db_and_tables()
 
 app.include_router(usuario_routes.router)
-app.include_router(login_router.router)
+app.include_router(login_routes.router)
 app.include_router(cliente_routes.router)
 app.include_router(animal_routes.router)
 app.include_router(agendamento_routes.router)
