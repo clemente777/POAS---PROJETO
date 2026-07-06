@@ -1,17 +1,25 @@
 import pytest
-from httpx import AsyncClient
+from fastapi.testclient import TestClient
 
-from main import app
+from backend.main import app
+from backend.auth.token import create_access_token
 
 
 @pytest.fixture
 def client():
-    return AsyncClient(app=app, base_url="http://test")
+    with TestClient(app) as client:
+        yield client
 
 
 @pytest.fixture
 def auth_headers():
-    # depois você troca por login real
+
+    token = create_access_token(
+        {
+            "sub": "admin@admin.com"
+        }
+    )
+
     return {
-        "Authorization": "Bearer TOKEN_TESTE"
+        "Authorization": f"Bearer {token}"
     }
