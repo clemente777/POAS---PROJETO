@@ -1,71 +1,113 @@
+def test_criar_cliente(client, auth_headers):
+
+    response = client.post(
+        "/clientes/",
+        headers=auth_headers,
+        json={
+            "nome":"João Silva",
+            "telefone":"84999999999",
+            "email":"joao@email.com"
+        }
+    )
 
 
-import pytest
+    assert response.status_code in [200,201]
+
+    assert response.json()["nome"] == "João Silva"
 
 
-@pytest.mark.asyncio
-async def test_listar_clientes(client, auth_headers):
 
-    response = await client.get(
+def test_listar_clientes(client, auth_headers):
+
+    response = client.get(
         "/clientes/",
         headers=auth_headers
     )
 
-    assert response.status_code in [200, 401, 403, 500]
+
+    assert response.status_code == 200
+
+    assert isinstance(response.json(), list)
 
 
-@pytest.mark.asyncio
-async def test_buscar_cliente(client, auth_headers):
 
-    response = await client.get(
-        "/clientes/1",
-        headers=auth_headers
-    )
+def test_buscar_cliente(client, auth_headers):
 
-    assert response.status_code in [200, 401, 403, 404, 500]
-
-
-@pytest.mark.asyncio
-async def test_criar_cliente(client, auth_headers):
-
-    cliente = {
-        "nome": "Cliente Teste",
-        "cpf": "12345678901",
-        "telefone": "999999999",
-        "email": "cliente@teste.com"
-    }
-
-    response = await client.post(
+    criar = client.post(
         "/clientes/",
-        json=cliente,
+        headers=auth_headers,
+        json={
+            "nome":"Maria",
+            "telefone":"888888888",
+            "email":"maria@email.com"
+        }
+    )
+
+
+    cliente_id = criar.json()["id"]
+
+
+    response = client.get(
+        f"/clientes/{cliente_id}",
         headers=auth_headers
     )
 
-    assert response.status_code in [200, 201, 400, 401, 403, 422, 500]
+
+    assert response.status_code == 200
+
+    assert response.json()["id"] == cliente_id
 
 
-@pytest.mark.asyncio
-async def test_atualizar_cliente(client, auth_headers):
 
-    cliente = {
-        "nome": "Cliente Alterado"
-    }
+def test_atualizar_cliente(client, auth_headers):
 
-    response = await client.put(
-        "/clientes/1",
-        json=cliente,
+    criar = client.post(
+        "/clientes/",
+        headers=auth_headers,
+        json={
+            "nome":"Cliente Teste",
+            "telefone":"111111",
+            "email":"teste@email.com"
+        }
+    )
+
+
+    cliente_id = criar.json()["id"]
+
+
+    response = client.put(
+        f"/clientes/{cliente_id}",
+        headers=auth_headers,
+        json={
+            "nome":"Cliente Alterado"
+        }
+    )
+
+
+    assert response.status_code == 200
+
+
+
+def test_deletar_cliente(client, auth_headers):
+
+    criar = client.post(
+        "/clientes/",
+        headers=auth_headers,
+        json={
+            "nome":"Excluir",
+            "telefone":"99999",
+            "email":"excluir@email.com"
+        }
+    )
+
+
+    cliente_id = criar.json()["id"]
+
+
+    response = client.delete(
+        f"/clientes/{cliente_id}",
         headers=auth_headers
     )
 
-    assert response.status_code in [200, 400, 401, 403, 404, 422, 500]
 
-
-@pytest.mark.asyncio
-async def test_deletar_cliente(client, auth_headers):
-
-    response = await client.delete(
-        "/clientes/1",
-        headers=auth_headers
-    )
-
-    assert response.status_code in [200, 400, 401, 403, 404, 500]
+    assert response.status_code in [200,204]

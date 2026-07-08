@@ -19,3 +19,6 @@ class UsuarioResponse(BaseModel):
     nome: str
     email: EmailStr
     criado_em: datetime
+
+class Config:
+    from_attributes = True

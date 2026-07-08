@@ -1,68 +1,89 @@
+def test_criar_carrinho(client, auth_headers):
+
+    response = client.post(
+        "/carrinhos/",
+        headers=auth_headers,
+        json={}
+    )
 
 
-import pytest
+    assert response.status_code in [200,201]
 
 
-@pytest.mark.asyncio
-async def test_listar_carrinhos(client, auth_headers):
 
-    response = await client.get(
+def test_listar_carrinhos(client, auth_headers):
+
+    response = client.get(
         "/carrinhos/",
         headers=auth_headers
     )
 
-    assert response.status_code in [200, 401, 403, 500]
+
+    assert response.status_code == 200
 
 
-@pytest.mark.asyncio
-async def test_buscar_carrinho(client, auth_headers):
 
-    response = await client.get(
-        "/carrinhos/1",
-        headers=auth_headers
-    )
+def test_buscar_carrinho(client, auth_headers):
 
-    assert response.status_code in [200, 401, 403, 404, 500]
-
-
-@pytest.mark.asyncio
-async def test_criar_carrinho(client, auth_headers):
-
-    carrinho = {
-        "cliente_id": 1
-    }
-
-    response = await client.post(
+    criar = client.post(
         "/carrinhos/",
-        json=carrinho,
+        headers=auth_headers,
+        json={}
+    )
+
+
+    carrinho_id = criar.json()["id"]
+
+
+    response = client.get(
+        f"/carrinhos/{carrinho_id}",
         headers=auth_headers
     )
 
-    assert response.status_code in [200, 201, 400, 401, 403, 422, 500]
+
+    assert response.status_code == 200
 
 
-@pytest.mark.asyncio
-async def test_atualizar_carrinho(client, auth_headers):
 
-    carrinho = {
-        "cliente_id": 2
-    }
+def test_atualizar_carrinho(client, auth_headers):
 
-    response = await client.put(
-        "/carrinhos/1",
-        json=carrinho,
+    criar = client.post(
+        "/carrinhos/",
+        headers=auth_headers,
+        json={}
+    )
+
+
+    carrinho_id = criar.json()["id"]
+
+
+    response = client.put(
+        f"/carrinhos/{carrinho_id}",
+        headers=auth_headers,
+        json={}
+    )
+
+
+    assert response.status_code == 200
+
+
+
+def test_deletar_carrinho(client, auth_headers):
+
+    criar = client.post(
+        "/carrinhos/",
+        headers=auth_headers,
+        json={}
+    )
+
+
+    carrinho_id = criar.json()["id"]
+
+
+    response = client.delete(
+        f"/carrinhos/{carrinho_id}",
         headers=auth_headers
     )
 
-    assert response.status_code in [200, 400, 401, 403, 404, 422, 500]
 
-
-@pytest.mark.asyncio
-async def test_deletar_carrinho(client, auth_headers):
-
-    response = await client.delete(
-        "/carrinhos/1",
-        headers=auth_headers
-    )
-
-    assert response.status_code in [200, 400, 401, 403, 404, 500]
+    assert response.status_code in [200,204]

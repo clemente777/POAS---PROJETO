@@ -1,68 +1,161 @@
-import pytest
+def criar_animal_para_teste(client, auth_headers):
+
+    cliente = client.post(
+        "/clientes/",
+        headers=auth_headers,
+        json={
+            "nome": "Cliente Atendimento",
+            "telefone": "999999",
+            "email": "atendimento@email.com"
+        }
+    )
+
+    cliente_id = cliente.json()["id"]
 
 
-@pytest.mark.asyncio
-async def test_listar_atendimentos(client, auth_headers):
+    animal = client.post(
+        "/animais/",
+        headers=auth_headers,
+        json={
+            "nome": "Rex Atendimento",
+            "especie": "Cachorro",
+            "raca": "Golden",
+            "idade": 4,
+            "cliente_id": cliente_id
+        }
+    )
 
-    response = await client.get(
+    return animal.json()["id"]
+
+
+
+def test_criar_atendimento(client, auth_headers):
+
+    animal_id = criar_animal_para_teste(
+        client,
+        auth_headers
+    )
+
+
+    response = client.post(
+        "/atendimentos/",
+        headers=auth_headers,
+        json={
+            "animal_id": animal_id,
+            "descricao": "Consulta de rotina",
+            "observacao": "Animal saudável"
+        }
+    )
+
+
+    assert response.status_code in [200,201]
+
+
+
+def test_listar_atendimentos(client, auth_headers):
+
+    response = client.get(
         "/atendimentos/",
         headers=auth_headers
     )
 
-    assert response.status_code in [200, 401, 403, 500]
+
+    assert response.status_code == 200
+
+    assert isinstance(response.json(), list)
 
 
-@pytest.mark.asyncio
-async def test_buscar_atendimento(client, auth_headers):
 
-    response = await client.get(
-        "/atendimentos/1",
-        headers=auth_headers
+def test_buscar_atendimento(client, auth_headers):
+
+    animal_id = criar_animal_para_teste(
+        client,
+        auth_headers
     )
 
-    assert response.status_code in [200, 401, 403, 404, 500]
 
-
-@pytest.mark.asyncio
-async def test_criar_atendimento(client, auth_headers):
-
-    atendimento = {
-        "agendamento_id": 1,
-        "descricao": "Banho completo"
-    }
-
-    response = await client.post(
+    criar = client.post(
         "/atendimentos/",
-        json=atendimento,
+        headers=auth_headers,
+        json={
+            "animal_id": animal_id,
+            "descricao":"Vacinação"
+        }
+    )
+
+
+    atendimento_id = criar.json()["id"]
+
+
+    response = client.get(
+        f"/atendimentos/{atendimento_id}",
         headers=auth_headers
     )
 
-    assert response.status_code in [200, 201, 400, 401, 403, 422, 500]
+
+    assert response.status_code == 200
 
 
-@pytest.mark.asyncio
-async def test_atualizar_atendimento(client, auth_headers):
 
-    atendimento = {
-        "descricao": "Banho e Tosa"
-    }
+def test_atualizar_atendimento(client, auth_headers):
 
-    response = await client.put(
-        "/atendimentos/1",
-        json=atendimento,
+    animal_id = criar_animal_para_teste(
+        client,
+        auth_headers
+    )
+
+
+    criar = client.post(
+        "/atendimentos/",
+        headers=auth_headers,
+        json={
+            "animal_id":animal_id,
+            "descricao":"Antigo"
+        }
+    )
+
+
+    atendimento_id = criar.json()["id"]
+
+
+    response = client.put(
+        f"/atendimentos/{atendimento_id}",
+        headers=auth_headers,
+        json={
+            "descricao":"Atualizado"
+        }
+    )
+
+
+    assert response.status_code == 200
+
+
+
+def test_deletar_atendimento(client, auth_headers):
+
+    animal_id = criar_animal_para_teste(
+        client,
+        auth_headers
+    )
+
+
+    criar = client.post(
+        "/atendimentos/",
+        headers=auth_headers,
+        json={
+            "animal_id":animal_id,
+            "descricao":"Excluir"
+        }
+    )
+
+
+    atendimento_id = criar.json()["id"]
+
+
+    response = client.delete(
+        f"/atendimentos/{atendimento_id}",
         headers=auth_headers
     )
 
-    assert response.status_code in [200, 400, 401, 403, 404, 422, 500]
 
-
-@pytest.mark.asyncio
-async def test_deletar_atendimento(client, auth_headers):
-
-    response = await client.delete(
-        "/atendimentos/1",
-        headers=auth_headers
-    )
-
-    assert response.status_code in [200, 400, 401, 403, 404, 500]
-    
+    assert response.status_code in [200,204]

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends,Response, APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from backend.database.database import get_session
@@ -28,14 +28,44 @@ def listar(service=Depends(get_service)):
 
 @router.get("/{id}", response_model=UsuarioResponse)
 def buscar(id: int, service=Depends(get_service)):
-    return service.buscar_por_id(id)
+
+    usuario = service.buscar_por_id(id)
+
+    if not usuario:
+        raise HTTPException(
+            status_code=404,
+            detail="Usuário não encontrado"
+        )
+
+    return usuario
 
 
 @router.put("/{id}", response_model=UsuarioResponse)
-def atualizar(id: int, usuario: UsuarioUpdate, service=Depends(get_service)):
-    return service.atualizar(id, usuario)
+def atualizar(
+    id: int,
+    usuario: UsuarioUpdate,
+    service=Depends(get_service)
+):
 
+    usuario_atualizado = service.atualizar(id, usuario)
 
-@router.delete("/{id}")
+    if not usuario_atualizado:
+        raise HTTPException(
+            status_code=404,
+            detail="Usuário não encontrado"
+        )
+
+    return usuario_atualizado
+
+@router.delete("/{id}", status_code=204)
 def deletar(id: int, service=Depends(get_service)):
-    return {"success": service.deletar(id)}
+
+    removido = service.deletar(id)
+
+    if not removido:
+        raise HTTPException(
+            status_code=404,
+            detail="Usuário não encontrado"
+        )
+
+    return Response(status_code=204)

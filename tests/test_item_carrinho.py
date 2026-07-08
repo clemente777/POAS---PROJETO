@@ -1,70 +1,105 @@
+def criar_produto(client, auth_headers):
+
+    response = client.post(
+        "/produtos/",
+        headers=auth_headers,
+        json={
+            "nome":"Produto Item",
+            "descricao":"Teste",
+            "preco":30,
+            "estoque":10
+        }
+    )
 
 
-import pytest
+    return response.json()["id"]
 
 
-@pytest.mark.asyncio
-async def test_listar_itens(client, auth_headers):
 
-    response = await client.get(
+def criar_carrinho(client, auth_headers):
+
+    response = client.post(
+        "/carrinhos/",
+        headers=auth_headers,
+        json={}
+    )
+
+
+    return response.json()["id"]
+
+
+
+def test_criar_item(client, auth_headers):
+
+    produto_id = criar_produto(
+        client,
+        auth_headers
+    )
+
+    carrinho_id = criar_carrinho(
+        client,
+        auth_headers
+    )
+
+
+    response = client.post(
+        "/itens-carrinho/",
+        headers=auth_headers,
+        json={
+            "produto_id":produto_id,
+            "carrinho_id":carrinho_id,
+            "quantidade":2
+        }
+    )
+
+
+    assert response.status_code in [200,201]
+
+
+
+def test_listar_itens(client, auth_headers):
+
+    response = client.get(
         "/itens-carrinho/",
         headers=auth_headers
     )
 
-    assert response.status_code in [200, 401, 403, 500]
+
+    assert response.status_code == 200
 
 
-@pytest.mark.asyncio
-async def test_buscar_item(client, auth_headers):
 
-    response = await client.get(
-        "/itens-carrinho/1",
-        headers=auth_headers
+def test_buscar_item(client, auth_headers):
+
+    produto_id = criar_produto(
+        client,
+        auth_headers
     )
 
-    assert response.status_code in [200, 401, 403, 404, 500]
+    carrinho_id = criar_carrinho(
+        client,
+        auth_headers
+    )
 
 
-@pytest.mark.asyncio
-async def test_criar_item(client, auth_headers):
-
-    item = {
-        "carrinho_id": 1,
-        "produto_id": 1,
-        "quantidade": 1
-    }
-
-    response = await client.post(
+    criar = client.post(
         "/itens-carrinho/",
-        json=item,
+        headers=auth_headers,
+        json={
+            "produto_id":produto_id,
+            "carrinho_id":carrinho_id,
+            "quantidade":1
+        }
+    )
+
+
+    item_id = criar.json()["id"]
+
+
+    response = client.get(
+        f"/itens-carrinho/{item_id}",
         headers=auth_headers
     )
 
-    assert response.status_code in [200, 201, 400, 401, 403, 422, 500]
 
-
-@pytest.mark.asyncio
-async def test_atualizar_item(client, auth_headers):
-
-    item = {
-        "quantidade": 2
-    }
-
-    response = await client.put(
-        "/itens-carrinho/1",
-        json=item,
-        headers=auth_headers
-    )
-
-    assert response.status_code in [200, 400, 401, 403, 404, 422, 500]
-
-
-@pytest.mark.asyncio
-async def test_deletar_item(client, auth_headers):
-
-    response = await client.delete(
-        "/itens-carrinho/1",
-        headers=auth_headers
-    )
-
-    assert response.status_code in [200, 400, 401, 403, 404, 500]
+    assert response.status_code == 200

@@ -1,69 +1,122 @@
+def test_criar_produto(client, auth_headers):
 
-import pytest
+    response = client.post(
+        "/produtos/",
+        headers=auth_headers,
+        json={
+            "nome": "Ração Premium",
+            "descricao": "Ração para cães adultos",
+            "preco": 80.00,
+            "estoque": 10
+        }
+    )
+
+    assert response.status_code in [200, 201]
+
+    data = response.json()
+
+    assert data["nome"] == "Ração Premium"
 
 
-@pytest.mark.asyncio
-async def test_listar_produtos(client, auth_headers):
 
-    response = await client.get(
+def test_listar_produtos(client, auth_headers):
+
+    response = client.get(
         "/produtos/",
         headers=auth_headers
     )
 
-    assert response.status_code in [200, 401, 403, 500]
+    assert response.status_code == 200
 
-
-@pytest.mark.asyncio
-async def test_buscar_produto(client, auth_headers):
-
-    response = await client.get(
-        "/produtos/1",
-        headers=auth_headers
+    assert isinstance(
+        response.json(),
+        list
     )
 
-    assert response.status_code in [200, 401, 403, 404, 500]
 
 
-@pytest.mark.asyncio
-async def test_criar_produto(client, auth_headers):
+def test_buscar_produto(client, auth_headers):
 
-    produto = {
-        "nome": "Produto Teste",
-        "preco": 10.50,
-        "estoque": 5
-    }
-
-    response = await client.post(
+    criar = client.post(
         "/produtos/",
-        json=produto,
+        headers=auth_headers,
+        json={
+            "nome":"Shampoo Pet",
+            "descricao":"Produto para banho",
+            "preco":25,
+            "estoque":5
+        }
+    )
+
+
+    produto_id = criar.json()["id"]
+
+
+    response = client.get(
+        f"/produtos/{produto_id}",
         headers=auth_headers
     )
 
-    assert response.status_code in [200, 201, 400, 401, 403, 422, 500]
+
+    assert response.status_code == 200
+
+    assert response.json()["id"] == produto_id
 
 
-@pytest.mark.asyncio
-async def test_atualizar_produto(client, auth_headers):
 
-    produto = {
-        "nome": "Produto Atualizado"
-    }
+def test_atualizar_produto(client, auth_headers):
 
-    response = await client.put(
-        "/produtos/1",
-        json=produto,
+    criar = client.post(
+        "/produtos/",
+        headers=auth_headers,
+        json={
+            "nome":"Produto Antigo",
+            "descricao":"Teste",
+            "preco":20,
+            "estoque":2
+        }
+    )
+
+
+    produto_id = criar.json()["id"]
+
+
+    response = client.put(
+        f"/produtos/{produto_id}",
+        headers=auth_headers,
+        json={
+            "nome":"Produto Novo"
+        }
+    )
+
+
+    assert response.status_code == 200
+
+    assert response.json()["nome"] == "Produto Novo"
+
+
+
+def test_deletar_produto(client, auth_headers):
+
+    criar = client.post(
+        "/produtos/",
+        headers=auth_headers,
+        json={
+            "nome":"Excluir Produto",
+            "descricao":"Teste",
+            "preco":10,
+            "estoque":1
+        }
+    )
+
+
+    produto_id = criar.json()["id"]
+
+
+    response = client.delete(
+        f"/produtos/{produto_id}",
         headers=auth_headers
     )
 
-    assert response.status_code in [200, 400, 401, 403, 404, 422, 500]
 
-
-@pytest.mark.asyncio
-async def test_deletar_produto(client, auth_headers):
-
-    response = await client.delete(
-        "/produtos/1",
-        headers=auth_headers
-    )
-
-    assert response.status_code in [200, 400, 401, 403, 404, 500]
+    assert response.status_code in [200,204]

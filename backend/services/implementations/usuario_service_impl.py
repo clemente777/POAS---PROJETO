@@ -38,7 +38,14 @@ class UsuarioServiceImpl:
         return self.session.scalars(
             select(Usuarios).where(Usuarios.id == id)
         ).first()
+    
+    # GET BY EMAIL (LOGIN)
+    def buscar_por_email(self, email: str):
 
+        return self.session.scalars(
+            select(Usuarios).where(Usuarios.email == email)
+        ).first()
+    
     # UPDATE
     def atualizar(self, id: int, usuario: UsuarioUpdate):
 

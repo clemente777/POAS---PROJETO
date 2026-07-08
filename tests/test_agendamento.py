@@ -1,70 +1,96 @@
+def criar_cliente_animal(client, auth_headers):
 
-import pytest
+    cliente = client.post(
+        "/clientes/",
+        headers=auth_headers,
+        json={
+            "nome":"Cliente Agenda",
+            "telefone":"999",
+            "email":"agenda@email.com"
+        }
+    )
+
+    cliente_id = cliente.json()["id"]
 
 
-@pytest.mark.asyncio
-async def test_listar_agendamentos(client, auth_headers):
+    animal = client.post(
+        "/animais/",
+        headers=auth_headers,
+        json={
+            "nome":"Animal Agenda",
+            "especie":"Cachorro",
+            "raca":"Labrador",
+            "idade":2,
+            "cliente_id":cliente_id
+        }
+    )
 
-    response = await client.get(
+
+    return animal.json()["id"]
+
+
+
+def test_criar_agendamento(client, auth_headers):
+
+    animal_id = criar_cliente_animal(
+        client,
+        auth_headers
+    )
+
+
+    response = client.post(
+        "/agendamentos/",
+        headers=auth_headers,
+        json={
+            "animal_id":animal_id,
+            "data":"2026-07-10T10:00:00",
+            "tipo":"Consulta"
+        }
+    )
+
+
+    assert response.status_code in [200,201]
+
+
+
+def test_listar_agendamentos(client, auth_headers):
+
+    response = client.get(
         "/agendamentos/",
         headers=auth_headers
     )
 
-    assert response.status_code in [200, 401, 403, 500]
+
+    assert response.status_code == 200
 
 
-@pytest.mark.asyncio
-async def test_buscar_agendamento(client, auth_headers):
 
-    response = await client.get(
-        "/agendamentos/1",
-        headers=auth_headers
+def test_buscar_agendamento(client, auth_headers):
+
+    animal_id = criar_cliente_animal(
+        client,
+        auth_headers
     )
 
-    assert response.status_code in [200, 401, 403, 404, 500]
 
-
-@pytest.mark.asyncio
-async def test_criar_agendamento(client, auth_headers):
-
-    agendamento = {
-        "cliente_id": 1,
-        "animal_id": 1,
-        "data": "2026-01-01",
-        "hora": "10:00"
-    }
-
-    response = await client.post(
+    criar = client.post(
         "/agendamentos/",
-        json=agendamento,
+        headers=auth_headers,
+        json={
+            "animal_id":animal_id,
+            "data":"2026-07-10T10:00:00",
+            "tipo":"Banho"
+        }
+    )
+
+
+    id_agendamento = criar.json()["id"]
+
+
+    response = client.get(
+        f"/agendamentos/{id_agendamento}",
         headers=auth_headers
     )
 
-    assert response.status_code in [200, 201, 400, 401, 403, 422, 500]
 
-
-@pytest.mark.asyncio
-async def test_atualizar_agendamento(client, auth_headers):
-
-    agendamento = {
-        "hora": "14:00"
-    }
-
-    response = await client.put(
-        "/agendamentos/1",
-        json=agendamento,
-        headers=auth_headers
-    )
-
-    assert response.status_code in [200, 400, 401, 403, 404, 422, 500]
-
-
-@pytest.mark.asyncio
-async def test_deletar_agendamento(client, auth_headers):
-
-    response = await client.delete(
-        "/agendamentos/1",
-        headers=auth_headers
-    )
-
-    assert response.status_code in [200, 400, 401, 403, 404, 500]
+    assert response.status_code == 200
