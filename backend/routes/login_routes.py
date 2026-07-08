@@ -21,7 +21,7 @@ router = APIRouter(
 
 senha_context = PasswordHash.recommended()
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login/")
 
 SessionDep = Annotated[Session, Depends(get_session)]
 

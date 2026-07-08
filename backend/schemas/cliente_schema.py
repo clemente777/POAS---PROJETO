@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 
 
 # =========================
@@ -27,6 +27,7 @@ class ClienteUpdate(BaseModel):
 # RESPONSE
 # =========================
 class ClienteResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     nome: str
     cpf: str

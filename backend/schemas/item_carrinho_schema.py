@@ -1,4 +1,5 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
+
 
 
 # =========================
@@ -21,6 +22,8 @@ class ItemCarrinhoUpdate(BaseModel):
 # RESPONSE
 # =========================
 class ItemCarrinhoResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     carrinho_id: int
     produto_id: int

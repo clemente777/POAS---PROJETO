@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 
 
@@ -24,6 +24,8 @@ class AgendamentoUpdate(BaseModel):
 # RESPONSE
 # =========================
 class AgendamentoResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     data_agendamento: datetime
     descricao: str

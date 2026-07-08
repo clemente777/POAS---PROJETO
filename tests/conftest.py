@@ -1,24 +1,23 @@
 import pytest
 
 from fastapi.testclient import TestClient
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from pwdlib import PasswordHash
 
-from main import app
-
-from backend.database.database import (
-    Base,
-    get_session
-)
-
+from backend.database.database import Base, get_session
 from backend.models.usuario_model import Usuarios
-
 from backend.auth.token import create_access_token
 
+import os
+
+os.environ["DATABASE_URL"] = "sqlite:///./test.db"
 
 
+
+from main import app
 # =========================
 # BANCO DE TESTE
 # =========================
@@ -49,7 +48,7 @@ senha_context = PasswordHash.recommended()
 # SESSION
 # =========================
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def session():
 
     Base.metadata.drop_all(bind=engine)
@@ -58,7 +57,6 @@ def session():
 
 
     db = TestingSessionLocal()
-
 
     try:
         yield db
@@ -72,7 +70,7 @@ def session():
 # CLIENT
 # =========================
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def client(session):
 
     def override_get_session():
@@ -93,12 +91,11 @@ def client(session):
 
 
 # =========================
-# LOGIN
+# LOGIN AUTOMÁTICO
 # =========================
 
 @pytest.fixture
 def auth_headers(session):
-
 
     usuario = Usuarios(
         nome="Administrador",
@@ -112,7 +109,6 @@ def auth_headers(session):
     session.commit()
 
     session.refresh(usuario)
-
 
 
     token = create_access_token(

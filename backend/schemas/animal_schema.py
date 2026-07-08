@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 # =========================
@@ -26,6 +26,9 @@ class AnimalUpdate(BaseModel):
 # RESPONSE
 # =========================
 class AnimalResponse(BaseModel):
+
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     nome: str
     especie: str

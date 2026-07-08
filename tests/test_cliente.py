@@ -1,12 +1,32 @@
+def criar_cliente(client, auth_headers, email):
+
+    response = client.post(
+        "/clientes/",
+        headers=auth_headers,
+        json={
+            "nome": "Cliente Teste",
+            "cpf": "11111111111",
+            "telefone": "999999999",
+            "email": email,
+            "endereco": "Rua Teste"
+        }
+    )
+
+    assert response.status_code in [200,201], response.json()
+
+    return response.json()["id"]
+    
 def test_criar_cliente(client, auth_headers):
 
     response = client.post(
         "/clientes/",
         headers=auth_headers,
         json={
-            "nome":"João Silva",
-            "telefone":"84999999999",
-            "email":"joao@email.com"
+            "nome": "João Silva",
+            "cpf": "12345678901",
+            "telefone": "84999999999",
+            "email": "joao@email.com",
+            "endereco": "Rua A, 100"
         }
     )
 
@@ -36,11 +56,13 @@ def test_buscar_cliente(client, auth_headers):
     criar = client.post(
         "/clientes/",
         headers=auth_headers,
-        json={
-            "nome":"Maria",
-            "telefone":"888888888",
-            "email":"maria@email.com"
-        }
+       json={
+            "nome": "Maria",
+            "cpf": "11111111111",
+            "telefone": "888888888",
+            "email": "maria@email.com",
+            "endereco": "Rua B"
+       }
     )
 
 
@@ -65,9 +87,11 @@ def test_atualizar_cliente(client, auth_headers):
         "/clientes/",
         headers=auth_headers,
         json={
-            "nome":"Cliente Teste",
-            "telefone":"111111",
-            "email":"teste@email.com"
+            "nome": "Excluir",
+            "cpf": "33333333333",
+            "telefone": "99999",
+            "email": "excluir@email.com",
+            "endereco": "Rua D"
         }
     )
 
@@ -88,18 +112,25 @@ def test_atualizar_cliente(client, auth_headers):
 
 
 
+
 def test_deletar_cliente(client, auth_headers):
 
     criar = client.post(
         "/clientes/",
         headers=auth_headers,
         json={
-            "nome":"Excluir",
-            "telefone":"99999",
-            "email":"excluir@email.com"
+            "nome": "Cliente Delete",
+            "cpf": "55555555555",
+            "telefone": "999999999",
+            "email": "deletecliente@email.com",
+            "endereco": "Rua Teste"
         }
     )
 
+    print("CLIENTE DELETE:", criar.status_code)
+    print("CLIENTE JSON:", criar.json())
+
+    assert criar.status_code in [200, 201], criar.json()
 
     cliente_id = criar.json()["id"]
 
@@ -110,4 +141,4 @@ def test_deletar_cliente(client, auth_headers):
     )
 
 
-    assert response.status_code in [200,204]
+    assert response.status_code in [200, 204]

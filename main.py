@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from backend.models import *
-from backend.database.database import create_db_and_tables
 
 from backend.routes import (
     usuario_routes,
@@ -14,11 +13,19 @@ from backend.routes import (
     item_carrinho_routes
 )
 
-app = FastAPI()
+from contextlib import asynccontextmanager
+from backend.database.database import create_db_and_tables
 
-@app.on_event("startup")
-def startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     create_db_and_tables()
+    yield
+
+
+
+app = FastAPI(lifespan=lifespan)
+
+
 
 app.include_router(usuario_routes.router)
 app.include_router(login_routes.router)
