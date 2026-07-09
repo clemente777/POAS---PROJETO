@@ -1,9 +1,7 @@
 from pydantic import BaseModel, EmailStr, ConfigDict
 
 
-# =========================
 # CREATE
-# =========================
 class ClienteCreate(BaseModel):
     nome: str
     cpf: str
@@ -12,9 +10,7 @@ class ClienteCreate(BaseModel):
     endereco: str
 
 
-# =========================
 # UPDATE
-# =========================
 class ClienteUpdate(BaseModel):
     nome: str | None = None
     cpf: str | None = None
@@ -23,9 +19,7 @@ class ClienteUpdate(BaseModel):
     endereco: str | None = None
 
 
-# =========================
 # RESPONSE
-# =========================
 class ClienteResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int

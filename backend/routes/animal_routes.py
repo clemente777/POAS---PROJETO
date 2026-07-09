@@ -8,7 +8,6 @@ from backend.schemas.animal_schema import (
     AnimalResponse
 )
 from backend.services.implementations.animal_service_impl import AnimalServiceImpl
-
 from backend.auth.dependencies import get_current_user
 
 router = APIRouter(

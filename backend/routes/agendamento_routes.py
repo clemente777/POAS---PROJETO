@@ -8,8 +8,8 @@ from backend.schemas.agendamento_schema import (
     AgendamentoResponse
 )
 from backend.services.implementations.agendamento_service_impl import AgendamentoServiceImpl
-
 from backend.auth.dependencies import get_current_user
+
 router = APIRouter(prefix="/agendamentos", tags=["Agendamentos"], dependencies=[Depends(get_current_user)])
 
 

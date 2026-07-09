@@ -1,9 +1,7 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
-# =========================
 # CREATE
-# =========================
 class ProdutoCreate(BaseModel):
     nome: str
     descricao: str
@@ -11,9 +9,7 @@ class ProdutoCreate(BaseModel):
     estoque: int
 
 
-# =========================
 # UPDATE
-# =========================
 class ProdutoUpdate(BaseModel):
     nome: str | None = None
     descricao: str | None = None
@@ -21,10 +17,10 @@ class ProdutoUpdate(BaseModel):
     estoque: int | None = None
 
 
-# =========================
 # RESPONSE
-# =========================
 class ProdutoResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     nome: str
     descricao: str

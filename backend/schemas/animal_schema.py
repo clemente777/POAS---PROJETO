@@ -1,9 +1,7 @@
 from pydantic import BaseModel, ConfigDict
 
 
-# =========================
 # CREATE
-# =========================
 class AnimalCreate(BaseModel):
     nome: str
     especie: str
@@ -12,9 +10,8 @@ class AnimalCreate(BaseModel):
     cliente_id: int
 
 
-# =========================
+
 # UPDATE
-# =========================
 class AnimalUpdate(BaseModel):
     nome: str | None = None
     especie: str | None = None
@@ -22,9 +19,7 @@ class AnimalUpdate(BaseModel):
     idade: int | None = None
 
 
-# =========================
 # RESPONSE
-# =========================
 class AnimalResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)

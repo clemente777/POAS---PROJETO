@@ -10,10 +10,7 @@ from backend.schemas.usuario_schema import (
 )
 from backend.services.implementations.usuario_service_impl import UsuarioServiceImpl
 
-router = APIRouter(
-    prefix="/usuarios",
-    tags=["Usuarios"],
-)
+router = APIRouter(prefix="/usuarios", tags=["Usuarios"],)
 
 
 def get_service(session: Session = Depends(get_session)):

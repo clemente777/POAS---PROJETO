@@ -18,9 +18,8 @@ os.environ["DATABASE_URL"] = "sqlite:///./test.db"
 
 
 from main import app
-# =========================
+
 # BANCO DE TESTE
-# =========================
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
 
@@ -44,9 +43,7 @@ senha_context = PasswordHash.recommended()
 
 
 
-# =========================
 # SESSION
-# =========================
 
 @pytest.fixture
 def session():
@@ -66,9 +63,7 @@ def session():
 
 
 
-# =========================
 # CLIENT
-# =========================
 
 @pytest.fixture
 def client(session):
@@ -90,9 +85,8 @@ def client(session):
 
 
 
-# =========================
+
 # LOGIN AUTOMÁTICO
-# =========================
 
 @pytest.fixture
 def auth_headers(session):

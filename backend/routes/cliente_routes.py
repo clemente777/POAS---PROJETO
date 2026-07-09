@@ -8,8 +8,8 @@ from backend.schemas.cliente_schema import (
     ClienteResponse
 )
 from backend.services.implementations.cliente_service_impl import ClienteServiceImpl
-from fastapi import APIRouter, Depends
 from backend.auth.dependencies import get_current_user
+
 router = APIRouter(prefix="/clientes", tags=["Clientes"], dependencies=[Depends(get_current_user)])
 
 

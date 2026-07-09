@@ -12,12 +12,8 @@ from backend.auth.token import (
     decode_token,
 )
 from backend.services.implementations.usuario_service_impl import UsuarioServiceImpl
-from fastapi import APIRouter, Depends
 
-router = APIRouter(
-    prefix="/login",
-    tags=["Login"]
-)
+router = APIRouter(prefix="/login",tags=["Login"])
 
 senha_context = PasswordHash.recommended()
 

@@ -8,8 +8,8 @@ from backend.schemas.produto_schema import (
     ProdutoResponse,
 )
 from backend.services.implementations.produto_service_impl import ProdutoServiceImpl
-from fastapi import APIRouter, Depends
 from backend.auth.dependencies import get_current_user
+
 router = APIRouter(prefix="/produtos", tags=["Produtos"], dependencies=[Depends(get_current_user)])
 
 
