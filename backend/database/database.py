@@ -11,10 +11,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 load_dotenv(BASE_DIR / ".env")
 
 
-# =========================
 # CONFIGURAÇÃO DO BANCO
-# =========================
-
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 
@@ -34,10 +31,7 @@ if not DATABASE_URL:
 
 
 
-# =========================
 # ENGINE
-# =========================
-
 engine = create_engine(
     DATABASE_URL,
     echo=True,
@@ -46,10 +40,7 @@ engine = create_engine(
 
 
 
-# =========================
 # SESSION
-# =========================
-
 SessionLocal = sessionmaker(
     autocommit=False,
     autoflush=False,
@@ -58,18 +49,12 @@ SessionLocal = sessionmaker(
 
 
 
-# =========================
 # BASE
-# =========================
-
 Base = declarative_base()
 
 
 
-# =========================
 # DEPENDENCY
-# =========================
-
 def get_session():
 
     db = SessionLocal()
@@ -82,10 +67,7 @@ def get_session():
 
 
 
-# =========================
 # CREATE TABLES
-# =========================
-
 def create_db_and_tables():
 
     Base.metadata.create_all(bind=engine)

@@ -12,9 +12,7 @@ if TYPE_CHECKING:
     from backend.models.carrinho_model import Carrinhos
 
 
-# =========================================================
 # CLIENTES
-# =========================================================
 class Clientes(Base):
     __tablename__ = "clientes"
 
@@ -34,3 +32,4 @@ class Clientes(Base):
         back_populates="cliente",
         lazy="selectin"
     )
+    
