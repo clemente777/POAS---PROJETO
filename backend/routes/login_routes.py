@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -7,11 +8,10 @@ from sqlalchemy.orm import Session
 
 from backend.database.database import get_session
 from backend.models.usuario_model import Usuarios
-from backend.auth.token import (
-    create_access_token,
-    decode_token,
-)
+from backend.auth.dependencies import get_current_user
+from backend.auth.token import create_access_token, decode_token
 from backend.services.implementations.usuario_service_impl import UsuarioServiceImpl
+from backend.services.implementations.token_service_impl import TokenService
 
 router = APIRouter(prefix="/login",tags=["Login"])
 
@@ -26,6 +26,10 @@ def get_service(session: SessionDep):
     return UsuarioServiceImpl(session)
 
 
+def get_token_service(session: SessionDep):
+    return TokenService(session)
+
+
 @router.post("/")
 def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
@@ -37,37 +41,57 @@ def login(
     if usuario is None:
         raise HTTPException(
             status_code=401,
-            detail="Usuário não encontrado",
+            detail="Usuário não encontrado"
         )
 
-    if not senha_context.verify(form_data.password, usuario.senha_hash):
+    if not senha_context.verify(
+        form_data.password,
+        usuario.senha_hash
+    ):
         raise HTTPException(
             status_code=401,
-            detail="Senha inválida",
+            detail="Senha inválida"
         )
 
     token = create_access_token(
-        data={"sub": usuario.email}
+        data={
+            "sub": usuario.email
+        }
     )
 
     return {
         "access_token": token,
-        "token_type": "bearer",
+        "token_type": "bearer"
     }
 
 
-def get_usuario(
+@router.post("/logout")
+def logout(
     token: Annotated[str, Depends(oauth2_scheme)],
-    service: UsuarioServiceImpl = Depends(get_service),
+    token_service: TokenService = Depends(get_token_service),
 ):
 
     payload = decode_token(token)
 
-    if payload is None:
-        raise HTTPException(
-            status_code=401,
-            detail="Token inválido",
-        )
+    expira_em = datetime.fromtimestamp(
+        payload["exp"],
+        tz=timezone.utc
+    )
+
+    token_service.revogar(
+        token,
+        expira_em
+    )
+
+    return {
+        "message": "Logout realizado com sucesso."
+    }
+
+
+def get_usuario(
+    payload: Annotated[dict, Depends(get_current_user)],
+    service: UsuarioServiceImpl = Depends(get_service),
+):
 
     email = payload.get("sub")
 
@@ -88,4 +112,7 @@ def get_usuario(
     return usuario
 
 
-UsuarioLogado = Annotated[Usuarios, Depends(get_usuario)]
+UsuarioLogado = Annotated[
+    Usuarios,
+    Depends(get_usuario)
+]

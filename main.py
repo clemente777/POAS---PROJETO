@@ -10,7 +10,7 @@ from backend.routes import (
     atendimento_routes,
     produto_routes,
     carrinho_routes,
-    item_carrinho_routes
+    item_carrinho_routes,
 )
 
 from contextlib import asynccontextmanager
