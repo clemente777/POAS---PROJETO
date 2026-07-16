@@ -25,7 +25,8 @@ class Clientes(Base):
 
     animais: Mapped[list["Animais"]] = relationship(
         back_populates="cliente",
-        lazy="selectin"
+        lazy="selectin",
+        cascade="save-update, merge"
     )
 
     carrinhos: Mapped[list["Carrinhos"]] = relationship(

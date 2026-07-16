@@ -2,77 +2,73 @@ def criar_cliente(client, auth_headers):
 
     response = client.post(
         "/clientes/",
-        headers=auth_headers,
         json={
-            "nome": "Cliente Item Carrinho",
-            "cpf": "11111111111",
-            "telefone": "999999999",
-            "email": "itemcarrinho@email.com",
-            "endereco": "Rua Teste"
-        }
+            "nome": "Maria Silva",
+            "cpf": "11144477735",
+            "telefone": "84999999999",
+            "email": "maria@email.com",
+            "endereco": "Rua B"
+        },
+        headers=auth_headers
     )
 
-    print("CLIENTE:", response.status_code)
-    print("CLIENTE JSON:", response.json())
+    assert response.status_code in [200, 201]
 
-    assert response.status_code in [200, 201], response.json()
+    return response.json()
 
-    return response.json()["id"]
 
 
 def criar_produto(client, auth_headers):
 
     response = client.post(
         "/produtos/",
-        headers=auth_headers,
         json={
-            "nome": "Produto Item",
-            "descricao": "Teste",
-            "preco": 30,
-            "estoque": 10
-        }
+            "nome": "Ração Premium",
+            "descricao": "Ração para cachorro",
+            "preco": 50,
+            "estoque": 20
+        },
+        headers=auth_headers
     )
 
-    print("PRODUTO:", response.status_code)
-    print("PRODUTO JSON:", response.json())
+    assert response.status_code in [200, 201]
 
-    assert response.status_code in [200, 201], response.json()
-
-    return response.json()["id"]
+    return response.json()
 
 
 
 def criar_carrinho(client, auth_headers):
 
-    cliente_id = criar_cliente(
+    cliente = criar_cliente(
         client,
         auth_headers
     )
+
 
     response = client.post(
         "/carrinhos/",
-        headers=auth_headers,
         json={
-            "cliente_id": cliente_id
-        }
+            "cliente_id": cliente["id"]
+        },
+        headers=auth_headers
     )
 
-    print("CARRINHO STATUS:", response.status_code)
-    print("CARRINHO JSON:", response.json())
 
-    assert response.status_code in [200, 201]
+    assert response.status_code in [200,201]
 
-    return response.json()["id"]
+    return response.json()
 
 
-def criar_item_carrinho(client, auth_headers):
 
-    produto_id = criar_produto(
+def criar_item(client, auth_headers):
+
+    carrinho = criar_carrinho(
         client,
         auth_headers
     )
 
-    carrinho_id = criar_carrinho(
+
+    produto = criar_produto(
         client,
         auth_headers
     )
@@ -80,42 +76,51 @@ def criar_item_carrinho(client, auth_headers):
 
     response = client.post(
         "/itens-carrinho/",
-        headers=auth_headers,
         json={
-            "produto_id": produto_id,
-            "carrinho_id": carrinho_id,
+            "carrinho_id": carrinho["id"],
+            "produto_id": produto["id"],
             "quantidade": 2
-        }
+        },
+        headers=auth_headers
     )
 
-    print("ITEM STATUS:", response.status_code)
-    print("ITEM JSON:", response.json())
 
-    assert response.status_code in [200, 201]
+    assert response.status_code in [200,201]
 
-    return response.json()["id"]
 
+    return response.json()
+
+
+
+# =====================================
+# CRIAR ITEM
+# =====================================
 
 
 def test_criar_item(client, auth_headers):
 
-    item_id = criar_item_carrinho(
+    item = criar_item(
         client,
         auth_headers
     )
 
 
-    response = client.get(
-        f"/itens-carrinho/{item_id}",
-        headers=auth_headers
-    )
+    assert item["quantidade"] == 2
 
 
-    assert response.status_code == 200
 
+# =====================================
+# LISTAR
+# =====================================
 
 
 def test_listar_itens(client, auth_headers):
+
+    criar_item(
+        client,
+        auth_headers
+    )
+
 
     response = client.get(
         "/itens-carrinho/",
@@ -125,44 +130,54 @@ def test_listar_itens(client, auth_headers):
 
     assert response.status_code == 200
 
-    assert isinstance(response.json(), list)
+    assert len(response.json()) == 1
 
+
+
+# =====================================
+# BUSCAR
+# =====================================
 
 
 def test_buscar_item(client, auth_headers):
 
-    item_id = criar_item_carrinho(
+    item = criar_item(
         client,
         auth_headers
     )
 
 
     response = client.get(
-        f"/itens-carrinho/{item_id}",
+        f"/itens-carrinho/{item['id']}",
         headers=auth_headers
     )
 
 
     assert response.status_code == 200
 
-    assert response.json()["id"] == item_id
+    assert response.json()["id"] == item["id"]
 
+
+
+# =====================================
+# ATUALIZAR
+# =====================================
 
 
 def test_atualizar_item(client, auth_headers):
 
-    item_id = criar_item_carrinho(
+    item = criar_item(
         client,
         auth_headers
     )
 
 
     response = client.put(
-        f"/itens-carrinho/{item_id}",
-        headers=auth_headers,
+        f"/itens-carrinho/{item['id']}",
         json={
-            "quantidade": 5
-        }
+            "quantidade":5
+        },
+        headers=auth_headers
     )
 
 
@@ -172,18 +187,177 @@ def test_atualizar_item(client, auth_headers):
 
 
 
+# =====================================
+# DELETAR
+# =====================================
+
+
 def test_deletar_item(client, auth_headers):
 
-    item_id = criar_item_carrinho(
+    item = criar_item(
         client,
         auth_headers
     )
 
 
     response = client.delete(
-        f"/itens-carrinho/{item_id}",
+        f"/itens-carrinho/{item['id']}",
         headers=auth_headers
     )
 
 
-    assert response.status_code in [200, 204]
+    assert response.status_code in [
+        200,
+        204
+    ]
+
+
+
+# =====================================
+# REGRAS DE NEGÓCIO
+# =====================================
+
+
+
+def test_item_produto_inexistente(
+    client,
+    auth_headers
+):
+
+    carrinho = criar_carrinho(
+        client,
+        auth_headers
+    )
+
+
+    response = client.post(
+        "/itens-carrinho/",
+        json={
+            "carrinho_id":carrinho["id"],
+            "produto_id":9999,
+            "quantidade":1
+        },
+        headers=auth_headers
+    )
+
+
+    assert response.status_code == 404
+
+
+
+def test_item_carrinho_inexistente(
+    client,
+    auth_headers
+):
+
+    produto = criar_produto(
+        client,
+        auth_headers
+    )
+
+
+    response = client.post(
+        "/itens-carrinho/",
+        json={
+            "carrinho_id":9999,
+            "produto_id":produto["id"],
+            "quantidade":1
+        },
+        headers=auth_headers
+    )
+
+
+    assert response.status_code == 404
+
+
+
+def test_quantidade_zero(
+    client,
+    auth_headers
+):
+
+    carrinho = criar_carrinho(
+        client,
+        auth_headers
+    )
+
+    produto = criar_produto(
+        client,
+        auth_headers
+    )
+
+
+    response = client.post(
+        "/itens-carrinho/",
+        json={
+            "carrinho_id":carrinho["id"],
+            "produto_id":produto["id"],
+            "quantidade":0
+        },
+        headers=auth_headers
+    )
+
+
+    assert response.status_code == 400
+
+
+
+def test_quantidade_maior_que_estoque(
+    client,
+    auth_headers
+):
+
+    carrinho = criar_carrinho(
+        client,
+        auth_headers
+    )
+
+    produto = criar_produto(
+        client,
+        auth_headers
+    )
+
+
+    response = client.post(
+        "/itens-carrinho/",
+        json={
+            "carrinho_id":carrinho["id"],
+            "produto_id":produto["id"],
+            "quantidade":1000
+        },
+        headers=auth_headers
+    )
+
+
+    assert response.status_code == 400
+
+
+
+def test_quantidade_negativa(
+    client,
+    auth_headers
+):
+
+    carrinho = criar_carrinho(
+        client,
+        auth_headers
+    )
+
+    produto = criar_produto(
+        client,
+        auth_headers
+    )
+
+
+    response = client.post(
+        "/itens-carrinho/",
+        json={
+            "carrinho_id":carrinho["id"],
+            "produto_id":produto["id"],
+            "quantidade":-1
+        },
+        headers=auth_headers
+    )
+
+
+    assert response.status_code == 400

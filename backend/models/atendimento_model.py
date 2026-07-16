@@ -38,5 +38,8 @@ class Atendimentos(Base):
         nullable=True
     )
 
-    animal: Mapped["Animais"] = relationship(back_populates="atendimentos")
+    animal: Mapped["Animais"] = relationship(
+    "Animais",
+    back_populates="atendimentos"
+)
     usuario: Mapped["Usuarios"] = relationship(back_populates="atendimentos")

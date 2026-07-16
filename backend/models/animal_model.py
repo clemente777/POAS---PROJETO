@@ -22,11 +22,30 @@ class Animais(Base):
     raca: Mapped[str] = mapped_column(String(100), nullable=False)
     idade: Mapped[int] = mapped_column(Integer, nullable=False)
 
+
+
+
     cliente_id: Mapped[int] = mapped_column(
         ForeignKey("clientes.id", ondelete="CASCADE"),
         nullable=False
     )
 
-    cliente: Mapped["Clientes"] = relationship(back_populates="animais")
-    agendamentos: Mapped[list["Agendamentos"]] = relationship(back_populates="animal")
-    atendimentos: Mapped[list["Atendimentos"]] = relationship(back_populates="animal")
+
+    cliente: Mapped["Clientes"] = relationship(
+        "Clientes",
+        back_populates="animais"
+    )
+
+
+    agendamentos: Mapped[list["Agendamentos"]] = relationship(
+        "Agendamentos",
+        back_populates="animal",
+        lazy="selectin"
+    )
+
+
+    atendimentos: Mapped[list["Atendimentos"]] = relationship(
+        "Atendimentos",
+        back_populates="animal",
+        lazy="selectin"
+    )

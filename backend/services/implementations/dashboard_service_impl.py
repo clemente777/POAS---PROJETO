@@ -16,38 +16,51 @@ class DashboardServiceImpl:
     def __init__(self, session: Session):
         self.session = session
 
+
     def dashboard(self):
+        """
+        Retorna os principais dados
+        do sistema para o dashboard.
+        """
 
         return {
             "usuarios": self.session.scalar(
-                select(func.count()).select_from(Usuarios)
+                select(func.count())
+                .select_from(Usuarios)
             ),
 
             "clientes": self.session.scalar(
-                select(func.count()).select_from(Clientes)
+                select(func.count())
+                .select_from(Clientes)
             ),
 
             "animais": self.session.scalar(
-                select(func.count()).select_from(Animais)
+                select(func.count())
+                .select_from(Animais)
             ),
 
             "agendamentos": self.session.scalar(
-                select(func.count()).select_from(Agendamentos)
+                select(func.count())
+                .select_from(Agendamentos)
             ),
 
             "atendimentos": self.session.scalar(
-                select(func.count()).select_from(Atendimentos)
+                select(func.count())
+                .select_from(Atendimentos)
             ),
 
             "produtos": self.session.scalar(
-                select(func.count()).select_from(Produtos)
+                select(func.count())
+                .select_from(Produtos)
             ),
 
             "carrinhos": self.session.scalar(
-                select(func.count()).select_from(Carrinhos)
+                select(func.count())
+                .select_from(Carrinhos)
             ),
 
             "itens_carrinho": self.session.scalar(
-                select(func.count()).select_from(ItensCarrinho)
-            ),
+                select(func.count())
+                .select_from(ItensCarrinho)
+            )
         }

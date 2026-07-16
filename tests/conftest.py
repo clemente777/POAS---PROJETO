@@ -1,4 +1,5 @@
 import pytest
+import os
 
 from fastapi.testclient import TestClient
 
@@ -7,21 +8,24 @@ from sqlalchemy.orm import sessionmaker
 
 from pwdlib import PasswordHash
 
+
 from backend.database.database import Base, get_session
 from backend.models.usuario_model import Usuarios
 from backend.auth.token import create_access_token
 
-import os
+from main import app
+
+
+
+# ==========================================
+# BANCO DE TESTE SQLITE
+# ==========================================
 
 os.environ["DATABASE_URL"] = "sqlite:///./test.db"
 
 
-
-from main import app
-
-# BANCO DE TESTE
-
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
+
 
 
 engine = create_engine(
@@ -32,6 +36,7 @@ engine = create_engine(
 )
 
 
+
 TestingSessionLocal = sessionmaker(
     autocommit=False,
     autoflush=False,
@@ -39,21 +44,30 @@ TestingSessionLocal = sessionmaker(
 )
 
 
+
 senha_context = PasswordHash.recommended()
 
 
 
+# ==========================================
 # SESSION
+# ==========================================
 
 @pytest.fixture
 def session():
 
-    Base.metadata.drop_all(bind=engine)
+    Base.metadata.drop_all(
+        bind=engine
+    )
 
-    Base.metadata.create_all(bind=engine)
+
+    Base.metadata.create_all(
+        bind=engine
+    )
 
 
     db = TestingSessionLocal()
+
 
     try:
         yield db
@@ -63,17 +77,24 @@ def session():
 
 
 
-# CLIENT
+# ==========================================
+# CLIENT FASTAPI
+# ==========================================
 
 @pytest.fixture
 def client(session):
+
 
     def override_get_session():
 
         yield session
 
 
-    app.dependency_overrides[get_session] = override_get_session
+
+    app.dependency_overrides[
+        get_session
+    ] = override_get_session
+
 
 
     with TestClient(app) as client:
@@ -81,20 +102,25 @@ def client(session):
         yield client
 
 
+
     app.dependency_overrides.clear()
 
 
 
-
-# LOGIN AUTOMÁTICO
+# ==========================================
+# USUÁRIO LOGADO
+# ==========================================
 
 @pytest.fixture
 def auth_headers(session):
 
+
     usuario = Usuarios(
         nome="Administrador",
         email="admin@admin.com",
-        senha_hash=senha_context.hash("123456")
+        senha_hash=senha_context.hash(
+            "123456"
+        )
     )
 
 
@@ -103,6 +129,7 @@ def auth_headers(session):
     session.commit()
 
     session.refresh(usuario)
+
 
 
     token = create_access_token(

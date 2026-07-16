@@ -1,26 +1,66 @@
+def usuario_json():
+
+    return {
+
+        "nome":"Carlos",
+
+        "email":"carlos@email.com",
+
+        "senha":"123456"
+
+    }
+
+
+
 def test_criar_usuario(client):
+
 
     response = client.post(
         "/usuarios/",
-        json={
-            "nome": "João",
-            "email": "joao@email.com",
-            "senha": "123456"
-        }
+        json=usuario_json()
     )
 
 
     assert response.status_code == 201
 
-    data = response.json()
 
-    assert data["nome"] == "João"
-    assert data["email"] == "joao@email.com"
+    dados = response.json()
+
+
+    assert dados["nome"] == "Carlos"
+
+    assert dados["email"] == "carlos@email.com"
+
+
+
+def test_criar_usuario_email_duplicado(client):
+
+
+    client.post(
+        "/usuarios/",
+        json=usuario_json()
+    )
+
+
+    response = client.post(
+        "/usuarios/",
+        json=usuario_json()
+    )
+
+
+    assert response.status_code in [400,409]
 
 
 
 def test_listar_usuarios(client, auth_headers):
 
+
+    client.post(
+        "/usuarios/",
+        json=usuario_json()
+    )
+
+
     response = client.get(
         "/usuarios/",
         headers=auth_headers
@@ -29,90 +69,86 @@ def test_listar_usuarios(client, auth_headers):
 
     assert response.status_code == 200
 
-    assert isinstance(
-        response.json(),
-        list
-    )
+
+    assert len(
+        response.json()
+    ) >= 1
+
 
 
 
 def test_buscar_usuario(client, auth_headers):
 
+
     criar = client.post(
         "/usuarios/",
-        headers=auth_headers,
-        json={
-            "nome":"Maria",
-            "email":"maria@email.com",
-            "senha":"123456"
-        }
+        json=usuario_json()
     )
 
 
-    usuario_id = criar.json()["id"]
+    id = criar.json()["id"]
+
 
 
     response = client.get(
-        f"/usuarios/{usuario_id}",
+        f"/usuarios/{id}",
         headers=auth_headers
     )
 
 
     assert response.status_code == 200
 
-    assert response.json()["id"] == usuario_id
+
+    assert response.json()["id"] == id
+
 
 
 
 def test_atualizar_usuario(client, auth_headers):
 
+
     criar = client.post(
         "/usuarios/",
-        headers=auth_headers,
-        json={
-            "nome":"Carlos",
-            "email":"carlos@email.com",
-            "senha":"123456"
-        }
+        json=usuario_json()
     )
 
 
-    usuario_id = criar.json()["id"]
+    id = criar.json()["id"]
+
 
 
     response = client.put(
-        f"/usuarios/{usuario_id}",
+        f"/usuarios/{id}",
         headers=auth_headers,
         json={
-            "nome":"Carlos Atualizado"
+            "nome":"Novo Nome"
         }
     )
 
 
     assert response.status_code == 200
 
-    assert response.json()["nome"] == "Carlos Atualizado"
+
+    assert response.json()["nome"] == "Novo Nome"
+
 
 
 
 def test_deletar_usuario(client, auth_headers):
 
-    criar = client.post(
+
+    usuario = client.get(
         "/usuarios/",
-        headers=auth_headers,
-        json={
-            "nome":"Excluir",
-            "email":"excluir@email.com",
-            "senha":"123456"
-        }
+        headers=auth_headers
     )
 
 
-    usuario_id = criar.json()["id"]
+    id = usuario.json()[0]["id"]
+
 
 
     response = client.delete(
-        f"/usuarios/{usuario_id}",
+        f"/usuarios/{id}",
         headers=auth_headers
     )
 

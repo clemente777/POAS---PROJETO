@@ -9,30 +9,54 @@ from backend.schemas.usuario_schema import (
     UsuarioResponse,
 )
 from backend.services.implementations.usuario_service_impl import UsuarioServiceImpl
+from backend.models.usuario_model import Usuarios
 
-router = APIRouter(prefix="/usuarios", tags=["Usuarios"],)
+from backend.auth.dependencies import UsuarioLogado
+
+router = APIRouter(
+    prefix="/usuarios",
+    tags=["Usuarios"]
+)
 
 
-def get_service(session: Session = Depends(get_session)):
+
+def get_service(
+    session: Session = Depends(get_session)
+):
     return UsuarioServiceImpl(session)
 
 
-# Cadastro de usuário NÃO precisa de autenticação
-@router.post("/", response_model=UsuarioResponse, status_code=201)
+
+# ==================================================
+# CRIAR USUÁRIO
+# Não precisa estar logado
+# ==================================================
+
+@router.post(
+    "/",
+    response_model=UsuarioResponse,
+    status_code=201
+)
 def criar(
     usuario: UsuarioCreate,
     service: UsuarioServiceImpl = Depends(get_service),
 ):
+
     return service.criar(usuario)
 
 
-# Listar usuários precisa de autenticação E NA ROTA TEM #PAGINAÇÃO
+
+
+
+# ==================================================
+# LISTAR USUÁRIOS
+# Precisa estar autenticado
+# ==================================================
+
 @router.get(
     "/",
-    response_model=list[UsuarioResponse],
-    dependencies=[Depends(get_current_user)],
+    response_model=list[UsuarioResponse]
 )
-
 def listar(
     skip: int = 0,
     limit: int = 10,
@@ -40,8 +64,12 @@ def listar(
     email: str | None = None,
     sort_by: str = "id",
     order: str = "asc",
+
+    usuario_logado: Usuarios = Depends(get_current_user),
+
     service: UsuarioServiceImpl = Depends(get_service),
 ):
+
     return service.listar(
         skip=skip,
         limit=limit,
@@ -52,65 +80,140 @@ def listar(
     )
 
 
-# Buscar usuário precisa de autenticação
+
+
+
+# ==================================================
+# BUSCAR USUÁRIO
+# ==================================================
+
 @router.get(
     "/{id}",
-    response_model=UsuarioResponse,
-    dependencies=[Depends(get_current_user)],
+    response_model=UsuarioResponse
 )
 def buscar(
-    id: int,
+    id:int,
+
+    usuario_logado: Usuarios = Depends(get_current_user),
+
     service: UsuarioServiceImpl = Depends(get_service),
 ):
+
     usuario = service.buscar_por_id(id)
 
+
     if not usuario:
+
         raise HTTPException(
             status_code=404,
-            detail="Usuário não encontrado",
+            detail="Usuário não encontrado."
         )
+
 
     return usuario
 
 
-# Atualizar usuário precisa de autenticação
+
+
+
+# ==================================================
+# ATUALIZAR USUÁRIO
+# ==================================================
+
 @router.put(
     "/{id}",
-    response_model=UsuarioResponse,
-    dependencies=[Depends(get_current_user)],
+    response_model=UsuarioResponse
 )
 def atualizar(
-    id: int,
-    usuario: UsuarioUpdate,
+    id:int,
+    usuario:UsuarioUpdate,
+
+    usuario_logado: Usuarios = Depends(get_current_user),
+
     service: UsuarioServiceImpl = Depends(get_service),
 ):
-    usuario_atualizado = service.atualizar(id, usuario)
+
+    usuario_atualizado = service.atualizar(
+        id,
+        usuario
+    )
+
 
     if not usuario_atualizado:
+
         raise HTTPException(
             status_code=404,
-            detail="Usuário não encontrado",
+            detail="Usuário não encontrado."
         )
+
 
     return usuario_atualizado
 
 
-# Deletar usuário precisa de autenticação
+
+
+
+# ==================================================
+# DELETAR USUÁRIO
+# ==================================================
+
 @router.delete(
     "/{id}",
-    status_code=204,
-    dependencies=[Depends(get_current_user)],
+    status_code=204
 )
 def deletar(
-    id: int,
+    id:int,
+
+    usuario_logado: Usuarios = Depends(get_current_user),
+
     service: UsuarioServiceImpl = Depends(get_service),
 ):
-    removido = service.deletar(id)
 
-    if not removido:
+    """
+    Regra:
+
+    Usuário só pode excluir
+    a própria conta.
+
+
+    Exemplo:
+
+    Token pertence ao usuário ID 5
+
+
+    Tentativa:
+
+    DELETE /usuarios/8
+
+
+    Resultado:
+
+    Bloqueado.
+    """
+
+
+    if usuario_logado.id != id:
+
         raise HTTPException(
-            status_code=404,
-            detail="Usuário não encontrado",
+            status_code=403,
+            detail="Você só pode excluir sua própria conta."
         )
 
-    return Response(status_code=204)
+
+
+    removido = service.deletar(id)
+
+
+
+    if not removido:
+
+        raise HTTPException(
+            status_code=404,
+            detail="Usuário não encontrado."
+        )
+
+
+
+    return Response(
+        status_code=204
+    )

@@ -11,7 +11,8 @@ from backend.routes import (
     produto_routes,
     carrinho_routes,
     item_carrinho_routes,
-    dashboard_routes
+    dashboard_routes,
+    
 )
 
 from contextlib import asynccontextmanager

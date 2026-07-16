@@ -1,122 +1,176 @@
-def test_criar_produto(client, auth_headers):
+def criar_produto(client, auth_headers):
 
     response = client.post(
         "/produtos/",
-        headers=auth_headers,
         json={
             "nome": "Ração Premium",
             "descricao": "Ração para cães adultos",
-            "preco": 80.00,
+            "preco": 120.50,
             "estoque": 10
-        }
+        },
+        headers=auth_headers
     )
 
-    assert response.status_code in [200, 201]
+    assert response.status_code in [200,201]
 
-    data = response.json()
+    return response.json()
 
-    assert data["nome"] == "Ração Premium"
+
+
+def test_criar_produto(client, auth_headers):
+
+    produto = criar_produto(
+        client,
+        auth_headers
+    )
+
+    assert produto["nome"] == "Ração Premium"
+    assert produto["estoque"] == 10
 
 
 
 def test_listar_produtos(client, auth_headers):
 
+    criar_produto(
+        client,
+        auth_headers
+    )
+
+
     response = client.get(
         "/produtos/",
         headers=auth_headers
     )
 
+
     assert response.status_code == 200
 
-    assert isinstance(
-        response.json(),
-        list
-    )
+    dados = response.json()
+
+    assert len(dados) == 1
 
 
 
 def test_buscar_produto(client, auth_headers):
 
-    criar = client.post(
-        "/produtos/",
-        headers=auth_headers,
-        json={
-            "nome":"Shampoo Pet",
-            "descricao":"Produto para banho",
-            "preco":25,
-            "estoque":5
-        }
+    produto = criar_produto(
+        client,
+        auth_headers
     )
 
 
-    produto_id = criar.json()["id"]
-
-
     response = client.get(
-        f"/produtos/{produto_id}",
+        f"/produtos/{produto['id']}",
         headers=auth_headers
     )
 
 
     assert response.status_code == 200
 
-    assert response.json()["id"] == produto_id
+    assert response.json()["id"] == produto["id"]
 
 
 
 def test_atualizar_produto(client, auth_headers):
 
-    criar = client.post(
-        "/produtos/",
-        headers=auth_headers,
-        json={
-            "nome":"Produto Antigo",
-            "descricao":"Teste",
-            "preco":20,
-            "estoque":2
-        }
+    produto = criar_produto(
+        client,
+        auth_headers
     )
 
 
-    produto_id = criar.json()["id"]
-
-
     response = client.put(
-        f"/produtos/{produto_id}",
-        headers=auth_headers,
+        f"/produtos/{produto['id']}",
         json={
-            "nome":"Produto Novo"
-        }
+            "nome":"Ração Atualizada"
+        },
+        headers=auth_headers
     )
 
 
     assert response.status_code == 200
 
-    assert response.json()["nome"] == "Produto Novo"
+    assert (
+        response.json()["nome"]
+        ==
+        "Ração Atualizada"
+    )
 
 
 
 def test_deletar_produto(client, auth_headers):
 
-    criar = client.post(
-        "/produtos/",
-        headers=auth_headers,
-        json={
-            "nome":"Excluir Produto",
-            "descricao":"Teste",
-            "preco":10,
-            "estoque":1
-        }
+    produto = criar_produto(
+        client,
+        auth_headers
     )
 
 
-    produto_id = criar.json()["id"]
-
-
     response = client.delete(
-        f"/produtos/{produto_id}",
+        f"/produtos/{produto['id']}",
         headers=auth_headers
     )
 
 
-    assert response.status_code in [200,204]
+    assert response.status_code in [
+        200,
+        204
+    ]
+
+
+
+# ==========================
+# REGRAS DE NEGÓCIO
+# ==========================
+
+
+def test_produto_sem_nome(client, auth_headers):
+
+    response = client.post(
+        "/produtos/",
+        json={
+            "descricao": "Produto teste",
+            "preco": 10,
+            "estoque": 5
+        },
+        headers=auth_headers
+    )
+
+
+    assert response.status_code == 422
+
+
+
+def test_produto_estoque_negativo(client, auth_headers):
+
+    response = client.post(
+        "/produtos/",
+        json={
+            "nome":"Produto",
+            "descricao":"Teste",
+            "preco":10,
+            "estoque":-1
+        },
+        headers=auth_headers
+    )
+
+
+    assert response.status_code == 400
+
+
+
+def test_produto_preco_negativo(client, auth_headers):
+
+    response = client.post(
+        "/produtos/",
+        json={
+            "nome":"Produto",
+            "descricao":"Teste",
+            "preco":-10,
+            "estoque":5
+        },
+        headers=auth_headers
+    )
+
+
+    assert response.status_code == 400

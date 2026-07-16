@@ -1,101 +1,166 @@
-def criar_animal_para_teste(client, auth_headers):
-
-    cliente = client.post(
-        "/clientes/",
-        headers=auth_headers,
-        json={
-            "nome": "Cliente Atendimento",
-            "cpf": "22222222222",
-            "telefone": "999999",
-            "email": "atendimento@email.com",
-            "endereco": "Rua Teste"
-        }
-    )
-
-    print("CLIENTE:", cliente.status_code)
-    print("CLIENTE JSON:", cliente.json())
-
-    assert cliente.status_code in [200, 201], cliente.json()
-
-    cliente_id = cliente.json()["id"]
+# tests/test_atendimento.py
 
 
-    animal = client.post(
-        "/animais/",
-        headers=auth_headers,
-        json={
-            "nome": "Rex Atendimento",
-            "especie": "Cachorro",
-            "raca": "Golden",
-            "idade": 4,
-            "cliente_id": cliente_id
-        }
-    )
+# =====================================================
+# DADOS
+# =====================================================
 
-    print("ANIMAL:", animal.status_code)
-    print("ANIMAL JSON:", animal.json())
 
-    assert animal.status_code in [200, 201], animal.json()
+CLIENTE = {
+    "nome": "João Silva",
+    "cpf": "52998224725",
+    "telefone": "84999999999",
+    "email": "joao@email.com",
+    "endereco": "Rua Principal"
+}
 
-    return animal.json()["id"]
+
+ANIMAL = {
+    "nome": "Rex",
+    "especie": "Cachorro",
+    "raca": "Labrador",
+    "idade": 5
+}
 
 
 
-def criar_atendimento(client, auth_headers):
+ATENDIMENTO = {
+    "diagnostico": "Gripe canina",
+    "observacoes": "Animal medicado"
+}
 
-    animal_id = criar_animal_para_teste(
-        client,
-        auth_headers
-    )
 
+
+
+
+# =====================================================
+# AUXILIARES
+# =====================================================
+
+
+def criar_cliente(client, auth_headers):
 
     response = client.post(
-        "/atendimentos/",
-        headers=auth_headers,
-        json={
-            "animal_id": animal_id,
-            "diagnostico": "Animal saudável",
-            "observacoes": "Consulta de rotina",
-            "usuario_id": 1
-        }
+        "/clientes/",
+        json=CLIENTE,
+        headers=auth_headers
     )
 
 
-    assert response.status_code in [200, 201]
+    assert response.status_code in [200,201]
+
 
     return response.json()["id"]
 
 
 
-def test_criar_atendimento(client, auth_headers):
 
-    animal_id = criar_animal_para_teste(
+
+def criar_animal(client, auth_headers):
+
+
+    cliente_id = criar_cliente(
         client,
         auth_headers
     )
+
+
+    dados = ANIMAL.copy()
+
+    dados["cliente_id"] = cliente_id
+
+
+
+    response = client.post(
+        "/animais/",
+        json=dados,
+        headers=auth_headers
+    )
+
+
+    assert response.status_code in [200,201]
+
+
+    return response.json()["id"]
+
+
+
+
+
+
+def criar_atendimento(client, auth_headers):
+
+
+    animal_id = criar_animal(
+        client,
+        auth_headers
+    )
+
+
+    dados = ATENDIMENTO.copy()
+
+
+    dados["animal_id"] = animal_id
+
+
+    dados["usuario_id"] = 1
+
 
 
     response = client.post(
         "/atendimentos/",
-        headers=auth_headers,
-        json={
-            "animal_id": animal_id,
-            "diagnostico": "Gripe canina",
-            "observacoes": "Animal saudável",
-            "usuario_id": 1
-        }
+        json=dados,
+        headers=auth_headers
     )
 
 
-    assert response.status_code in [200, 201]
+    assert response.status_code in [200,201]
 
-    data = response.json()
 
-    assert data["animal_id"] == animal_id
+    return response.json()
 
+
+
+
+
+# =====================================================
+# CRIAR
+# =====================================================
+
+
+def test_criar_atendimento(client, auth_headers):
+
+
+    atendimento = criar_atendimento(
+        client,
+        auth_headers
+    )
+
+
+    assert (
+        atendimento["diagnostico"]
+        ==
+        "Gripe canina"
+    )
+
+
+
+
+
+# =====================================================
+# LISTAR
+# =====================================================
 
 
 def test_listar_atendimentos(client, auth_headers):
+
+
+    criar_atendimento(
+        client,
+        auth_headers
+    )
+
+
 
     response = client.get(
         "/atendimentos/",
@@ -105,16 +170,29 @@ def test_listar_atendimentos(client, auth_headers):
 
     assert response.status_code == 200
 
-    assert isinstance(response.json(), list)
 
+    assert len(response.json()) == 1
+
+
+
+
+
+# =====================================================
+# BUSCAR
+# =====================================================
 
 
 def test_buscar_atendimento(client, auth_headers):
 
-    atendimento_id = criar_atendimento(
+
+    atendimento = criar_atendimento(
         client,
         auth_headers
     )
+
+
+    atendimento_id = atendimento["id"]
+
 
 
     response = client.get(
@@ -125,43 +203,116 @@ def test_buscar_atendimento(client, auth_headers):
 
     assert response.status_code == 200
 
-    assert response.json()["id"] == atendimento_id
 
+    assert (
+        response.json()["id"]
+        ==
+        atendimento_id
+    )
+
+
+
+
+
+# =====================================================
+# ATUALIZAR
+# =====================================================
 
 
 def test_atualizar_atendimento(client, auth_headers):
 
-    atendimento_id = criar_atendimento(
+
+    atendimento = criar_atendimento(
         client,
         auth_headers
     )
 
 
+    atendimento_id = atendimento["id"]
+
+
+
     response = client.put(
         f"/atendimentos/{atendimento_id}",
-        headers=auth_headers,
         json={
-            "diagnostico": "Diagnóstico atualizado",
-            "observacoes": "Nova observação"
-        }
+            "diagnostico":
+                "Diagnostico atualizado"
+        },
+        headers=auth_headers
     )
 
 
     assert response.status_code == 200
 
-    data = response.json()
 
-    assert data["diagnostico"] == "Diagnóstico atualizado"
-
-
-
-def test_deletar_atendimento(client, auth_headers):
-
-    atendimento_id = criar_atendimento(
-        client,
-        auth_headers
+    assert (
+        response.json()["diagnostico"]
+        ==
+        "Diagnostico atualizado"
     )
 
+
+
+
+
+# =====================================================
+# DELETAR
+# =====================================================
+
+def test_deletar_atendimento_bloqueado(
+    client,
+    auth_headers
+):
+
+    # criar cliente
+    cliente = client.post(
+        "/clientes/",
+        json={
+            "nome": "João Silva",
+            "cpf": "52998224725",
+            "telefone": "84999999999",
+            "email": "joao@email.com",
+            "endereco": "Rua A"
+        },
+        headers=auth_headers
+    )
+
+    cliente_id = cliente.json()["id"]
+
+
+    # criar animal
+    animal = client.post(
+        "/animais/",
+        json={
+            "nome": "Rex",
+            "especie": "Cachorro",
+            "raca": "Pastor Alemão",
+            "idade": 5,
+            "cliente_id": cliente_id
+        },
+        headers=auth_headers
+    )
+
+    animal_id = animal.json()["id"]
+
+
+    # criar atendimento
+    atendimento = client.post(
+        "/atendimentos/",
+        json={
+            "diagnostico": "Infecção",
+            "observacoes": "Tratamento iniciado",
+            "animal_id": animal_id,
+            "usuario_id": 1
+        },
+        headers=auth_headers
+    )
+
+
+    atendimento_id = atendimento.json()["id"]
+
+
+    # tentar deletar
 
     response = client.delete(
         f"/atendimentos/{atendimento_id}",
@@ -169,4 +320,93 @@ def test_deletar_atendimento(client, auth_headers):
     )
 
 
-    assert response.status_code in [200, 204]
+    assert response.status_code == 409
+
+
+    assert response.json()["detail"] == (
+        "Atendimentos não podem ser excluídos. "
+        "O histórico deve ser preservado."
+    )
+
+
+
+# =====================================================
+# REGRA - ANIMAL INEXISTENTE
+# =====================================================
+
+
+def test_atendimento_animal_inexistente(client, auth_headers):
+
+
+    dados = {
+
+        "diagnostico":
+            "Teste",
+
+        "observacoes":
+            "Teste",
+
+        "animal_id":
+            999999,
+
+        "usuario_id":
+            1
+    }
+
+
+
+    response = client.post(
+        "/atendimentos/",
+        json=dados,
+        headers=auth_headers
+    )
+
+
+    assert response.status_code in [
+        400,
+        404
+    ]
+
+
+
+
+
+# =====================================================
+# REGRA - DIAGNOSTICO VAZIO
+# =====================================================
+
+
+def test_atendimento_diagnostico_vazio(client, auth_headers):
+
+
+    animal_id = criar_animal(
+        client,
+        auth_headers
+    )
+
+
+    dados = {
+
+        "diagnostico":
+            "",
+
+        "observacoes":
+            "teste",
+
+        "animal_id":
+            animal_id,
+
+        "usuario_id":
+            1
+    }
+
+
+
+    response = client.post(
+        "/atendimentos/",
+        json=dados,
+        headers=auth_headers
+    )
+
+
+    assert response.status_code == 400

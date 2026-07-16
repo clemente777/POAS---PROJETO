@@ -26,3 +26,7 @@ class Produtos(Base):
         back_populates="produto",
         lazy="selectin"
     )
+    ativo: Mapped[bool] = mapped_column(
+    default=True,
+    nullable=False
+)   
