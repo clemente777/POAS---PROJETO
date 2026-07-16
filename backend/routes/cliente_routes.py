@@ -21,10 +21,29 @@ def get_service(session: Session = Depends(get_session)):
 def criar(cliente: ClienteCreate, service=Depends(get_service)):
     return service.criar(cliente)
 
-
+# Paginação e filtros
 @router.get("/", response_model=list[ClienteResponse])
-def listar(service=Depends(get_service)):
-    return service.listar()
+def listar(
+    skip: int = 0,
+    limit: int = 10,
+    nome: str | None = None,
+    cpf: str | None = None,
+    telefone: str | None = None,
+    email: str | None = None,
+    sort_by: str = "id",
+    order: str = "asc",
+    service: ClienteServiceImpl = Depends(get_service),
+):
+    return service.listar(
+        skip=skip,
+        limit=limit,
+        nome=nome,
+        cpf=cpf,
+        telefone=telefone,
+        email=email,
+        sort_by=sort_by,
+        order=order,
+    )
 
 
 @router.get("/{id}", response_model=ClienteResponse)

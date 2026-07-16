@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import select, asc, desc
 from sqlalchemy.orm import Session
 
 from backend.models.item_carrinho_model import ItensCarrinho
@@ -21,9 +21,74 @@ class ItemCarrinhoServiceImpl:
 
         return db
 
-    # LIST
-    def listar(self):
-        return self.session.scalars(select(ItensCarrinho)).all()
+
+# LIST
+    def listar(
+        self,
+        skip: int = 0,
+        limit: int = 10,
+        carrinho_id: int | None = None,
+        produto_id: int | None = None,
+        quantidade_min: int | None = None,
+        quantidade_max: int | None = None,
+        sort_by: str = "id",
+        order: str = "asc",
+    ):
+
+        query = select(ItensCarrinho)
+
+        # ==========================
+        # FILTROS
+        # ==========================
+
+        if carrinho_id is not None:
+            query = query.where(
+                ItensCarrinho.carrinho_id == carrinho_id
+            )
+
+        if produto_id is not None:
+            query = query.where(
+                ItensCarrinho.produto_id == produto_id
+            )
+
+        if quantidade_min is not None:
+            query = query.where(
+                ItensCarrinho.quantidade >= quantidade_min
+            )
+
+        if quantidade_max is not None:
+            query = query.where(
+                ItensCarrinho.quantidade <= quantidade_max
+            )
+
+        # ==========================
+        # ORDENAÇÃO
+        # ==========================
+
+        campos = {
+            "id": ItensCarrinho.id,
+            "quantidade": ItensCarrinho.quantidade,
+            "produto_id": ItensCarrinho.produto_id,
+            "carrinho_id": ItensCarrinho.carrinho_id,
+        }
+
+        coluna = campos.get(
+            sort_by,
+            ItensCarrinho.id
+        )
+
+        if order.lower() == "desc":
+            query = query.order_by(desc(coluna))
+        else:
+            query = query.order_by(asc(coluna))
+
+        # ==========================
+        # PAGINAÇÃO
+        # ==========================
+
+        query = query.offset(skip).limit(limit)
+
+        return self.session.scalars(query).all()
 
     # GET BY ID
     def buscar_por_id(self, id: int):

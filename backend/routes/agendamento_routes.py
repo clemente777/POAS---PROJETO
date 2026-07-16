@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
+from datetime import datetime
 
 from backend.database.database import get_session
 from backend.schemas.agendamento_schema import (
@@ -21,10 +22,29 @@ def get_service(session: Session = Depends(get_session)):
 def criar(agendamento: AgendamentoCreate, service=Depends(get_service)):
     return service.criar(agendamento)
 
-
+#PAGINAÇÃO e filtros
 @router.get("/", response_model=list[AgendamentoResponse])
-def listar(service=Depends(get_service)):
-    return service.listar()
+def listar(
+    skip: int = 0,
+    limit: int = 10,
+    animal_id: int | None = None,
+    status: str | None = None,
+    descricao: str | None = None,
+    data: datetime | None = None,
+    sort_by: str = "data_agendamento",
+    order: str = "asc",
+    service: AgendamentoServiceImpl = Depends(get_service),
+):
+    return service.listar(
+        skip=skip,
+        limit=limit,
+        animal_id=animal_id,
+        status=status,
+        descricao=descricao,
+        data=data,
+        sort_by=sort_by,
+        order=order,
+    )
 
 
 @router.get("/{id}", response_model=AgendamentoResponse)

@@ -26,14 +26,30 @@ def criar(
     return service.criar(usuario)
 
 
-# Listar usuários precisa de autenticação
+# Listar usuários precisa de autenticação E NA ROTA TEM #PAGINAÇÃO
 @router.get(
     "/",
     response_model=list[UsuarioResponse],
     dependencies=[Depends(get_current_user)],
 )
-def listar(service: UsuarioServiceImpl = Depends(get_service)):
-    return service.listar()
+
+def listar(
+    skip: int = 0,
+    limit: int = 10,
+    nome: str | None = None,
+    email: str | None = None,
+    sort_by: str = "id",
+    order: str = "asc",
+    service: UsuarioServiceImpl = Depends(get_service),
+):
+    return service.listar(
+        skip=skip,
+        limit=limit,
+        nome=nome,
+        email=email,
+        sort_by=sort_by,
+        order=order,
+    )
 
 
 # Buscar usuário precisa de autenticação

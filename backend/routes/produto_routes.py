@@ -21,10 +21,36 @@ def get_service(session: Session = Depends(get_session)):
 def criar(produto: ProdutoCreate, service=Depends(get_service)):
     return service.criar(produto)
 
+#PAGINAÇÃO e filtros
+@router.get("/",response_model=list[ProdutoResponse])
+def listar(
+    skip: int = 0,
+    limit: int = 10,
+    nome: str | None = None,
+    descricao: str | None = None,
+    preco_min: float | None = None,
+    preco_max: float | None = None,
+    estoque_min: int | None = None,
+    estoque_max: int | None = None,
+    em_estoque: bool | None = None,
+    sort_by: str = "nome",
+    order: str = "asc",
+    service: ProdutoServiceImpl = Depends(get_service),
+):
 
-@router.get("/", response_model=list[ProdutoResponse])
-def listar(service=Depends(get_service)):
-    return service.listar()
+    return service.listar(
+        skip=skip,
+        limit=limit,
+        nome=nome,
+        descricao=descricao,
+        preco_min=preco_min,
+        preco_max=preco_max,
+        estoque_min=estoque_min,
+        estoque_max=estoque_max,
+        em_estoque=em_estoque,
+        sort_by=sort_by,
+        order=order,
+    )
 
 
 @router.get("/{id}", response_model=ProdutoResponse)

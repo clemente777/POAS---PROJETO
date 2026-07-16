@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import asc, desc, select
 from sqlalchemy.orm import Session
 
 from backend.models.animal_model import Animais
@@ -21,14 +21,84 @@ class AnimalServiceImpl:
 
         return db
 
-    # LIST
-    def listar(self):
-        return self.session.scalars(select(Animais)).all()
+    
 
-    # GET BY ID
+# LIST
+    def listar(
+        self,
+        skip: int = 0,
+        limit: int = 10,
+        nome: str | None = None,
+        especie: str | None = None,
+        raca: str | None = None,
+        idade: int | None = None,
+        cliente_id: int | None = None,
+        sort_by: str = "id",
+        order: str = "asc",
+    ):
+
+        query = select(Animais)
+
+        # ==========================
+        # FILTROS
+        # ==========================
+
+        if nome:
+            query = query.where(
+                Animais.nome.ilike(f"%{nome}%")
+            )
+
+        if especie:
+            query = query.where(
+                Animais.especie.ilike(f"%{especie}%")
+            )
+
+        if raca:
+            query = query.where(
+                Animais.raca.ilike(f"%{raca}%")
+            )
+
+        if idade is not None:
+            query = query.where(
+                Animais.idade == idade
+            )
+
+        if cliente_id is not None:
+            query = query.where(
+                Animais.cliente_id == cliente_id
+            )
+
+        # ==========================
+        # ORDENAÇÃO
+        # ==========================
+
+        campos = {
+            "id": Animais.id,
+            "nome": Animais.nome,
+            "especie": Animais.especie,
+            "raca": Animais.raca,
+            "idade": Animais.idade,
+            "cliente_id": Animais.cliente_id,
+        }
+
+        coluna = campos.get(sort_by, Animais.id)
+
+        if order.lower() == "desc":
+            query = query.order_by(desc(coluna))
+        else:
+            query = query.order_by(asc(coluna))
+
+        # ==========================
+        # PAGINAÇÃO
+        # ==========================
+
+        query = query.offset(skip).limit(limit)
+
+        return self.session.scalars(query).all()
+            
+        # GET BY ID
     def buscar_por_id(self, id: int):
-        return self.session.scalars(
-            select(Animais).where(Animais.id == id)
+        return self.session.scalars(                select(Animais).where(Animais.id == id)
         ).first()
 
     # UPDATE

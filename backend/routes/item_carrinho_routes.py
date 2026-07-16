@@ -21,10 +21,34 @@ def get_service(session: Session = Depends(get_session)):
 def criar(item: ItemCarrinhoCreate, service=Depends(get_service)):
     return service.criar(item)
 
+#PAGINAÇÃO e filtros
+@router.get(
+    "/",
+    response_model=list[ItemCarrinhoResponse],
+    dependencies=[Depends(get_current_user)],
+)
+def listar(
+    skip: int = 0,
+    limit: int = 10,
+    carrinho_id: int | None = None,
+    produto_id: int | None = None,
+    quantidade_min: int | None = None,
+    quantidade_max: int |None = None,
+    sort_by: str = "id",
+    order: str = "asc",
+    service: ItemCarrinhoServiceImpl = Depends(get_service),
+):
 
-@router.get("/", response_model=list[ItemCarrinhoResponse])
-def listar(service=Depends(get_service)):
-    return service.listar()
+    return service.listar(
+        skip=skip,
+        limit=limit,
+        carrinho_id=carrinho_id,
+        produto_id=produto_id,
+        quantidade_min=quantidade_min,
+        quantidade_max=quantidade_max,
+        sort_by=sort_by,
+        order=order,
+    )
 
 
 @router.get("/{id}", response_model=ItemCarrinhoResponse)

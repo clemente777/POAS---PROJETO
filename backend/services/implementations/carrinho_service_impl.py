@@ -1,4 +1,6 @@
-from sqlalchemy import select
+from dns.resolver import query
+from sqlalchemy import select, asc, desc
+from datetime import datetime
 from sqlalchemy.orm import Session
 
 from backend.models.carrinho_model import Carrinhos
@@ -21,9 +23,62 @@ class CarrinhoServiceImpl:
 
         return db
 
-    # LIST
-    def listar(self):
-        return self.session.scalars(select(Carrinhos)).all()
+
+
+# LIST
+    def listar(
+        self,
+        skip: int = 0,
+        limit: int = 10,
+        cliente_id: int | None = None,
+        data_criacao: datetime | None = None,
+        sort_by: str = "data_criacao",
+        order: str = "desc",
+    ):
+
+        query = select(Carrinhos)
+
+        # ==========================
+        # FILTROS
+        # ==========================
+
+        if cliente_id is not None:
+            query = query.where(
+                Carrinhos.cliente_id == cliente_id
+            )
+
+        if data_criacao:
+            query = query.where(
+                Carrinhos.data_criacao == data_criacao
+            )
+
+        # ==========================
+        # ORDENAÇÃO
+        # ==========================
+
+        campos = {
+            "id": Carrinhos.id,
+            "data_criacao": Carrinhos.data_criacao,
+            "cliente_id": Carrinhos.cliente_id,
+        }
+
+        coluna = campos.get(
+            sort_by,
+            Carrinhos.data_criacao
+        )
+
+        if order.lower() == "desc":
+            query = query.order_by(desc(coluna))
+        else:
+            query = query.order_by(asc(coluna))
+
+    # ==========================
+    # PAGINAÇÃO
+    # ==========================
+
+        query = query.offset(skip).limit(limit)
+
+        return self.session.scalars(query).all()
 
     # GET BY ID
     def buscar_por_id(self, id: int):

@@ -25,9 +25,32 @@ def criar(animal: AnimalCreate, service=Depends(get_service)):
     return service.criar(animal)
 
 
-@router.get("/", response_model=list[AnimalResponse])
-def listar(service=Depends(get_service)):
-    return service.listar()
+#PAGINAÇÃO e Filtro
+@router.get("/",response_model=list[AnimalResponse])
+def listar(
+    skip: int = 0,
+    limit: int = 10,
+    nome: str | None = None,
+    especie: str | None = None,
+    raca: str | None = None,
+    idade: int | None = None,
+    cliente_id: int | None = None,
+    sort_by: str = "id",
+    order: str = "asc",
+    service: AnimalServiceImpl = Depends(get_service),
+):
+    return service.listar(
+        skip=skip,
+        limit=limit,
+        nome=nome,
+        especie=especie,
+        raca=raca,
+        idade=idade,
+        cliente_id=cliente_id,
+        sort_by=sort_by,
+        order=order,
+    )
+
 
 
 @router.get("/{id}", response_model=AnimalResponse)

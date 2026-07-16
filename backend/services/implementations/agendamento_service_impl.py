@@ -1,4 +1,5 @@
-from sqlalchemy import select
+from sqlalchemy import asc, desc, select
+from datetime import datetime
 from sqlalchemy.orm import Session
 
 from backend.models.agendamento_model import Agendamentos
@@ -24,9 +25,73 @@ class AgendamentoServiceImpl:
 
         return db
 
-    # LIST
-    def listar(self):
-        return self.session.scalars(select(Agendamentos)).all()
+   
+
+# LIST
+    def listar(
+        self,
+        skip: int = 0,
+        limit: int = 10,
+        animal_id: int | None = None,
+        status: str | None = None,
+        descricao: str | None = None,
+        data: datetime | None = None,
+        sort_by: str = "data_agendamento",
+        order: str = "asc",
+    ):
+
+        query = select(Agendamentos)
+
+        # ==========================
+        # FILTROS
+        # ==========================
+
+        if animal_id is not None:
+            query = query.where(
+                Agendamentos.animal_id == animal_id
+            )
+
+        if status:
+            query = query.where(
+                Agendamentos.status.ilike(f"%{status}%")
+            )
+
+        if descricao:
+            query = query.where(
+                Agendamentos.descricao.ilike(f"%{descricao}%")
+            )
+
+        if data:
+            query = query.where(
+                Agendamentos.data_agendamento == data
+            )
+
+        # ==========================
+        # ORDENAÇÃO
+        # ==========================
+
+        campos = {
+            "id": Agendamentos.id,
+            "data_agendamento": Agendamentos.data_agendamento,
+            "status": Agendamentos.status,
+            "descricao": Agendamentos.descricao,
+            "animal_id": Agendamentos.animal_id,
+        }
+
+        coluna = campos.get(sort_by, Agendamentos.data_agendamento)
+
+        if order.lower() == "desc":
+            query = query.order_by(desc(coluna))
+        else:
+            query = query.order_by(asc(coluna))
+
+        # ==========================
+        # PAGINAÇÃO
+        # ==========================
+
+        query = query.offset(skip).limit(limit)
+
+        return self.session.scalars(query).all()
 
     # GET BY ID
     def buscar_por_id(self, id: int):
