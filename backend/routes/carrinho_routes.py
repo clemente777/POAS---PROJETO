@@ -1,11 +1,12 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from backend.database.database import get_session
 from backend.schemas.carrinho_schema import (
     CarrinhoCreate,
     CarrinhoUpdate,
-    CarrinhoResponse
+    CarrinhoResponse,
+    CompraResponse
 )
 from backend.services.implementations.carrinho_service_impl import CarrinhoServiceImpl
 from backend.auth.dependencies import get_current_user
@@ -24,11 +25,7 @@ def criar(carrinho: CarrinhoCreate, service=Depends(get_service)):
 #PAGINAÇÃO e filtros
 from datetime import datetime
 
-@router.get(
-    "/",
-    response_model=list[CarrinhoResponse],
-    dependencies=[Depends(get_current_user)],
-)
+@router.get("/", response_model=list[CarrinhoResponse],)
 def listar(
     skip: int = 0,
     limit: int = 10,
@@ -62,3 +59,17 @@ def atualizar(id: int, carrinho: CarrinhoUpdate, service=Depends(get_service)):
 @router.delete("/{id}")
 def deletar(id: int, service=Depends(get_service)):
     return {"success": service.deletar(id)}
+ 
+
+@router.post("/{id}/finalizar", response_model=CompraResponse, summary="Finalizar compra do carrinho")
+def finalizar_compra(id: int, service: CarrinhoServiceImpl = Depends(get_service)):
+    try:
+
+        return service.finalizar_compra(id)
+    
+    except Exception as e:
+
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )

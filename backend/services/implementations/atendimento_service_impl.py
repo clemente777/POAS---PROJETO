@@ -5,6 +5,10 @@ from sqlalchemy.orm import Session
 from backend.models.atendimento_model import Atendimentos
 from backend.schemas.atendimento_schema import AtendimentoCreate, AtendimentoUpdate
 
+from backend.models.animal_model import Animais
+from backend.models.atendimento_model import Atendimentos
+from backend.models.usuario_model import Usuarios
+from backend.models.cliente_model import Clientes
 
 class AtendimentoServiceImpl:
 
@@ -24,7 +28,7 @@ class AtendimentoServiceImpl:
 
 
 
-# LIST
+    # LIST
     def listar(
         self,
         skip: int = 0,
@@ -135,3 +139,57 @@ class AtendimentoServiceImpl:
         self.session.commit()
 
         return True
+
+    #historico
+    def historico_completo(self, animal_id: int):
+
+        animal = self.session.get(Animais, animal_id)
+
+        if animal is None:
+            return None
+
+        cliente = animal.cliente
+
+        atendimentos = (
+            self.session.query(Atendimentos)
+            .filter(
+                Atendimentos.animal_id == animal_id
+            )
+            .order_by(
+                Atendimentos.data_atendimento.desc()
+            )
+            .all()
+        )
+
+        historico = []
+
+        for atendimento in atendimentos:
+
+            veterinario = None
+
+            if atendimento.usuario:
+                veterinario = atendimento.usuario.nome
+
+            historico.append({
+                "data": atendimento.data_atendimento,
+                "veterinario": veterinario,
+                "diagnostico": atendimento.diagnostico,
+                "observacoes": atendimento.observacoes
+            })
+
+        return {
+            "animal": {
+                "id": animal.id,
+                "nome": animal.nome,
+                "especie": animal.especie,
+                "raca": animal.raca,
+                "idade": animal.idade
+            },
+            "cliente": {
+                "id": cliente.id,
+                "nome": cliente.nome,
+                "telefone": cliente.telefone,
+                "email": cliente.email
+            },
+            "historico": historico
+        }

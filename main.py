@@ -11,6 +11,7 @@ from backend.routes import (
     produto_routes,
     carrinho_routes,
     item_carrinho_routes,
+    dashboard_routes
 )
 
 from contextlib import asynccontextmanager
@@ -36,6 +37,7 @@ app.include_router(atendimento_routes.router)
 app.include_router(produto_routes.router)
 app.include_router(carrinho_routes.router)
 app.include_router(item_carrinho_routes.router)
+app.include_router(dashboard_routes.router)
 
 if __name__ == "__main__":
     import uvicorn

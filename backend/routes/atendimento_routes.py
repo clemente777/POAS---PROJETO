@@ -8,6 +8,12 @@ from backend.schemas.atendimento_schema import (
     AtendimentoUpdate,
     AtendimentoResponse
 )
+from sqlalchemy import select
+
+from backend.models.animal_model import Animais
+from backend.models.atendimento_model import Atendimentos
+from backend.models.usuario_model import Usuarios
+from backend.models.cliente_model import Clientes
 from backend.services.implementations.atendimento_service_impl import AtendimentoServiceImpl
 from backend.auth.dependencies import get_current_user
 

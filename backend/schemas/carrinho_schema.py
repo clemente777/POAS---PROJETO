@@ -17,3 +17,11 @@ class CarrinhoResponse(BaseModel):
 
     id: int
     cliente_id: int
+
+
+class CompraResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    mensagem: str
+    valor_total: float
+    quantidade_itens: int

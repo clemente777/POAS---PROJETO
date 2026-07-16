@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from backend.database.database import get_session
@@ -7,18 +7,19 @@ from backend.schemas.animal_schema import (
     AnimalUpdate,
     AnimalResponse
 )
+from backend.schemas.historico_schema import AnimalHistoricoResponse
+from backend.services.implementations.atendimento_service_impl import AtendimentoServiceImpl
 from backend.services.implementations.animal_service_impl import AnimalServiceImpl
 from backend.auth.dependencies import get_current_user
 
 router = APIRouter(
     prefix="/animais",
     tags=["Animais"],
-    dependencies=[Depends(get_current_user)]  # 🔒 protege tudo aqui
+    dependencies=[Depends(get_current_user)]  #protege tudo aqui
 )
 
 def get_service(session: Session = Depends(get_session)):
     return AnimalServiceImpl(session)
-
 
 @router.post("/", response_model=AnimalResponse)
 def criar(animal: AnimalCreate, service=Depends(get_service)):
@@ -57,12 +58,36 @@ def listar(
 def buscar(id: int, service=Depends(get_service)):
     return service.buscar_por_id(id)
 
-
 @router.put("/{id}", response_model=AnimalResponse)
 def atualizar(id: int, animal: AnimalUpdate, service=Depends(get_service)):
     return service.atualizar(id, animal)
 
-
 @router.delete("/{id}")
 def deletar(id: int, service=Depends(get_service)):
     return {"success": service.deletar(id)}
+
+
+def get_atendimento_service(session: Session = Depends(get_session)):
+    return AtendimentoServiceImpl(session)
+
+
+# HISTORICO DE ACORDO COM ATENDIMENTOS
+@router.get(
+    "/{id}/historico",
+    response_model=AnimalHistoricoResponse,
+    dependencies=[Depends(get_current_user)],
+)
+def historico(
+    id: int,
+    service: AtendimentoServiceImpl = Depends(get_atendimento_service),
+):
+
+    resultado = service.historico_completo(id)
+
+    if resultado is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Animal não encontrado"
+        )
+
+    return resultado
