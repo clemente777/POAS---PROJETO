@@ -9,27 +9,57 @@ from backend.database.database import Base
 
 from typing import TYPE_CHECKING
 
+
 if TYPE_CHECKING:
     from backend.models.animal_model import Animais
 
 
+
 class Agendamentos(Base):
+
     __tablename__ = "agendamentos"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
-    data_agendamento: Mapped[datetime] = mapped_column(DateTime, nullable=False)
-    descricao: Mapped[str] = mapped_column(String(255), nullable=False)
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True
+    )
+
+
+
+    data_agendamento: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=False
+    )
+
+
+
+    descricao: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False
+    )
+
+
 
     status: Mapped[str] = mapped_column(
         String(30),
-        default="Pendente",
-        nullable=False
+        nullable=False,
+        default="Pendente"
     )
+
+
 
     animal_id: Mapped[int] = mapped_column(
-        ForeignKey("animais.id", ondelete="CASCADE"),
+        ForeignKey(
+            "animais.id",
+            ondelete="CASCADE"
+        ),
         nullable=False
     )
 
-    animal: Mapped["Animais"] = relationship(back_populates="agendamentos")
+
+
+    animal: Mapped["Animais"] = relationship(
+        back_populates="agendamentos"
+    )

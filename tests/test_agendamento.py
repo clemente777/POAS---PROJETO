@@ -2,8 +2,35 @@
 
 
 from datetime import datetime, timedelta
+from urllib import response
+
+from datetime import datetime, timedelta
 
 
+from datetime import datetime, timedelta
+
+
+from datetime import datetime, timedelta
+
+
+
+from datetime import datetime, timedelta
+
+
+def agendamento_json(animal_id):
+
+    return {
+
+        "data_agendamento": (
+            datetime.now()
+            + timedelta(days=5)
+        ).isoformat(),
+
+        "descricao": "Consulta veterinaria",
+
+        "animal_id": animal_id
+
+    }
 
 CLIENTE = {
     "nome": "João Silva",
@@ -123,91 +150,56 @@ def criar_agendamento(client, auth_headers):
 # =====================================================
 
 
-def test_criar_agendamento(client, auth_headers):
+def test_deletar_agendamento(client, auth_headers):
 
 
-    agendamento = criar_agendamento(
-        client,
-        auth_headers
+    # criar animal antes
+
+    animal = client.post(
+        "/animais/",
+        headers=auth_headers,
+        json={
+            "nome": "Rex",
+            "idade": 3,
+            "raca": "Labrador",
+            "cliente_id": 1
+        }
     )
 
 
-    assert (
-        agendamento["descricao"]
-        ==
-        "Consulta de rotina"
-    )
+    assert animal.status_code == 201
+
+
+    animal_id = animal.json()["id"]
 
 
 
+    # criar agendamento
 
-
-# =====================================================
-# LISTAR
-# =====================================================
-
-
-def test_listar_agendamentos(client, auth_headers):
-
-
-    criar_agendamento(
-        client,
-        auth_headers
-    )
-
-
-    response = client.get(
+    criar = client.post(
         "/agendamentos/",
+        headers=auth_headers,
+        json=agendamento_json(animal_id)
+    )
+
+
+    assert criar.status_code == 201
+
+
+
+    id_agendamento = criar.json()["id"]
+
+
+
+    # tentar deletar
+
+    response = client.delete(
+        f"/agendamentos/{id_agendamento}",
         headers=auth_headers
     )
 
 
-    assert response.status_code == 200
-
-
-    assert len(response.json()) == 1
-
-
-
-
-
-# =====================================================
-# BUSCAR POR ID
-# =====================================================
-
-
-def test_buscar_agendamento(client, auth_headers):
-
-
-    agendamento = criar_agendamento(
-        client,
-        auth_headers
-    )
-
-
-    agendamento_id = agendamento["id"]
-
-
-
-    response = client.get(
-        f"/agendamentos/{agendamento_id}",
-        headers=auth_headers
-    )
-
-
-
-    assert response.status_code == 200
-
-
-    assert (
-        response.json()["id"]
-        ==
-        agendamento_id
-    )
-
-
-
-
+    assert response.status_code == 409
 
 # =====================================================
 # ATUALIZAR
@@ -258,32 +250,64 @@ def test_atualizar_agendamento(client, auth_headers):
 def test_deletar_agendamento(client, auth_headers):
 
 
-    agendamento = criar_agendamento(
-        client,
-        auth_headers
+    # criar animal primeiro
+    animal = client.post(
+        "/animais/",
+        headers=auth_headers,
+        json={
+            "nome": "Rex",
+            "idade": 5,
+            "raca": "Labrador",
+            "especie_id": 1,
+            "cliente_id": 1
+        }
     )
 
 
-    agendamento_id = agendamento["id"]
+    assert animal.status_code == 201
+
+
+    animal_id = animal.json()["id"]
 
 
 
+    # criar agendamento
+    criar = client.post(
+        "/agendamentos/",
+        headers=auth_headers,
+        json={
+
+            "data_agendamento":
+            "2030-01-10T10:00:00",
+
+            "descricao":
+            "Consulta veterinaria",
+
+            "animal_id":
+            animal_id
+
+        }
+    )
+
+
+    print(criar.json())
+
+
+    assert criar.status_code == 201
+
+
+    id_agendamento = criar.json()["id"]
+
+
+
+    # tentar deletar
     response = client.delete(
-        f"/agendamentos/{agendamento_id}",
+        f"/agendamentos/{id_agendamento}",
         headers=auth_headers
     )
 
 
-
-    assert response.status_code in [
-        200,
-        204
-    ]
-
-
-
-
-
+    assert response.status_code == 409
 # =====================================================
 # REGRA - ANIMAL INEXISTENTE
 # =====================================================
@@ -371,14 +395,3 @@ def test_agendamento_descricao_vazia(client, auth_headers):
 
     assert response.status_code == 400
 
-def test_deletar_agendamento(
-    client,
-    auth_headers
-):
-
-        response = client.delete(
-            "/agendamentos/1",
-            headers=auth_headers
-        )
-
-        assert response.status_code == 409

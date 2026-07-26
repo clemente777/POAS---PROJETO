@@ -137,14 +137,17 @@ def test_atualizar_usuario(client, auth_headers):
 def test_deletar_usuario(client, auth_headers):
 
 
-    usuario = client.get(
+    criar = client.post(
         "/usuarios/",
-        headers=auth_headers
+        json={
+            "nome":"Usuario Teste",
+            "email":"teste_delete@email.com",
+            "senha":"123456"
+        }
     )
 
 
-    id = usuario.json()[0]["id"]
-
+    id = criar.json()["id"]
 
 
     response = client.delete(

@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from backend.models.atendimento_model import Atendimentos
-
+    from backend.models.cliente_model import Clientes
 
 class Usuarios(Base):
     __tablename__ = "usuarios"
@@ -20,6 +20,7 @@ class Usuarios(Base):
     nome: Mapped[str] = mapped_column(String(100), nullable=False)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
     senha_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    perfil: Mapped[str] = mapped_column(String(30), default="Cliente", nullable=False)
 
     criado_em: Mapped[datetime] = mapped_column(
         DateTime,
@@ -31,3 +32,8 @@ class Usuarios(Base):
         back_populates="usuario",
         lazy="selectin"
     )
+    cliente: Mapped["Clientes"] = relationship(
+    back_populates="usuario",
+    uselist=False
+)
+    

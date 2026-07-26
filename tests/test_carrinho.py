@@ -1,18 +1,30 @@
+# tests/test_carrinho.py
+
+
+CLIENTE = {
+    "nome": "João Silva",
+    "cpf": "52998224725",
+    "telefone": "84999999999",
+    "email": "joao@email.com",
+    "endereco": "Rua A"
+}
+
+
+
 def criar_cliente(client, auth_headers):
 
     response = client.post(
         "/clientes/",
-        json={
-            "nome": "João Silva",
-            "cpf": "52998224725",
-            "telefone": "84999999999",
-            "email": "joao@email.com",
-            "endereco": "Rua A"
-        },
+        json=CLIENTE,
         headers=auth_headers
     )
 
-    assert response.status_code in [200, 201]
+
+    assert response.status_code in [
+        200,
+        201
+    ]
+
 
     return response.json()
 
@@ -35,18 +47,24 @@ def criar_carrinho(client, auth_headers):
     )
 
 
-    assert response.status_code in [200, 201]
+    assert response.status_code in [
+        200,
+        201
+    ]
+
 
     return response.json()
 
 
 
-# ============================
-# CREATE
-# ============================
+# ==========================================
+# CRIAR
+# ==========================================
 
-
-def test_criar_carrinho(client, auth_headers):
+def test_criar_carrinho(
+    client,
+    auth_headers
+):
 
     carrinho = criar_carrinho(
         client,
@@ -58,12 +76,14 @@ def test_criar_carrinho(client, auth_headers):
 
 
 
-# ============================
+# ==========================================
 # LISTAR
-# ============================
+# ==========================================
 
-
-def test_listar_carrinhos(client, auth_headers):
+def test_listar_carrinhos(
+    client,
+    auth_headers
+):
 
     criar_carrinho(
         client,
@@ -79,18 +99,19 @@ def test_listar_carrinhos(client, auth_headers):
 
     assert response.status_code == 200
 
-    dados = response.json()
 
-    assert len(dados) == 1
-
+    assert len(response.json()) == 1
 
 
-# ============================
+
+# ==========================================
 # BUSCAR
-# ============================
+# ==========================================
 
-
-def test_buscar_carrinho(client, auth_headers):
+def test_buscar_carrinho(
+    client,
+    auth_headers
+):
 
     carrinho = criar_carrinho(
         client,
@@ -106,20 +127,19 @@ def test_buscar_carrinho(client, auth_headers):
 
     assert response.status_code == 200
 
-    assert (
-        response.json()["id"]
-        ==
-        carrinho["id"]
-    )
+
+    assert response.json()["id"] == carrinho["id"]
 
 
 
-# ============================
+# ==========================================
 # ATUALIZAR
-# ============================
+# ==========================================
 
-
-def test_atualizar_carrinho(client, auth_headers):
+def test_atualizar_carrinho(
+    client,
+    auth_headers
+):
 
     carrinho = criar_carrinho(
         client,
@@ -140,12 +160,14 @@ def test_atualizar_carrinho(client, auth_headers):
 
 
 
-# ============================
-# DELETE
-# ============================
+# ==========================================
+# DELETAR
+# ==========================================
 
-
-def test_deletar_carrinho(client, auth_headers):
+def test_deletar_carrinho(
+    client,
+    auth_headers
+):
 
     carrinho = criar_carrinho(
         client,
@@ -166,12 +188,11 @@ def test_deletar_carrinho(client, auth_headers):
 
 
 
-# ============================
-# REGRAS DE NEGÓCIO
-# ============================
+# ==========================================
+# REGRA - CLIENTE INEXISTENTE
+# ==========================================
 
-
-def test_criar_carrinho_cliente_inexistente(
+def test_carrinho_cliente_inexistente(
     client,
     auth_headers
 ):
@@ -179,7 +200,7 @@ def test_criar_carrinho_cliente_inexistente(
     response = client.post(
         "/carrinhos/",
         json={
-            "cliente_id":9999
+            "cliente_id":99999
         },
         headers=auth_headers
     )
@@ -188,6 +209,10 @@ def test_criar_carrinho_cliente_inexistente(
     assert response.status_code == 404
 
 
+
+# ==========================================
+# REGRA - SEM CLIENTE
+# ==========================================
 
 def test_carrinho_sem_cliente(
     client,
@@ -201,10 +226,13 @@ def test_carrinho_sem_cliente(
     )
 
 
-    # erro do Pydantic
     assert response.status_code == 422
 
 
+
+# ==========================================
+# REGRA - CLIENTE COM DOIS CARRINHOS
+# ==========================================
 
 def test_carrinho_cliente_duplicado(
     client,
@@ -217,25 +245,32 @@ def test_carrinho_cliente_duplicado(
     )
 
 
-    client.post(
+    primeiro = client.post(
         "/carrinhos/",
         json={
-            "cliente_id":cliente["id"]
+            "cliente_id": cliente["id"]
         },
         headers=auth_headers
     )
 
 
-    response = client.post(
+    assert primeiro.status_code in [
+        200,
+        201
+    ]
+
+
+
+    segundo = client.post(
         "/carrinhos/",
         json={
-            "cliente_id":cliente["id"]
+            "cliente_id": cliente["id"]
         },
         headers=auth_headers
     )
 
 
-    assert response.status_code in [
+    assert segundo.status_code in [
         400,
         409
     ]

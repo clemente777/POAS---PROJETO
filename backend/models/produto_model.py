@@ -22,11 +22,9 @@ class Produtos(Base):
     preco: Mapped[float] = mapped_column(Float, nullable=False)
     estoque: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
+    ativo: Mapped[bool] = mapped_column(default=True)
     itens_carrinho: Mapped[list["ItensCarrinho"]] = relationship(
         back_populates="produto",
         lazy="selectin"
     )
-    ativo: Mapped[bool] = mapped_column(
-    default=True,
-    nullable=False
-)   
+   

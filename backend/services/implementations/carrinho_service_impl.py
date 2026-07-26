@@ -4,7 +4,6 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 
 from backend.models.carrinho_model import Carrinhos
-from backend.models.item_carrinho_model import ItensCarrinho
 from backend.models.cliente_model import Clientes
 
 from backend.schemas.carrinho_schema import (
@@ -14,91 +13,240 @@ from backend.schemas.carrinho_schema import (
 
 
 class CarrinhoServiceImpl:
+
+
     """
     Service responsável pelas regras
     de negócio do carrinho.
 
-    Responsabilidades:
 
-    - Criar carrinhos
-    - Garantir um carrinho por cliente
-    - Buscar carrinhos
-    - Atualizar carrinho
-    - Finalizar compras
-    - Controlar integridade dos dados
+    Regras:
+
+    - Cliente possui apenas um carrinho.
+    - Cliente só acessa seu próprio carrinho.
+    - Administrador possui acesso total.
+    - Carrinho vazio não finaliza compra.
+    - Produto sem estoque bloqueia compra.
+    - Carrinho com itens não pode ser excluído.
     """
+
+
 
     def __init__(
         self,
-        session: Session
+        session: Session,
+        usuario_logado
     ):
+
         self.session = session
+        self.usuario_logado = usuario_logado
+
+
+
 
 
     # ==================================================
-    # BUSCAS AUXILIARES
+    # PERFIL
     # ==================================================
+
+
+    def obter_perfil(self):
+
+
+        perfil = self.usuario_logado.perfil
+
+
+        if hasattr(
+            perfil,
+            "nome"
+        ):
+
+            return perfil.nome
+
+
+        return perfil
+
+
+
+
+
+    def is_admin(self):
+
+        return (
+            self.obter_perfil()
+            ==
+            "Administrador"
+        )
+
+
+
+
+
+
+    # ==================================================
+    # BUSCAR CARRINHO
+    # ==================================================
+
 
     def buscar_por_id(
         self,
         id: int
     ):
-        """
-        Busca um carrinho pelo ID.
-        """
 
-        return self.session.scalars(
+
+        carrinho = self.session.scalar(
+
             select(Carrinhos)
             .where(
                 Carrinhos.id == id
             )
-        ).first()
+
+        )
+
+
+        if not carrinho:
+
+
+            raise HTTPException(
+
+                status_code=404,
+
+                detail="Carrinho não encontrado"
+
+            )
+
+
+
+        self.validar_proprietario(
+
+            carrinho
+
+        )
+
+
+
+        return carrinho
+
+
+
+
 
 
     def buscar_por_cliente(
         self,
         cliente_id: int
     ):
-        """
-        Busca o carrinho de um cliente.
 
-        Regra:
 
-        Cada cliente possui
-        apenas um carrinho.
-        """
+        return self.session.scalar(
 
-        return self.session.scalars(
             select(Carrinhos)
+
             .where(
-                Carrinhos.cliente_id == cliente_id
+
+                Carrinhos.cliente_id
+                ==
+                cliente_id
+
             )
-        ).first()
+
+        )
+
+
+
+
+
 
 
     def validar_cliente(
         self,
         cliente_id: int
     ):
-        """
-        Verifica se o cliente existe.
-        """
 
-        cliente = self.session.scalars(
+
+        cliente = self.session.scalar(
+
             select(Clientes)
+
             .where(
-                Clientes.id == cliente_id
+
+                Clientes.id
+                ==
+                cliente_id
+
             )
-        ).first()
+
+        )
 
 
         if not cliente:
+
+
             raise HTTPException(
+
                 status_code=404,
+
                 detail="Cliente não encontrado."
+
             )
 
 
+        return cliente
+
+
+
+
+
+
+
+    # ==================================================
+    # REGRA DE PROPRIEDADE
+    # ==================================================
+
+
+    def validar_proprietario(
+        self,
+        carrinho: Carrinhos
+    ):
+
+
+
+        if self.is_admin():
+
+            return
+
+
+
+
+
+        if not carrinho.cliente:
+
+
+            raise HTTPException(
+
+                status_code=404,
+
+                detail="Cliente do carrinho não encontrado."
+
+            )
+
+
+
+
+
+        if carrinho.cliente.usuario_id != self.usuario_logado.id:
+
+
+            raise HTTPException(
+
+                status_code=403,
+
+                detail=
+                "Você não possui acesso a este carrinho."
+
+            )
+    
+    
     # ==================================================
     # CRIAR CARRINHO
     # ==================================================
@@ -107,49 +255,107 @@ class CarrinhoServiceImpl:
         self,
         carrinho: CarrinhoCreate
     ):
-        """
-        Cria um carrinho.
 
-        Regras:
 
-        1 - Cliente precisa existir
+        cliente = self.validar_cliente(
 
-        2 - Cliente não pode possuir
-            outro carrinho
-        """
-
-        self.validar_cliente(
             carrinho.cliente_id
+
         )
 
 
-        carrinho_existente = self.buscar_por_cliente(
+
+        if not self.is_admin():
+
+
+            if cliente.usuario_id != self.usuario_logado.id:
+
+
+                raise HTTPException(
+
+                    status_code=403,
+
+                    detail=
+                    "Você só pode criar seu próprio carrinho."
+
+                )
+
+
+
+
+        existente = self.buscar_por_cliente(
+
             carrinho.cliente_id
+
         )
 
 
-        if carrinho_existente:
+
+        if existente:
+
+
             raise HTTPException(
+
                 status_code=409,
-                detail="Cliente já possui um carrinho."
+
+                detail=
+                "Cliente já possui um carrinho."
+
             )
 
 
-        db = Carrinhos(
+
+
+        novo = Carrinhos(
+
             **carrinho.model_dump()
+
         )
 
 
-        self.session.add(db)
 
-        self.session.commit()
-
-        self.session.refresh(db)
+        try:
 
 
-        return db
-    
-        # ==================================================
+            self.session.add(
+                novo
+            )
+
+
+            self.session.commit()
+
+
+            self.session.refresh(
+                novo
+            )
+
+
+            return novo
+
+
+
+        except Exception:
+
+
+            self.session.rollback()
+
+
+            raise HTTPException(
+
+                status_code=500,
+
+                detail=
+                "Erro ao criar carrinho."
+
+            )
+
+
+
+
+
+
+
+    # ==================================================
     # LISTAR CARRINHOS
     # ==================================================
 
@@ -160,68 +366,171 @@ class CarrinhoServiceImpl:
         cliente_id: int | None = None,
         data_criacao: datetime | None = None,
         sort_by: str = "data_criacao",
-        order: str = "desc",
+        order: str = "desc"
     ):
-        """
-        Lista carrinhos.
-
-        Possui:
-
-        - Paginação
-        - Filtro por cliente
-        - Filtro por data
-        - Ordenação
-        """
-
-        query = select(Carrinhos)
 
 
-        if cliente_id is not None:
-            query = query.where(
-                Carrinhos.cliente_id == cliente_id
+        query = select(
+            Carrinhos
+        )
+
+
+
+        if not self.is_admin():
+
+
+            query = (
+
+                query
+
+                .join(
+                    Clientes,
+                    Carrinhos.cliente_id ==
+                    Clientes.id
+                )
+
+                .where(
+
+                    Clientes.usuario_id ==
+                    self.usuario_logado.id
+
+                )
+
             )
+
+
+        else:
+
+
+            if cliente_id is not None:
+
+
+                query = query.where(
+
+                    Carrinhos.cliente_id ==
+                    cliente_id
+
+                )
+
+
+
+
 
 
         if data_criacao:
+
+
             query = query.where(
-                Carrinhos.data_criacao == data_criacao
+
+                Carrinhos.data_criacao ==
+                data_criacao
+
             )
 
 
+
+
+
+
         campos = {
-            "id": Carrinhos.id,
-            "cliente_id": Carrinhos.cliente_id,
-            "data_criacao": Carrinhos.data_criacao
+
+
+            "id":
+            Carrinhos.id,
+
+
+            "cliente_id":
+            Carrinhos.cliente_id,
+
+
+            "data_criacao":
+            Carrinhos.data_criacao
+
+
         }
 
 
+
+
+
         coluna = campos.get(
+
             sort_by,
+
             Carrinhos.data_criacao
+
         )
+
+
+
 
 
         if order.lower() == "desc":
 
+
             query = query.order_by(
+
                 desc(coluna)
+
             )
+
 
         else:
 
+
             query = query.order_by(
+
                 asc(coluna)
+
             )
 
 
+
+
+
+        if skip < 0:
+
+            skip = 0
+
+
+
+        if limit <= 0:
+
+            limit = 10
+
+
+
+        if limit > 100:
+
+            limit = 100
+
+
+
+
+
         query = (
+
             query
+
             .offset(skip)
+
             .limit(limit)
+
         )
 
 
-        return self.session.scalars(query).all()
+
+
+        return self.session.scalars(
+
+            query
+
+        ).all()
+
+
+
+
+
 
 
 
@@ -234,72 +543,142 @@ class CarrinhoServiceImpl:
         id: int,
         carrinho: CarrinhoUpdate
     ):
-        """
-        Atualiza informações
-        do carrinho.
-
-        Alterações permitidas:
-
-        - cliente_id
-
-        Validação:
-
-        Cliente precisa existir.
-        """
-
-        db = self.buscar_por_id(id)
 
 
-        if not db:
-            raise HTTPException(
-                status_code=404,
-                detail="Carrinho não encontrado."
-            )
+        db = self.buscar_por_id(
+
+            id
+
+        )
+
 
 
         dados = carrinho.model_dump(
+
             exclude_unset=True
+
         )
+
+
 
 
         if "cliente_id" in dados:
 
-            self.validar_cliente(
+
+
+            cliente = self.validar_cliente(
+
                 dados["cliente_id"]
+
             )
+
+
+
+
+            if not self.is_admin():
+
+
+
+                if cliente.usuario_id != self.usuario_logado.id:
+
+
+
+                    raise HTTPException(
+
+                        status_code=403,
+
+                        detail=
+                        "Você não pode transferir este carrinho."
+
+                    )
+
+
+
+
 
 
             outro = self.buscar_por_cliente(
+
                 dados["cliente_id"]
+
             )
+
+
 
 
             if outro and outro.id != id:
 
+
+
                 raise HTTPException(
+
                     status_code=409,
-                    detail="Cliente já possui carrinho."
+
+                    detail=
+                    "Cliente já possui outro carrinho."
+
                 )
 
 
-        for campo, valor in dados.items():
 
-            setattr(
-                db,
-                campo,
-                valor
+
+
+
+
+        try:
+
+
+            for campo, valor in dados.items():
+
+
+                setattr(
+
+                    db,
+
+                    campo,
+
+                    valor
+
+                )
+
+
+
+
+
+            self.session.commit()
+
+
+
+            self.session.refresh(
+
+                db
+
             )
 
 
-        self.session.commit()
 
-        self.session.refresh(db)
-
-
-        return db
+            return db
 
 
 
+
+
+        except Exception:
+
+
+            self.session.rollback()
+
+
+
+            raise HTTPException(
+
+                status_code=500,
+
+                detail=
+                "Erro ao atualizar carrinho."
+
+            )
+    
     # ==================================================
     # DELETAR CARRINHO
     # ==================================================
@@ -308,44 +687,74 @@ class CarrinhoServiceImpl:
         self,
         id: int
     ):
-        """
-        Remove um carrinho.
-
-        Regra:
-
-        Carrinho com itens
-        não pode ser removido.
-        """
-
-        carrinho = self.buscar_por_id(id)
 
 
-        if not carrinho:
+        carrinho = self.buscar_por_id(
 
-            raise HTTPException(
-                status_code=404,
-                detail="Carrinho não encontrado."
-            )
+            id
+
+        )
+
 
 
         if carrinho.itens:
 
+
             raise HTTPException(
+
                 status_code=409,
+
                 detail=
-                "Carrinho possui produtos. "
-                "Remova os itens antes de excluir."
+                "Carrinho possui itens. Remova os produtos antes."
+
             )
 
 
-        self.session.delete(carrinho)
-
-        self.session.commit()
 
 
-        return True
-    
-        # ==================================================
+        try:
+
+
+            self.session.delete(
+
+                carrinho
+
+            )
+
+
+            self.session.commit()
+
+
+
+            return True
+
+
+
+
+
+        except Exception:
+
+
+            self.session.rollback()
+
+
+
+            raise HTTPException(
+
+                status_code=500,
+
+                detail=
+                "Erro ao excluir carrinho."
+
+            )
+
+
+
+
+
+
+
+    # ==================================================
     # FINALIZAR COMPRA
     # ==================================================
 
@@ -353,57 +762,47 @@ class CarrinhoServiceImpl:
         self,
         carrinho_id: int
     ):
+
+
         """
-        Finaliza uma compra.
+        Finaliza a compra do carrinho.
 
-        Fluxo:
 
-        Carrinho
+        Regras:
 
-            ↓
-
-        Verifica itens
-
-            ↓
-
-        Verifica estoque
-
-            ↓
-
-        Calcula valor
-
-            ↓
-
-        Baixa estoque
-
-            ↓
-
-        Remove itens do carrinho
-
-            ↓
-
-        Retorna resumo
+        - Usuário deve ser dono do carrinho.
+        - Administrador pode finalizar qualquer carrinho.
+        - Carrinho não pode estar vazio.
+        - Produto precisa ter estoque.
+        - Estoque é reduzido.
+        - Itens são removidos após compra.
         """
+
+
 
         carrinho = self.buscar_por_id(
+
             carrinho_id
+
         )
 
 
-        if not carrinho:
-
-            raise HTTPException(
-                status_code=404,
-                detail="Carrinho não encontrado."
-            )
 
 
         if not carrinho.itens:
 
+
             raise HTTPException(
+
                 status_code=400,
-                detail="Carrinho vazio."
+
+                detail=
+                "Carrinho vazio."
+
             )
+
+
+
 
 
         valor_total = 0
@@ -411,85 +810,173 @@ class CarrinhoServiceImpl:
         quantidade_itens = 0
 
 
+
+
+
         try:
+
+
+
 
             # ==========================================
             # VALIDAR ESTOQUE
             # ==========================================
 
+
             for item in carrinho.itens:
 
+
                 produto = item.produto
+
+
 
 
                 if produto.estoque < item.quantidade:
 
+
+
                     raise HTTPException(
+
                         status_code=409,
-                        detail=
-                        f"Estoque insuficiente para {produto.nome}."
+
+                        detail=(
+
+                            f"Estoque insuficiente "
+                            f"para {produto.nome}."
+
+                        )
+
                     )
 
 
+
+
+
+
+
+
             # ==========================================
-            # BAIXAR ESTOQUE
+            # ATUALIZAR ESTOQUE
             # ==========================================
+
 
             for item in carrinho.itens:
 
+
+
                 produto = item.produto
+
 
 
                 produto.estoque -= item.quantidade
 
 
+
+
                 valor_total += (
+
                     produto.preco *
+
                     item.quantidade
+
                 )
+
+
 
 
                 quantidade_itens += (
+
                     item.quantidade
+
                 )
 
 
+
+
+
+
+
             # ==========================================
-            # LIMPAR CARRINHO
+            # REMOVER ITENS
             # ==========================================
 
-            for item in carrinho.itens:
 
-                self.session.delete(item)
+            for item in list(carrinho.itens):
+
+
+                self.session.delete(
+
+                    item
+
+                )
+
+
+
+
+
 
 
             self.session.commit()
 
 
+
+
+
+
         except HTTPException:
 
+
             self.session.rollback()
+
 
             raise
 
 
+
+
+
+
         except Exception:
+
+
 
             self.session.rollback()
 
+
+
             raise HTTPException(
+
                 status_code=500,
-                detail="Erro ao finalizar compra."
+
+                detail=
+                "Erro ao finalizar compra."
+
             )
 
 
+
+
+
+
+
         return {
+
+
             "mensagem":
+
             "Compra finalizada com sucesso.",
 
+
+
             "valor_total":
+
             valor_total,
 
+
+
             "quantidade_itens":
+
             quantidade_itens
+
+
         }

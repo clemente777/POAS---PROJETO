@@ -1,17 +1,29 @@
-from fastapi import APIRouter, Depends, Response, HTTPException
+from fastapi import APIRouter, Depends, Response
 from sqlalchemy.orm import Session
 
-from backend.auth.dependencies import get_current_user
+
 from backend.database.database import get_session
+
+
 from backend.schemas.usuario_schema import (
     UsuarioCreate,
     UsuarioUpdate,
     UsuarioResponse,
+    UsuarioAdminCreate
 )
-from backend.services.implementations.usuario_service_impl import UsuarioServiceImpl
+
+
+from backend.services.implementations.usuario_service_impl import (
+    UsuarioServiceImpl
+)
+
+
 from backend.models.usuario_model import Usuarios
 
-from backend.auth.dependencies import UsuarioLogado
+
+from backend.auth.permissions import exigir_perfil
+
+
 
 router = APIRouter(
     prefix="/usuarios",
@@ -20,17 +32,29 @@ router = APIRouter(
 
 
 
+# ==========================================================
+# SERVICE
+# ==========================================================
+
+
 def get_service(
     session: Session = Depends(get_session)
 ):
-    return UsuarioServiceImpl(session)
+
+    return UsuarioServiceImpl(
+        session
+    )
 
 
 
-# ==================================================
+# ==========================================================
 # CRIAR USUÁRIO
-# Não precisa estar logado
-# ==================================================
+#
+# Público
+#
+# Sempre cria Cliente
+# ==========================================================
+
 
 @router.post(
     "/",
@@ -38,182 +62,254 @@ def get_service(
     status_code=201
 )
 def criar(
+
     usuario: UsuarioCreate,
-    service: UsuarioServiceImpl = Depends(get_service),
+
+
+    service: UsuarioServiceImpl = Depends(
+        get_service
+    )
+
 ):
 
-    return service.criar(usuario)
+    return service.criar(
+        usuario
+    )
 
 
 
 
 
-# ==================================================
+# ==========================================================
+# CRIAR USUÁRIO POR ADMIN
+#
+# Apenas Administrador
+# ==========================================================
+
+
+@router.post(
+    "/admin",
+    response_model=UsuarioResponse
+)
+def criar_usuario_admin(
+
+    usuario: UsuarioAdminCreate,
+
+
+    usuario_logado: Usuarios = Depends(
+        exigir_perfil(
+            "Administrador"
+        )
+    ),
+
+
+    service: UsuarioServiceImpl = Depends(
+        get_service
+    )
+
+):
+
+    return service.criar_por_admin(
+        usuario
+    )
+
+
+
+
+
+# ==========================================================
 # LISTAR USUÁRIOS
-# Precisa estar autenticado
-# ==================================================
+#
+# Apenas Administrador
+# ==========================================================
+
 
 @router.get(
     "/",
     response_model=list[UsuarioResponse]
 )
 def listar(
+
     skip: int = 0,
+
     limit: int = 10,
+
     nome: str | None = None,
+
     email: str | None = None,
+
+    perfil: str | None = None,
+
     sort_by: str = "id",
+
     order: str = "asc",
 
-    usuario_logado: Usuarios = Depends(get_current_user),
 
-    service: UsuarioServiceImpl = Depends(get_service),
+
+    usuario_logado: Usuarios = Depends(
+        exigir_perfil(
+            "Administrador"
+        )
+    ),
+
+
+    service: UsuarioServiceImpl = Depends(
+        get_service
+    )
+
 ):
 
+
     return service.listar(
+
         skip=skip,
+
         limit=limit,
+
         nome=nome,
+
         email=email,
+
+        perfil=perfil,
+
         sort_by=sort_by,
-        order=order,
+
+        order=order
+
     )
 
 
 
 
 
-# ==================================================
+# ==========================================================
 # BUSCAR USUÁRIO
-# ==================================================
+#
+# Apenas Administrador
+# ==========================================================
+
 
 @router.get(
     "/{id}",
     response_model=UsuarioResponse
 )
 def buscar(
-    id:int,
 
-    usuario_logado: Usuarios = Depends(get_current_user),
+    id: int,
 
-    service: UsuarioServiceImpl = Depends(get_service),
+
+    usuario_logado: Usuarios = Depends(
+        exigir_perfil(
+            "Administrador"
+        )
+    ),
+
+
+    service: UsuarioServiceImpl = Depends(
+        get_service
+    )
+
 ):
 
-    usuario = service.buscar_por_id(id)
 
-
-    if not usuario:
-
-        raise HTTPException(
-            status_code=404,
-            detail="Usuário não encontrado."
-        )
-
-
-    return usuario
+    return service.buscar_por_id(
+        id
+    )
 
 
 
 
 
-# ==================================================
+# ==========================================================
 # ATUALIZAR USUÁRIO
-# ==================================================
+#
+# Apenas Administrador
+#
+# Controle também no Service
+# ==========================================================
+
 
 @router.put(
     "/{id}",
     response_model=UsuarioResponse
 )
 def atualizar(
-    id:int,
-    usuario:UsuarioUpdate,
 
-    usuario_logado: Usuarios = Depends(get_current_user),
+    id: int,
 
-    service: UsuarioServiceImpl = Depends(get_service),
+
+    usuario: UsuarioUpdate,
+
+
+    usuario_logado: Usuarios = Depends(
+        exigir_perfil(
+            "Administrador"
+        )
+    ),
+
+
+    service: UsuarioServiceImpl = Depends(
+        get_service
+    )
+
 ):
 
-    usuario_atualizado = service.atualizar(
+
+    return service.atualizar(
+
         id,
-        usuario
+
+        usuario,
+
+        usuario_logado
+
     )
 
 
-    if not usuario_atualizado:
-
-        raise HTTPException(
-            status_code=404,
-            detail="Usuário não encontrado."
-        )
-
-
-    return usuario_atualizado
 
 
 
-
-
-# ==================================================
+# ==========================================================
 # DELETAR USUÁRIO
-# ==================================================
+#
+# Apenas Administrador
+#
+# Controle também no Service
+# ==========================================================
+
 
 @router.delete(
     "/{id}",
     status_code=204
 )
 def deletar(
-    id:int,
 
-    usuario_logado: Usuarios = Depends(get_current_user),
-
-    service: UsuarioServiceImpl = Depends(get_service),
-):
-
-    """
-    Regra:
-
-    Usuário só pode excluir
-    a própria conta.
+    id: int,
 
 
-    Exemplo:
-
-    Token pertence ao usuário ID 5
-
-
-    Tentativa:
-
-    DELETE /usuarios/8
-
-
-    Resultado:
-
-    Bloqueado.
-    """
-
-
-    if usuario_logado.id != id:
-
-        raise HTTPException(
-            status_code=403,
-            detail="Você só pode excluir sua própria conta."
+    usuario_logado: Usuarios = Depends(
+        exigir_perfil(
+            "Administrador"
         )
+    ),
 
 
-
-    removido = service.deletar(id)
-
-
-
-    if not removido:
-
-        raise HTTPException(
-            status_code=404,
-            detail="Usuário não encontrado."
-        )
-
-
-
-    return Response(
-        status_code=204
+    service: UsuarioServiceImpl = Depends(
+        get_service
     )
+
+    ):
+
+
+        service.deletar(
+
+            id,
+
+            usuario_logado
+
+        )
+
+
+        return Response(
+            status_code=204
+        )

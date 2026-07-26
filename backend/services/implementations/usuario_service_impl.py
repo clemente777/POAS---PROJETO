@@ -4,208 +4,466 @@ from sqlalchemy.orm import Session
 from pwdlib import PasswordHash
 
 from backend.models.usuario_model import Usuarios
+
 from backend.schemas.usuario_schema import (
     UsuarioCreate,
-    UsuarioUpdate
+    UsuarioUpdate,
+    UsuarioAdminCreate
 )
 
 
 senha_context = PasswordHash.recommended()
 
 
+
 class UsuarioServiceImpl:
     """
-    Service responsável pelas regras de negócio
-    dos usuários.
+    ==========================================================
+                    SERVICE DE USUÁRIOS
+    ==========================================================
 
-    Responsabilidades:
+    Responsável pelas regras de negócio dos usuários.
 
-    - Validar cadastro
-    - Criptografar senhas
-    - Evitar emails duplicados
-    - Buscar usuários
-    - Atualizar dados
-    - Remover usuários
+    Perfis:
+
+    Administrador:
+        - Controle total.
+
+    Veterinário:
+        - Não gerencia usuários.
+
+    Cliente:
+        - Gerencia apenas sua própria conta.
+
+
+    Regras:
+
+    • Cadastro público cria Cliente.
+    • Apenas Administrador cria outros perfis.
+    • Email único.
+    • Senha criptografada.
+    • Perfil protegido.
     """
 
-    def __init__(self, session: Session):
-        """
-        Recebe a sessão do banco.
 
-        A sessão será utilizada para:
 
-        - Consultas
-        - Inserções
-        - Atualizações
-        - Exclusões
-        """
+    def __init__(
+        self,
+        session: Session
+    ):
 
         self.session = session
 
 
-    # ==================================================
+
+    # ==========================================================
     # NORMALIZAÇÃO
-    # ==================================================
-
-    def normalizar_email(self, email: str):
-        """
-        Padroniza o email.
-
-        Exemplo:
-
-        Entrada:
-
-        JOAO@EMAIL.COM
+    # ==========================================================
 
 
-        Saída:
-
-        joao@email.com
-        """
+    def normalizar_email(
+        self,
+        email: str
+    ):
 
         if not email:
+
             return ""
 
-        return email.lower().strip()
+
+        return email.strip().lower()
 
 
 
-    # ==================================================
+    def normalizar_nome(
+        self,
+        nome: str
+    ):
+
+        if not nome:
+
+            return ""
+
+
+        return " ".join(
+            nome.strip().split()
+        ).title()
+
+
+
+    def normalizar_perfil(
+        self,
+        perfil: str
+    ):
+
+        if not perfil:
+
+            raise HTTPException(
+                status_code=400,
+                detail="Perfil obrigatório."
+            )
+
+
+        perfil = (
+            perfil
+            .strip()
+            .lower()
+        )
+
+
+        perfis = {
+
+            "administrador":
+            "Administrador",
+
+            "admin":
+            "Administrador",
+
+            "veterinario":
+            "Veterinário",
+
+            "veterinário":
+            "Veterinário",
+
+            "vet":
+            "Veterinário",
+
+            "cliente":
+            "Cliente"
+
+        }
+
+
+        if perfil not in perfis:
+
+            raise HTTPException(
+                status_code=400,
+                detail="Perfil inválido."
+            )
+
+
+        return perfis[perfil]
+    
+        # ==========================================================
     # BUSCAS
-    # ==================================================
+    # ==========================================================
 
-    def buscar_por_id(self, id: int):
-        """
-        Busca usuário pelo ID.
 
-        Retorna:
+    def buscar_por_id(
+        self,
+        id: int
+    ):
 
-        Usuário encontrado
+        return self.session.scalar(
 
-        ou
-
-        None caso não exista.
-        """
-
-        return self.session.scalars(
             select(Usuarios)
             .where(
                 Usuarios.id == id
             )
-        ).first()
+
+        )
 
 
 
-    def buscar_por_email(self, email: str):
-        """
-        Busca usuário pelo email.
+    def buscar_por_email(
+        self,
+        email: str
+    ):
 
-        Usado para:
+        email = self.normalizar_email(
+            email
+        )
 
-        - Login
-        - Impedir emails duplicados
-        """
 
-        email = self.normalizar_email(email)
+        return self.session.scalar(
 
-        return self.session.scalars(
             select(Usuarios)
             .where(
                 Usuarios.email == email
             )
-        ).first()
+
+        )
 
 
 
-    # ==================================================
-    # CRIAR USUÁRIO
-    # ==================================================
+    # ==========================================================
+    # CONTROLE DE PERMISSÃO
+    # ==========================================================
 
-    def criar(self, usuario: UsuarioCreate):
+
+    def validar_acesso_usuario(
+        self,
+        usuario_db: Usuarios,
+        usuario_logado: Usuarios
+    ):
+
         """
-        Cria um novo usuário.
-
         Regras:
 
-        1 - Nome obrigatório
+        Administrador:
+            acesso total.
 
-        2 - Email obrigatório
+        Cliente:
+            somente própria conta.
 
-        3 - Senha mínima de 6 caracteres
-
-        4 - Email não pode repetir
-
-        5 - Senha deve ser armazenada criptografada
+        Veterinário:
+            sem acesso.
         """
 
 
-        # Normalizar email
+        if usuario_logado.perfil == "Administrador":
+
+            return True
+
+
+
+        if usuario_logado.perfil == "Cliente":
+
+
+            if usuario_db.id != usuario_logado.id:
+
+
+                raise HTTPException(
+
+                    status_code=403,
+
+                    detail=(
+                        "Você não possui "
+                        "acesso a este usuário."
+                    )
+
+                )
+
+
+            return True
+
+
+
+        raise HTTPException(
+
+            status_code=403,
+
+            detail="Perfil sem permissão."
+
+        )
+
+
+
+    # ==========================================================
+    # CRIAR USUÁRIO PÚBLICO
+    # ==========================================================
+
+
+    def criar(
+        self,
+        usuario: UsuarioCreate
+    ):
+
+        """
+        Cadastro público.
+
+        Sempre cria:
+
+        Cliente
+        """
+
+
+        nome = self.normalizar_nome(
+            usuario.nome
+        )
+
 
         email = self.normalizar_email(
             usuario.email
         )
 
 
-        # Validar nome
 
-        if not usuario.nome.strip():
+        if not nome:
 
             raise HTTPException(
+
                 status_code=400,
-                detail="Nome é obrigatório."
+
+                detail="Nome obrigatório."
+
             )
 
 
-        # Validar senha
 
         if len(usuario.senha) < 6:
 
             raise HTTPException(
+
                 status_code=400,
-                detail="A senha deve possuir no mínimo 6 caracteres."
+
+                detail=(
+                    "A senha deve possuir "
+                    "mínimo 6 caracteres."
+                )
+
             )
 
 
-        # Verificar email existente
 
-        usuario_existente = self.buscar_por_email(
-            email
-        )
-
-
-        if usuario_existente:
+        if self.buscar_por_email(email):
 
             raise HTTPException(
+
                 status_code=409,
+
                 detail="Email já cadastrado."
+
             )
 
 
-        # Criar usuário
 
-        db = Usuarios(
-            nome=usuario.nome.strip(),
+        novo_usuario = Usuarios(
+
+            nome=nome,
+
             email=email,
+
             senha_hash=senha_context.hash(
                 usuario.senha
-            )
+            ),
+
+            perfil="Cliente"
+
         )
 
 
-        self.session.add(db)
+
+        self.session.add(
+            novo_usuario
+        )
+
 
         self.session.commit()
 
-        self.session.refresh(db)
+
+        self.session.refresh(
+            novo_usuario
+        )
 
 
-        return db
+        return novo_usuario
+    
+        # ==========================================================
+    # CRIAR USUÁRIO POR ADMINISTRADOR
+    # ==========================================================
+
+
+    def criar_por_admin(
+        self,
+        usuario: UsuarioAdminCreate
+    ):
+
+        """
+        Criado somente pelo Administrador.
+
+        Permite criar:
+
+        • Administrador
+        • Veterinário
+        • Cliente
+        """
+
+
+        nome = self.normalizar_nome(
+            usuario.nome
+        )
+
+
+        email = self.normalizar_email(
+            usuario.email
+        )
+
+
+        perfil = self.normalizar_perfil(
+            usuario.perfil
+        )
 
 
 
-    # ==================================================
+        if not nome:
+
+            raise HTTPException(
+
+                status_code=400,
+
+                detail="Nome obrigatório."
+
+            )
+
+
+
+        if len(usuario.senha) < 6:
+
+            raise HTTPException(
+
+                status_code=400,
+
+                detail=(
+                    "A senha deve possuir "
+                    "mínimo 6 caracteres."
+                )
+
+            )
+
+
+
+        if self.buscar_por_email(email):
+
+            raise HTTPException(
+
+                status_code=409,
+
+                detail="Email já cadastrado."
+
+            )
+
+
+
+        novo_usuario = Usuarios(
+
+            nome=nome,
+
+            email=email,
+
+            senha_hash=senha_context.hash(
+                usuario.senha
+            ),
+
+            perfil=perfil
+
+        )
+
+
+
+        self.session.add(
+            novo_usuario
+        )
+
+
+        self.session.commit()
+
+
+        self.session.refresh(
+            novo_usuario
+        )
+
+
+        return novo_usuario
+
+
+
+
+
+    # ==========================================================
     # LISTAR USUÁRIOS
-    # ==================================================
+    # ==========================================================
+
 
     def listar(
         self,
@@ -213,126 +471,183 @@ class UsuarioServiceImpl:
         limit: int = 10,
         nome: str | None = None,
         email: str | None = None,
+        perfil: str | None = None,
         sort_by: str = "id",
-        order: str = "asc",
+        order: str = "asc"
     ):
+
         """
         Lista usuários.
 
+        Apenas Administrador.
+
         Recursos:
 
-        - Paginação
-        - Filtro por nome
-        - Filtro por email
-        - Ordenação
+        • Paginação
+        • Filtros
+        • Ordenação
         """
 
 
-        query = select(Usuarios)
+        limit = min(
+            limit,
+            100
+        )
 
 
-        # Filtro por nome
+        query = select(
+            Usuarios
+        )
+
+
 
         if nome:
 
             query = query.where(
+
                 Usuarios.nome.ilike(
+
                     f"%{nome}%"
+
                 )
+
             )
 
 
-        # Filtro por email
 
         if email:
 
             query = query.where(
+
                 Usuarios.email.ilike(
+
                     f"%{email}%"
+
                 )
+
             )
 
 
-        # Campos permitidos para ordenar
+
+        if perfil:
+
+            perfil = self.normalizar_perfil(
+                perfil
+            )
+
+
+            query = query.where(
+
+                Usuarios.perfil == perfil
+
+            )
+
+
 
         campos = {
 
-            "id": Usuarios.id,
 
-            "nome": Usuarios.nome,
+            "id":
 
-            "email": Usuarios.email,
+            Usuarios.id,
 
-            "criado_em": Usuarios.criado_em
+
+            "nome":
+
+            Usuarios.nome,
+
+
+            "email":
+
+            Usuarios.email,
+
+
+            "perfil":
+
+            Usuarios.perfil,
+
+
+            "criado_em":
+
+            Usuarios.criado_em
 
         }
 
 
+
         coluna = campos.get(
+
             sort_by,
+
             Usuarios.id
+
         )
+
 
 
         if order.lower() == "desc":
 
+
             query = query.order_by(
+
                 desc(coluna)
+
             )
 
         else:
 
+
             query = query.order_by(
+
                 asc(coluna)
+
             )
 
 
-        # Paginação
 
         query = (
+
             query
+
             .offset(skip)
+
             .limit(limit)
+
         )
+
 
 
         return self.session.scalars(
             query
         ).all()
-    
-        # ==================================================
+        
+        # ==========================================================
     # ATUALIZAR USUÁRIO
-    # ==================================================
+    # ==========================================================
 
     def atualizar(
         self,
         id: int,
-        usuario: UsuarioUpdate
+        usuario: UsuarioUpdate,
+        usuario_logado: Usuarios
     ):
         """
-        Atualiza um usuário existente.
+        Atualiza usuário.
 
-        Permite atualização parcial.
+        Regras:
 
-        Exemplo:
-
-        Entrada:
-
-        {
-            "nome":"João"
-        }
-
-
-        Apenas o nome será alterado.
-
-        Os outros campos permanecem iguais.
+        • Administrador pode alterar qualquer usuário.
+        • Usuário comum não altera perfil.
+        • Cliente não altera outro usuário.
+        • Email continua único.
+        • Senha é sempre criptografada.
         """
 
 
-        db = self.buscar_por_id(id)
+        usuario_db = self.buscar_por_id(id)
 
 
-        if not db:
+        if not usuario_db:
 
             raise HTTPException(
                 status_code=404,
@@ -340,49 +655,83 @@ class UsuarioServiceImpl:
             )
 
 
-        # Pega somente os campos enviados
 
-        dados = usuario.model_dump(
-            exclude_unset=True
-        )
+        # ======================================================
+        # CONTROLE DE PERMISSÃO
+        # ======================================================
+
+        if usuario_logado.perfil != "Administrador":
 
 
-        # ==================================================
-        # VALIDAR NOME
-        # ==================================================
-
-        if "nome" in dados:
-
-            if not dados["nome"].strip():
+            if usuario_db.id != usuario_logado.id:
 
                 raise HTTPException(
-                    status_code=400,
-                    detail="Nome é obrigatório."
+                    status_code=403,
+                    detail="Você não pode alterar outro usuário."
                 )
 
 
-            dados["nome"] = dados["nome"].strip()
+
+            dados = usuario.model_dump(
+                exclude_unset=True
+            )
+
+
+            if "perfil" in dados:
+
+                raise HTTPException(
+                    status_code=403,
+                    detail="Você não pode alterar seu perfil."
+                )
+
+        else:
+
+            dados = usuario.model_dump(
+                exclude_unset=True
+            )
 
 
 
-        # ==================================================
-        # VALIDAR EMAIL
-        # ==================================================
+        # ======================================================
+        # NOME
+        # ======================================================
+
+        if "nome" in dados:
+
+            nome = self.normalizar_nome(
+                dados["nome"]
+            )
+
+
+            if not nome:
+
+                raise HTTPException(
+                    status_code=400,
+                    detail="Nome obrigatório."
+                )
+
+
+            usuario_db.nome = nome
+
+
+
+        # ======================================================
+        # EMAIL
+        # ======================================================
 
         if "email" in dados:
-
 
             email = self.normalizar_email(
                 dados["email"]
             )
 
 
-            usuario_existente = self.buscar_por_email(
+            existente = self.buscar_por_email(
                 email
             )
 
 
-            if usuario_existente and usuario_existente.id != id:
+            if existente and existente.id != id:
 
                 raise HTTPException(
                     status_code=409,
@@ -390,105 +739,103 @@ class UsuarioServiceImpl:
                 )
 
 
-            dados["email"] = email
+            usuario_db.email = email
 
 
 
-        # ==================================================
-        # VALIDAR SENHA
-        # ==================================================
+        # ======================================================
+        # SENHA
+        # ======================================================
 
         if "senha" in dados:
 
 
-            if len(dados["senha"]) < 4:
+            if len(dados["senha"]) < 6:
 
                 raise HTTPException(
                     status_code=400,
-                    detail=
-                    "A senha deve possuir no mínimo 6 caracteres."
+                    detail=(
+                        "A senha deve possuir "
+                        "no mínimo 6 caracteres."
+                    )
                 )
 
 
-            """
-            A senha nunca é salva
-            diretamente no banco.
-
-            Exemplo:
-
-            Entrada:
-
-            123456
-
-
-            Banco:
-
-            $argon2id$v=19$...
-            """
-
-
-            db.senha_hash = senha_context.hash(
-                dados["senha"]
+            usuario_db.senha_hash = (
+                senha_context.hash(
+                    dados["senha"]
+                )
             )
 
 
-            # Remove senha normal
-            # para não tentar salvar
-            # no banco
 
-            del dados["senha"]
+        # ======================================================
+        # PERFIL
+        # ======================================================
+
+        if "perfil" in dados:
 
 
+            if usuario_logado.perfil != "Administrador":
 
-        # ==================================================
-        # APLICAR ALTERAÇÕES
-        # ==================================================
+                raise HTTPException(
+                    status_code=403,
+                    detail=(
+                        "Somente Administrador "
+                        "pode alterar perfil."
+                    )
+                )
 
-        for campo, valor in dados.items():
 
-            setattr(
-                db,
-                campo,
-                valor
+            usuario_db.perfil = (
+                self.normalizar_perfil(
+                    dados["perfil"]
+                )
             )
+
 
 
         self.session.commit()
 
-        self.session.refresh(db)
+
+        self.session.refresh(
+            usuario_db
+        )
 
 
-        return db
+        return usuario_db
 
 
 
 
-    # ==================================================
+
+
+    # ==========================================================
     # DELETAR USUÁRIO
-    # ==================================================
+    # ==========================================================
 
     def deletar(
         self,
-        id: int
+        id: int,
+        usuario_logado: Usuarios
     ):
         """
-        Remove um usuário.
+        Remove usuário.
 
         Regras:
 
-        1 - Usuário precisa existir
-
-        2 - Caso exista,
-            remove do banco
+        • Apenas Administrador exclui usuários.
+        • Não permite excluir a si mesmo.
+        • Usuário precisa existir.
         """
 
 
-        db = self.buscar_por_id(
+        usuario_db = self.buscar_por_id(
             id
         )
 
 
-        if not db:
+        if not usuario_db:
 
             raise HTTPException(
                 status_code=404,
@@ -496,12 +843,30 @@ class UsuarioServiceImpl:
             )
 
 
+
+        # ======================================================
+        # IMPEDIR AUTOEXCLUSÃO
+        # ======================================================
+
+        if usuario_db.id == usuario_logado.id:
+
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Administrador não pode "
+                    "excluir o próprio usuário."
+                )
+            )
+
+
+
         self.session.delete(
-            db
+            usuario_db
         )
 
 
         self.session.commit()
+
 
 
         return {

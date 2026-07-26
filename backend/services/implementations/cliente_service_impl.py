@@ -3,6 +3,11 @@ from sqlalchemy import asc, desc, select
 from sqlalchemy.orm import Session
 
 from backend.models.cliente_model import Clientes
+from backend.models.usuario_model import Usuarios
+from backend.models.animal_model import Animais
+from backend.models.atendimento_model import Atendimentos
+from backend.models.carrinho_model import Carrinhos
+
 from backend.schemas.cliente_schema import (
     ClienteCreate,
     ClienteUpdate
@@ -10,21 +15,61 @@ from backend.schemas.cliente_schema import (
 
 
 class ClienteServiceImpl:
+
     """
-    Service responsável pelas regras de negócio
-    relacionadas aos clientes.
+    ==========================================================
+    Service responsável pelas regras de negócio dos Clientes.
+    ==========================================================
+
+    Regras implementadas:
+
+    • Cliente só acessa seu próprio cadastro.
+    • Veterinário consulta clientes, mas não altera.
+    • Administrador possui acesso total.
+    • Um usuário Cliente só pode possuir um cadastro.
+    • CPF único.
+    • Email único.
+    • Não excluir cliente com animais.
+    • Não excluir cliente com compras.
+    • Não excluir cliente com histórico.
     """
 
     def __init__(
         self,
-        session: Session
+        session: Session,
+        usuario_logado: Usuarios
     ):
+
         self.session = session
+        self.usuario_logado = usuario_logado
+        
+    # ==========================================================
+    # NORMALIZAÇÕES
+    # ==========================================================
+
+    def normalizar_nome(
+        self,
+        nome: str
+    ):
+
+        if not nome:
+            return ""
+
+        return " ".join(
+            nome.strip().split()
+        ).title()
 
 
-    # ==================================================
-    # NORMALIZAÇÃO
-    # ==================================================
+    def normalizar_email(
+        self,
+        email: str
+    ):
+
+        if not email:
+            return ""
+
+        return email.strip().lower()
+
 
     def normalizar_cpf(
         self,
@@ -42,106 +87,95 @@ class ClienteServiceImpl:
         )
 
 
-    def normalizar_email(
-        self,
-        email: str
-    ):
-
-        if not email:
-            return ""
-
-        return email.lower().strip()
-
-
-
-    # ==================================================
-    # VALIDAÇÕES
-    # ==================================================
-
-    def validar_cpf(
-        self,
-        cpf: str
-    ):
-
-        cpf = self.normalizar_cpf(cpf)
-
-
-        if len(cpf) != 11:
-            return False
-
-
-        if cpf == cpf[0] * 11:
-            return False
-
-
-        soma = sum(
-            int(cpf[i]) * (10 - i)
-            for i in range(9)
-        )
-
-
-        resto = soma % 11
-
-
-        digito1 = (
-            0
-            if resto < 2
-            else 11 - resto
-        )
-
-
-        soma = sum(
-            int(cpf[i]) * (11 - i)
-            for i in range(10)
-        )
-
-
-        resto = soma % 11
-
-
-        digito2 = (
-            0
-            if resto < 2
-            else 11 - resto
-        )
-
-
-        return (
-            int(cpf[9]) == digito1
-            and
-            int(cpf[10]) == digito2
-        )
-
-
-
-    def validar_telefone(
+    def normalizar_telefone(
         self,
         telefone: str
     ):
 
         if not telefone:
-            return False
+            return ""
 
-
-        numeros = (
+        return (
             telefone
             .replace("(", "")
             .replace(")", "")
             .replace("-", "")
             .replace(" ", "")
         )
+        # ==========================================================
+    # PERFIL
+    # ==========================================================
 
+    def obter_perfil(self):
 
-        return (
-            numeros.isdigit()
-            and len(numeros) in [10, 11]
+        perfil = self.usuario_logado.perfil
+
+        if hasattr(
+            perfil,
+            "nome"
+        ):
+            return perfil.nome
+
+        return perfil
+    
+        # ==========================================================
+    # CONTROLE DE ACESSO
+    # ==========================================================
+
+    def validar_acesso_cliente(
+        self,
+        cliente: Clientes
+    ):
+
+        perfil = self.obter_perfil()
+
+        if perfil in [
+            "Administrador",
+            "Veterinário"
+        ]:
+            return
+
+        if perfil == "Cliente":
+
+            if cliente.usuario_id != self.usuario_logado.id:
+
+                raise HTTPException(
+                    status_code=403,
+                    detail="Você não possui acesso a este cliente."
+                )
+
+            return
+
+        raise HTTPException(
+            status_code=403,
+            detail="Perfil sem permissão."
+        )
+    
+        # ==========================================================
+    # BUSCAS
+    # ==========================================================
+
+    def buscar_por_id(
+        self,
+        id: int
+    ):
+
+        cliente = self.session.scalar(
+            select(Clientes)
+            .where(Clientes.id == id)
         )
 
+        if not cliente:
 
+            raise HTTPException(
+                status_code=404,
+                detail="Cliente não encontrado."
+            )
 
-    # ==================================================
-    # BUSCAS
-    # ==================================================
+        self.validar_acesso_cliente(cliente)
+
+        return cliente
+
 
     def buscar_por_cpf(
         self,
@@ -150,14 +184,10 @@ class ClienteServiceImpl:
 
         cpf = self.normalizar_cpf(cpf)
 
-
-        return self.session.scalars(
+        return self.session.scalar(
             select(Clientes)
-            .where(
-                Clientes.cpf == cpf
-            )
-        ).first()
-
+            .where(Clientes.cpf == cpf)
+        )
 
 
     def buscar_por_email(
@@ -167,89 +197,192 @@ class ClienteServiceImpl:
 
         email = self.normalizar_email(email)
 
-
-        return self.session.scalars(
+        return self.session.scalar(
             select(Clientes)
-            .where(
-                Clientes.email == email
-            )
-        ).first()
-
-
-
-    def buscar_por_id(
-        self,
-        id: int
-    ):
-
-        return self.session.scalars(
-            select(Clientes)
-            .where(
-                Clientes.id == id
-            )
-        ).first()
-
-
-
-    # ==================================================
-    # CRIAR CLIENTE
-    # ==================================================
-
-    def criar(
-        self,
-        cliente: ClienteCreate
-    ):
-
-        cpf = self.normalizar_cpf(
-            cliente.cpf
+            .where(Clientes.email == email)
         )
 
 
-        email = self.normalizar_email(
-            cliente.email
+    def buscar_por_usuario(self):
+
+        return self.session.scalar(
+
+            select(Clientes)
+
+            .where(
+                Clientes.usuario_id == self.usuario_logado.id
+            )
+
         )
+    def validar_nome(
+        self,
+        nome: str
+    ):
 
+        nome = self.normalizar_nome(nome)
 
-        if not cliente.nome.strip():
-
-            raise HTTPException(
-                status_code=400,
-                detail="Nome é obrigatório."
-            )
-
-
-        if not cpf:
+        if len(nome) < 3:
 
             raise HTTPException(
                 status_code=400,
-                detail="CPF é obrigatório."
+                detail="Nome inválido."
             )
+    def validar_email(
+        self,
+        email: str
+    ):
 
+        email = self.normalizar_email(email)
 
-        if not self.validar_cpf(cpf):
-
-            raise HTTPException(
-                status_code=400,
-                detail="CPF inválido."
-            )
-
-
-        if not self.validar_telefone(
-            cliente.telefone
+        if (
+            "@" not in email
+            or "." not in email.split("@")[-1]
         ):
+
+            raise HTTPException(
+                status_code=400,
+                detail="Email inválido."
+            )
+    
+    def validar_telefone(
+        self,
+        telefone: str
+    ):
+
+        telefone = self.normalizar_telefone(
+            telefone
+        )
+
+        if not telefone.isdigit():
 
             raise HTTPException(
                 status_code=400,
                 detail="Telefone inválido."
             )
 
-
-        if not cliente.endereco.strip():
+        if len(telefone) not in [10, 11]:
 
             raise HTTPException(
                 status_code=400,
-                detail="Endereço é obrigatório."
+                detail="Telefone inválido."
             )
+    
+    def validar_cpf(
+        self,
+        cpf: str
+    ):
+
+        cpf = self.normalizar_cpf(cpf)
+
+        if len(cpf) != 11:
+
+            raise HTTPException(
+                status_code=400,
+                detail="CPF inválido."
+            )
+
+        if cpf == cpf[0] * 11:
+
+            raise HTTPException(
+                status_code=400,
+                detail="CPF inválido."
+            )
+
+        soma = sum(
+            int(cpf[i]) * (10 - i)
+            for i in range(9)
+        )
+
+        resto = soma % 11
+
+        digito1 = 0 if resto < 2 else 11 - resto
+
+        soma = sum(
+            int(cpf[i]) * (11 - i)
+            for i in range(10)
+        )
+
+        resto = soma % 11
+
+        digito2 = 0 if resto < 2 else 11 - resto
+
+        if (
+            int(cpf[9]) != digito1
+            or
+            int(cpf[10]) != digito2
+        ):
+
+            raise HTTPException(
+                status_code=400,
+                detail="CPF inválido."
+            )
+    
+        # ==========================================================
+    # CRIAR
+    # ==========================================================
+
+    def criar(
+    self,
+    cliente: ClienteCreate,
+):
+
+        perfil = self.obter_perfil()
+
+        if perfil not in [
+            "Cliente",
+            "Administrador"
+        ]:
+
+            raise HTTPException(
+                status_code=403,
+                detail="Sem permissão para cadastrar cliente."
+            )
+
+
+        usuario = self.session.scalar(
+
+            select(Usuarios)
+
+            .where(
+                Usuarios.id == self.usuario_logado.id
+            )
+
+        )
+
+
+        if not usuario:
+
+            raise HTTPException(
+                status_code=404,
+                detail="Usuário não encontrado."
+            )
+
+
+        nome = self.normalizar_nome(
+            cliente.nome
+        )
+
+        cpf = self.normalizar_cpf(
+            cliente.cpf
+        )
+
+        email = self.normalizar_email(
+            cliente.email
+        )
+
+        telefone = self.normalizar_telefone(
+            cliente.telefone
+        )
+
+
+        self.validar_nome(nome)
+
+        self.validar_cpf(cpf)
+
+        self.validar_email(email)
+
+        self.validar_telefone(telefone)
+
 
 
         if self.buscar_por_cpf(cpf):
@@ -268,32 +401,65 @@ class ClienteServiceImpl:
             )
 
 
-        dados = cliente.model_dump()
 
+        existente = self.session.scalar(
 
-        dados["cpf"] = cpf
-        dados["email"] = email
+            select(Clientes)
 
+            .where(
+                Clientes.usuario_id == usuario.id
+            )
 
-        db = Clientes(
-            **dados
         )
 
 
-        self.session.add(db)
+        if existente:
 
-        self.session.commit()
-
-        self.session.refresh(db)
-
-
-        return db
+            raise HTTPException(
+                status_code=409,
+                detail="Usuário já possui cadastro de cliente."
+            )
 
 
+        novo = Clientes(
 
-    # ==================================================
-    # LISTAR CLIENTES
-    # ==================================================
+            nome=nome,
+
+            cpf=cpf,
+
+            telefone=telefone,
+
+            email=email,
+
+            endereco=cliente.endereco.strip(),
+
+            usuario_id=usuario.id
+
+        )
+
+
+        try:
+
+            self.session.add(novo)
+
+            self.session.commit()
+
+            self.session.refresh(novo)
+
+            return novo
+
+
+        except Exception:
+
+            self.session.rollback()
+
+            raise HTTPException(
+                status_code=500,
+                detail="Erro ao criar cliente."
+            )
+        # ==========================================================
+    # LISTAR
+    # ==========================================================
 
     def listar(
         self,
@@ -301,53 +467,43 @@ class ClienteServiceImpl:
         limit: int = 10,
         nome: str | None = None,
         cpf: str | None = None,
-        telefone: str | None = None,
         email: str | None = None,
-        sort_by: str = "id",
-        order: str = "asc",
+        sort_by: str = "nome",
+        order: str = "asc"
     ):
-
 
         query = select(Clientes)
 
+        perfil = self.obter_perfil()
 
+        if perfil == "Cliente":
+
+            query = query.where(
+                Clientes.usuario_id ==
+                self.usuario_logado.id
+            )
 
         if nome:
 
             query = query.where(
                 Clientes.nome.ilike(
-                    f"%{nome}%"
+                    f"%{nome.strip()}%"
                 )
             )
-
 
         if cpf:
 
             query = query.where(
-                Clientes.cpf.ilike(
-                    f"%{cpf}%"
-                )
+                Clientes.cpf ==
+                self.normalizar_cpf(cpf)
             )
-
-
-        if telefone:
-
-            query = query.where(
-                Clientes.telefone.ilike(
-                    f"%{telefone}%"
-                )
-            )
-
 
         if email:
 
             query = query.where(
-                Clientes.email.ilike(
-                    f"%{email}%"
-                )
+                Clientes.email ==
+                self.normalizar_email(email)
             )
-
-
 
         campos = {
 
@@ -357,17 +513,14 @@ class ClienteServiceImpl:
 
             "cpf": Clientes.cpf,
 
-            "telefone": Clientes.telefone,
-
             "email": Clientes.email
-        }
 
+        }
 
         coluna = campos.get(
             sort_by,
-            Clientes.id
+            Clientes.nome
         )
-
 
         if order.lower() == "desc":
 
@@ -381,6 +534,14 @@ class ClienteServiceImpl:
                 asc(coluna)
             )
 
+        if skip < 0:
+            skip = 0
+
+        if limit <= 0:
+            limit = 10
+
+        if limit > 100:
+            limit = 100
 
         query = (
             query
@@ -388,14 +549,15 @@ class ClienteServiceImpl:
             .limit(limit)
         )
 
+        return self.session.scalars(
+            query
+        ).all()
+        
 
-        return self.session.scalars(query).all()
 
-
-
-    # ==================================================
-    # ATUALIZAR CLIENTE
-    # ==================================================
+        # ==========================================================
+    # ATUALIZAR
+    # ==========================================================
 
     def atualizar(
         self,
@@ -403,53 +565,105 @@ class ClienteServiceImpl:
         cliente: ClienteUpdate
     ):
 
-        db_cliente = self.buscar_por_id(id)
-
-
-        if not db_cliente:
-            return None
-
+        db = self.buscar_por_id(id)
 
         dados = cliente.model_dump(
             exclude_unset=True
         )
 
+        if "nome" in dados:
+
+            nome = self.normalizar_nome(
+                dados["nome"]
+            )
+
+            self.validar_nome(nome)
+
+            db.nome = nome
+
 
         if "cpf" in dados:
 
-            dados["cpf"] = self.normalizar_cpf(
+            cpf = self.normalizar_cpf(
                 dados["cpf"]
             )
+
+            self.validar_cpf(cpf)
+
+            existente = self.buscar_por_cpf(cpf)
+
+            if existente and existente.id != db.id:
+
+                raise HTTPException(
+                    status_code=409,
+                    detail="CPF já cadastrado."
+                )
+
+            db.cpf = cpf
 
 
         if "email" in dados:
 
-            dados["email"] = self.normalizar_email(
+            email = self.normalizar_email(
                 dados["email"]
             )
 
+            self.validar_email(email)
 
-        for campo, valor in dados.items():
-
-            setattr(
-                db_cliente,
-                campo,
-                valor
+            existente = self.buscar_por_email(
+                email
             )
 
+            if existente and existente.id != db.id:
 
-        self.session.commit()
+                raise HTTPException(
+                    status_code=409,
+                    detail="Email já cadastrado."
+                )
 
-        self.session.refresh(db_cliente)
+            db.email = email
 
 
-        return db_cliente
+        if "telefone" in dados:
+
+            telefone = self.normalizar_telefone(
+                dados["telefone"]
+            )
+
+            self.validar_telefone(
+                telefone
+            )
+
+            db.telefone = telefone
 
 
+        if "endereco" in dados:
 
-    # ==================================================
-    # DELETAR CLIENTE
-    # ==================================================
+            db.endereco = dados[
+                "endereco"
+            ].strip()
+
+
+        try:
+
+            self.session.commit()
+
+            self.session.refresh(db)
+
+            return db
+
+        except Exception:
+
+            self.session.rollback()
+
+            raise HTTPException(
+                status_code=500,
+                detail="Erro ao atualizar cliente."
+            )
+    
+        # ==========================================================
+    # DELETAR
+    # ==========================================================
 
     def deletar(
         self,
@@ -458,14 +672,80 @@ class ClienteServiceImpl:
 
         cliente = self.buscar_por_id(id)
 
+        possui_animais = self.session.scalar(
 
-        if not cliente:
-            return False
+            select(Animais)
+
+            .where(
+                Animais.cliente_id == cliente.id
+            )
+
+        )
+
+        if possui_animais:
+
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    "Não é possível excluir um cliente que possui animais cadastrados."
+                )
+            )
 
 
-        self.session.delete(cliente)
+        possui_atendimentos = self.session.scalar(
 
-        self.session.commit()
+            select(Atendimentos)
+
+            .join(Animais)
+
+            .where(
+                Animais.cliente_id == cliente.id
+            )
+
+        )
+
+        if possui_atendimentos:
+
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    "Não é possível excluir cliente com histórico veterinário."
+                )
+            )
 
 
-        return True
+        possui_carrinho = self.session.scalar(
+
+            select(Carrinhos)
+
+            .where(
+                Carrinhos.cliente_id == cliente.id
+            )
+
+        )
+
+        if possui_carrinho:
+
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    "Não é possível excluir cliente que possui compras."
+                )
+            )
+
+
+        try:
+
+            self.session.delete(cliente)
+
+            self.session.commit()
+
+        except Exception:
+
+            self.session.rollback()
+
+            raise HTTPException(
+                status_code=500,
+                detail="Erro ao excluir cliente."
+            )
+        

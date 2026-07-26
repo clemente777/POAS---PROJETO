@@ -2,188 +2,240 @@ from fastapi import HTTPException
 from sqlalchemy import asc, desc, select
 from sqlalchemy.orm import Session
 
+
 from backend.models.animal_model import Animais
 from backend.models.cliente_model import Clientes
+from backend.models.usuario_model import Usuarios
+from backend.models.atendimento_model import Atendimentos
+
+
 from backend.schemas.animal_schema import (
     AnimalCreate,
     AnimalUpdate
 )
 
 
+
 class AnimalServiceImpl:
-    """
-    Service responsável pelas regras de negócio
-    dos animais.
 
-    Responsabilidades:
 
-    - Validar dados do animal
-    - Verificar cliente dono
-    - Cadastrar animais
-    - Atualizar informações
-    - Listar com filtros
-    - Aplicar paginação
-    - Remover animais seguindo regras
-    """
-
-    def __init__(self, session: Session):
-        """
-        Recebe a sessão do banco.
-
-        Usada para:
-
-        - Consultas
-        - Inserções
-        - Atualizações
-        - Exclusões
-        """
+    def __init__(
+        self,
+        session: Session,
+        usuario_logado: Usuarios
+    ):
 
         self.session = session
+        self.usuario_logado = usuario_logado
 
 
-    # ==================================================
+
+    # ==========================================================
+    # AUXILIAR
+    # ==========================================================
+
+
+    def obter_perfil(self):
+
+        if not self.usuario_logado.perfil:
+
+            return None
+
+
+        return self.usuario_logado.perfil
+
+
+
+
+    # ==========================================================
     # NORMALIZAÇÃO
-    # ==================================================
+    # ==========================================================
 
-    def normalizar_texto(self, texto: str):
-        """
-        Remove espaços extras
-        e padroniza texto.
 
-        Exemplo:
-
-        Entrada:
-
-        "   cachorro   "
-
-        Saída:
-
-        "Cachorro"
-        """
+    def normalizar_texto(
+        self,
+        texto: str
+    ):
 
         if not texto:
+
             return ""
 
-        return texto.strip().capitalize()
 
-
-    # ==================================================
-    # VALIDAÇÕES
-    # ==================================================
-
-    def validar_idade(self, idade: int):
-        """
-        Valida idade do animal.
-
-        Regras:
-
-        - Não aceita idade negativa
-        - Limite máximo de 100 anos
-        """
-
-        if idade < 0:
-            return False
-
-        if idade > 100:
-            return False
-
-        return True
-
-
-    def validar_campos_obrigatorios(self, animal):
-        """
-        Valida campos obrigatórios.
-
-        Obrigatórios:
-
-        - Nome
-        - Espécie
-        - Raça
-        """
-
-        if not animal.nome.strip():
-            raise HTTPException(
-                status_code=400,
-                detail="Nome do animal é obrigatório."
+        return (
+            " ".join(
+                texto.strip().split()
             )
-
-        if not animal.especie.strip():
-            raise HTTPException(
-                status_code=400,
-                detail="Espécie é obrigatória."
-            )
-
-        if not animal.raca.strip():
-            raise HTTPException(
-                status_code=400,
-                detail="Raça é obrigatória."
-            )
-
-
-    # ==================================================
-    # BUSCAS
-    # ==================================================
-
-    def buscar_por_id(self, id: int):
-        """
-        Busca animal pelo ID.
-
-        Retorna:
-
-        - Animal encontrado
-        - None caso não exista
-        """
-
-        return self.session.scalars(
-            select(Animais)
-            .where(
-                Animais.id == id
-            )
-        ).first()
-
-
-    def buscar_cliente(self, id: int):
-        """
-        Busca cliente dono do animal.
-
-        Um animal precisa
-        obrigatoriamente possuir
-        um cliente existente.
-        """
-
-        return self.session.scalars(
-            select(Clientes)
-            .where(
-                Clientes.id == id
-            )
-        ).first()
-    
-        # ==================================================
-    # CRIAR ANIMAL
-    # ==================================================
-
-    def criar(self, animal: AnimalCreate):
-        """
-        Cadastra um novo animal.
-
-        Regras:
-
-        1 - Nome obrigatório
-        2 - Espécie obrigatória
-        3 - Raça obrigatória
-        4 - Idade válida
-        5 - Cliente dono precisa existir
-        6 - Dados normalizados antes de salvar
-        """
-
-        # Validar campos obrigatórios
-
-        self.validar_campos_obrigatorios(
-            animal
+            .title()
         )
 
 
-        # Validar idade
+
+    # ==========================================================
+    # VALIDAÇÕES
+    # ==========================================================
+
+
+    def validar_nome(
+        self,
+        nome: str
+    ):
+
+        if not nome:
+
+            return False
+
+
+        return len(
+            nome.strip()
+        ) >= 2
+
+
+
+
+    def validar_especie(
+        self,
+        especie: str
+    ):
+
+        if not especie:
+
+            return False
+
+
+        return len(
+            especie.strip()
+        ) >= 2
+
+
+
+
+    def validar_raca(
+        self,
+        raca: str
+    ):
+
+        if not raca:
+
+            return False
+
+
+        return len(
+            raca.strip()
+        ) >= 2
+
+
+
+
+    def validar_idade(
+        self,
+        idade: int
+    ):
+
+        if idade is None:
+
+            return False
+
+
+        return 0 <= idade <= 100
+
+
+
+
+    def validar_peso(
+        self,
+        peso: float | None
+    ):
+
+        if peso is None:
+
+            return True
+
+
+        return (
+            peso > 0
+            and
+            peso <= 300
+        )
+
+
+
+    # ==========================================================
+    # VALIDAR CLIENTE
+    # ==========================================================
+
+
+    def validar_cliente(
+        self,
+        cliente_id: int
+    ):
+
+
+        cliente = self.session.scalar(
+
+            select(Clientes)
+            .where(
+                Clientes.id == cliente_id
+            )
+
+        )
+
+
+        if not cliente:
+
+
+            raise HTTPException(
+
+                status_code=404,
+
+                detail="Cliente não encontrado."
+
+            )
+
+
+        return cliente
+
+
+
+
+    def validar_campos_obrigatorios(
+        self,
+        animal: AnimalCreate
+    ):
+
+
+        if not self.validar_nome(
+            animal.nome
+        ):
+
+            raise HTTPException(
+                status_code=400,
+                detail="Nome inválido."
+            )
+
+
+
+        if not self.validar_especie(
+            animal.especie
+        ):
+
+            raise HTTPException(
+                status_code=400,
+                detail="Espécie inválida."
+            )
+
+
+
+        if not self.validar_raca(
+            animal.raca
+        ):
+
+            raise HTTPException(
+                status_code=400,
+                detail="Raça inválida."
+            )
+
+
 
         if not self.validar_idade(
             animal.idade
@@ -195,393 +247,843 @@ class AnimalServiceImpl:
             )
 
 
-        # Verificar cliente
 
-        cliente = self.buscar_cliente(
-            animal.cliente_id
+        if hasattr(animal, "peso"):
+
+
+            if not self.validar_peso(
+                animal.peso
+            ):
+
+
+                raise HTTPException(
+                    status_code=400,
+                    detail="Peso inválido."
+                )
+        # ==========================================================
+    # BUSCAS
+    # ==========================================================
+
+
+    def buscar_animal_por_id(
+        self,
+        animal_id: int
+    ) -> Animais:
+
+
+        animal = self.session.scalar(
+
+            select(Animais)
+            .where(
+                Animais.id == animal_id
+            )
+
+        )
+
+
+        if not animal:
+
+
+            raise HTTPException(
+
+                status_code=404,
+
+                detail="Animal não encontrado."
+
+            )
+
+
+        return animal
+
+
+
+
+    def buscar_cliente_por_id(
+        self,
+        cliente_id: int
+    ) -> Clientes:
+
+
+        cliente = self.session.scalar(
+
+            select(Clientes)
+            .where(
+                Clientes.id == cliente_id
+            )
+
         )
 
 
         if not cliente:
 
+
             raise HTTPException(
+
                 status_code=404,
+
                 detail="Cliente não encontrado."
+
             )
 
 
-        # Normalizar dados
-
-        dados = animal.model_dump()
+        return cliente
 
 
-        dados["nome"] = self.normalizar_texto(
-            dados["nome"]
+
+
+
+    # ==========================================================
+    # CONTROLE DE PERMISSÃO
+    # ==========================================================
+
+
+    def verificar_acesso_animal(
+        self,
+        animal: Animais
+    ):
+
+
+        perfil = self.obter_perfil()
+
+
+
+        # Administrador e Veterinário
+        # possuem acesso total
+
+        if perfil in [
+
+            "Administrador",
+
+            "Veterinário"
+
+        ]:
+
+            return
+
+
+
+
+        # Cliente somente seus animais
+
+        if perfil == "Cliente":
+
+
+
+            cliente = self.session.scalar(
+
+                select(Clientes)
+                .where(
+                    Clientes.usuario_id
+                    ==
+                    self.usuario_logado.id
+                )
+
+            )
+
+
+
+            if not cliente:
+
+
+                raise HTTPException(
+
+                    status_code=403,
+
+                    detail=
+                    "Usuário sem cliente vinculado."
+
+                )
+
+
+
+
+            if animal.cliente_id != cliente.id:
+
+
+                raise HTTPException(
+
+                    status_code=403,
+
+                    detail=
+                    "Você não possui permissão para acessar este animal."
+
+                )
+
+
+            return
+
+
+
+
+
+        raise HTTPException(
+
+            status_code=403,
+
+            detail="Perfil sem permissão."
+
         )
 
-        dados["especie"] = self.normalizar_texto(
-            dados["especie"]
+
+
+
+
+
+    # ==========================================================
+    # CRIAR ANIMAL
+    # ==========================================================
+
+
+    def criar(
+        self,
+        animal: AnimalCreate
+    ) -> Animais:
+
+
+
+        self.validar_campos_obrigatorios(
+            animal
         )
 
-        dados["raca"] = self.normalizar_texto(
-            dados["raca"]
+
+
+        cliente = self.validar_cliente(
+
+            animal.cliente_id
+
         )
 
 
-        # Criar objeto
 
-        db = Animais(
-            **dados
+        perfil = self.obter_perfil()
+
+
+
+        # Cliente só cria para ele mesmo
+
+        if perfil == "Cliente":
+
+
+
+            cliente_usuario = self.session.scalar(
+
+                select(Clientes)
+                .where(
+
+                    Clientes.usuario_id
+                    ==
+                    self.usuario_logado.id
+
+                )
+
+            )
+
+
+
+            if not cliente_usuario:
+
+
+                raise HTTPException(
+
+                    status_code=403,
+
+                    detail=
+                    "Usuário sem cliente vinculado."
+
+                )
+
+
+
+            if cliente_usuario.id != cliente.id:
+
+
+                raise HTTPException(
+
+                    status_code=403,
+
+                    detail=
+                    "Você não pode cadastrar animal para outro cliente."
+
+                )
+
+
+
+
+
+        novo_animal = Animais(
+
+
+            nome=self.normalizar_texto(
+
+                animal.nome
+
+            ),
+
+
+
+            especie=self.normalizar_texto(
+
+                animal.especie
+
+            ),
+
+
+
+            raca=self.normalizar_texto(
+
+                animal.raca
+
+            ),
+
+
+
+            idade=animal.idade,
+
+
+            cliente_id=cliente.id
+
         )
 
 
-        # Salvar
 
-        self.session.add(db)
+
+        self.session.add(
+            novo_animal
+        )
+
 
         self.session.commit()
 
-        self.session.refresh(db)
+
+        self.session.refresh(
+            novo_animal
+        )
 
 
-        return db
+        return novo_animal
 
 
 
-    # ==================================================
+
+
+
+    # ==========================================================
     # LISTAR ANIMAIS
-    # ==================================================
+    # ==========================================================
+
 
     def listar(
+
         self,
-        skip: int = 0,
-        limit: int = 10,
+
+        pagina: int = 1,
+
+        limite: int = 10,
+
         nome: str | None = None,
-        especie: str | None = None,
-        raca: str | None = None,
-        idade: int | None = None,
-        cliente_id: int | None = None,
-        sort_by: str = "id",
-        order: str = "asc",
-    ):
-        """
-        Lista animais cadastrados.
 
-        Recursos:
+        ordem: str = "asc"
 
-        - Paginação
-        - Filtro por nome
-        - Filtro por espécie
-        - Filtro por raça
-        - Filtro por idade
-        - Filtro por cliente
-        - Ordenação
-
-
-        Exemplo:
-
-        GET /animais?
-
-        especie=Cachorro
-
-        limit=5
-        """
-
-
-        query = select(Animais)
+    ) -> list[Animais]:
 
 
 
-        # ==================================================
-        # FILTROS
-        # ==================================================
+        query = select(
+            Animais
+        )
+
+
+
+        perfil = self.obter_perfil()
+
+
+
+        # Cliente vê apenas seus animais
+
+        if perfil == "Cliente":
+
+
+
+            cliente = self.session.scalar(
+
+                select(Clientes)
+                .where(
+
+                    Clientes.usuario_id
+                    ==
+                    self.usuario_logado.id
+
+                )
+
+            )
+
+
+
+            if not cliente:
+
+
+                raise HTTPException(
+
+                    status_code=403,
+
+                    detail=
+                    "Usuário sem cliente vinculado."
+
+                )
+
+
+
+            query = query.where(
+
+                Animais.cliente_id
+                ==
+                cliente.id
+
+            )
+
+
+
+
+
+        # filtro nome
 
         if nome:
 
+
             query = query.where(
+
                 Animais.nome.ilike(
-                    f"%{nome}%"
+
+                    f"%{nome.strip()}%"
+
                 )
-            )
 
-
-        if especie:
-
-            query = query.where(
-                Animais.especie.ilike(
-                    f"%{especie}%"
-                )
-            )
-
-
-        if raca:
-
-            query = query.where(
-                Animais.raca.ilike(
-                    f"%{raca}%"
-                )
-            )
-
-
-        if idade is not None:
-
-            query = query.where(
-                Animais.idade == idade
-            )
-
-
-        if cliente_id is not None:
-
-            query = query.where(
-                Animais.cliente_id == cliente_id
             )
 
 
 
-        # ==================================================
-        # ORDENAÇÃO
-        # ==================================================
-
-        campos = {
-
-            "id":
-            Animais.id,
-
-            "nome":
-            Animais.nome,
-
-            "especie":
-            Animais.especie,
-
-            "raca":
-            Animais.raca,
-
-            "idade":
-            Animais.idade,
-
-            "cliente_id":
-            Animais.cliente_id
-
-        }
 
 
-        coluna = campos.get(
-            sort_by,
-            Animais.id
-        )
+        # ordenação
 
+        if ordem.lower() == "desc":
 
-        if order.lower() == "desc":
 
             query = query.order_by(
-                desc(coluna)
+
+                desc(
+                    Animais.nome
+                )
+
             )
+
 
         else:
 
+
             query = query.order_by(
-                asc(coluna)
+
+                asc(
+                    Animais.nome
+                )
+
             )
 
 
 
-        # ==================================================
-        # PAGINAÇÃO
-        # ==================================================
+
+
+        # paginação
+
+        if pagina < 1:
+
+            pagina = 1
+
+
+
+        if limite < 1:
+
+            limite = 10
+
+
+
+        offset = (
+
+            pagina - 1
+
+        ) * limite
+
+
 
         query = (
+
             query
-            .offset(skip)
-            .limit(limit)
+
+            .offset(offset)
+
+            .limit(limite)
+
         )
+
 
 
         return self.session.scalars(
             query
         ).all()
-    
-        # ==================================================
+        
+        # ==========================================================
+    # BUSCAR ANIMAL POR ID
+    # ==========================================================
+
+
+    def buscar_por_id(
+        self,
+        animal_id: int
+    ) -> Animais:
+
+
+        animal = self.buscar_animal_por_id(
+            animal_id
+        )
+
+
+        self.verificar_acesso_animal(
+            animal
+        )
+
+
+        return animal
+
+
+
+
+
+
+    # ==========================================================
     # ATUALIZAR ANIMAL
-    # ==================================================
+    # ==========================================================
+
 
     def atualizar(
         self,
-        id: int,
-        animal: AnimalUpdate
-    ):
-        """
-        Atualiza os dados de um animal.
-
-        Permite atualização parcial.
-
-        Exemplo:
-
-        Enviado:
-
-        {
-            "idade": 5
-        }
+        animal_id: int,
+        dados: AnimalUpdate
+    ) -> Animais:
 
 
-        Apenas a idade será alterada.
-        """
 
-        db = self.buscar_por_id(id)
-
-
-        if not db:
-
-            raise HTTPException(
-                status_code=404,
-                detail="Animal não encontrado."
-            )
+        animal = self.buscar_animal_por_id(
+            animal_id
+        )
 
 
-        dados = animal.model_dump(
+
+        self.verificar_acesso_animal(
+            animal
+        )
+
+
+
+        perfil = self.obter_perfil()
+
+
+
+        dados_dict = dados.model_dump(
             exclude_unset=True
         )
 
 
 
-        # ==================================================
-        # VALIDAR CAMPOS VAZIOS
-        # ==================================================
+        # ======================================================
+        # ALTERAR CLIENTE DO ANIMAL
+        # ======================================================
 
-        for campo, valor in dados.items():
 
-            if isinstance(valor, str):
+        if "cliente_id" in dados_dict:
 
-                if not valor.strip():
+
+
+            novo_cliente_id = dados_dict["cliente_id"]
+
+
+
+            if novo_cliente_id != animal.cliente_id:
+
+
+
+                if perfil == "Cliente":
+
 
                     raise HTTPException(
-                        status_code=400,
-                        detail=f"{campo} não pode ser vazio."
+
+                        status_code=403,
+
+                        detail=
+                        "Cliente não pode alterar proprietário do animal."
+
                     )
 
 
 
-        # ==================================================
-        # VALIDAR IDADE
-        # ==================================================
+                self.validar_cliente(
+                    novo_cliente_id
+                )
 
-        if "idade" in dados:
 
-            if not self.validar_idade(
-                dados["idade"]
+
+                animal.cliente_id = novo_cliente_id
+
+
+
+
+
+
+        # ======================================================
+        # ALTERAR NOME
+        # ======================================================
+
+
+        if "nome" in dados_dict:
+
+
+            if not self.validar_nome(
+                dados.nome
             ):
 
+
                 raise HTTPException(
+
                     status_code=400,
-                    detail="Idade inválida."
+
+                    detail="Nome inválido."
+
                 )
 
 
 
-        # ==================================================
-        # NORMALIZAR TEXTOS
-        # ==================================================
-
-        campos_texto = [
-
-            "nome",
-
-            "especie",
-
-            "raca"
-
-        ]
-
-
-        for campo in campos_texto:
-
-            if campo in dados:
-
-                dados[campo] = (
-                    self.normalizar_texto(
-                        dados[campo]
-                    )
-                )
-
-
-
-        # ==================================================
-        # APLICAR ALTERAÇÕES
-        # ==================================================
-
-        for campo, valor in dados.items():
-
-            setattr(
-                db,
-                campo,
-                valor
+            animal.nome = self.normalizar_texto(
+                dados.nome
             )
+
+
+
+
+
+
+        # ======================================================
+        # ALTERAR ESPÉCIE
+        # ======================================================
+
+
+        if "especie" in dados_dict:
+
+
+
+            if not self.validar_especie(
+                dados.especie
+            ):
+
+
+                raise HTTPException(
+
+                    status_code=400,
+
+                    detail="Espécie inválida."
+
+                )
+
+
+
+            animal.especie = self.normalizar_texto(
+                dados.especie
+            )
+
+
+
+
+
+
+        # ======================================================
+        # ALTERAR RAÇA
+        # ======================================================
+
+
+        if "raca" in dados_dict:
+
+
+
+            if not self.validar_raca(
+                dados.raca
+            ):
+
+
+                raise HTTPException(
+
+                    status_code=400,
+
+                    detail="Raça inválida."
+
+                )
+
+
+
+            animal.raca = self.normalizar_texto(
+                dados.raca
+            )
+
+
+
+
+
+
+        # ======================================================
+        # ALTERAR IDADE
+        # ======================================================
+
+
+        if "idade" in dados_dict:
+
+
+
+            if not self.validar_idade(
+                dados.idade
+            ):
+
+
+                raise HTTPException(
+
+                    status_code=400,
+
+                    detail="Idade inválida."
+
+                )
+
+
+
+            animal.idade = dados.idade
+
+
+
+
+
+
+        # ======================================================
+        # ALTERAR PESO
+        # ======================================================
+
+
+        if "peso" in dados_dict:
+
+
+
+            if not self.validar_peso(
+                dados.peso
+            ):
+
+
+                raise HTTPException(
+
+                    status_code=400,
+
+                    detail="Peso inválido."
+
+                )
+
+
+
+            animal.peso = dados.peso
+
+
+
 
 
 
         self.session.commit()
 
-        self.session.refresh(db)
 
 
-        return db
+        self.session.refresh(
+            animal
+        )
 
 
 
-    # ==================================================
+        return animal
+
+
+
+
+
+
+    # ==========================================================
     # DELETAR ANIMAL
-    # ==================================================
+    # ==========================================================
+
 
     def deletar(
         self,
-        id: int
+        animal_id: int
     ):
-        """
-        Remove um animal.
-
-        Regras:
-
-        - Animal precisa existir
-        - Animal com histórico de atendimento
-          não pode ser removido
-        """
 
 
-        db = self.buscar_por_id(id)
+
+        animal = self.buscar_animal_por_id(
+            animal_id
+        )
 
 
-        if not db:
 
-            raise HTTPException(
-                status_code=404,
-                detail="Animal não encontrado."
+        self.verificar_acesso_animal(
+            animal
+        )
+
+
+
+        atendimento = self.session.scalar(
+
+            select(Atendimentos)
+            .where(
+
+                Atendimentos.animal_id
+                ==
+                animal.id
+
             )
 
+        )
 
 
-        # ==================================================
-        # VERIFICAR HISTÓRICO
-        # ==================================================
 
-        if db.atendimentos:
+        if atendimento:
+
+
 
             raise HTTPException(
-                status_code=409,
+
+                status_code=400,
+
                 detail=
-                "Animal possui histórico de atendimento."
+                "Não é possível excluir animal com histórico de atendimento."
+
             )
 
 
 
-        # ==================================================
-        # REMOVER
-        # ==================================================
 
-        self.session.delete(db)
+
+        self.session.delete(
+            animal
+        )
+
+
 
         self.session.commit()
 
 
+
         return {
+
             "message":
             "Animal removido com sucesso."
+
         }

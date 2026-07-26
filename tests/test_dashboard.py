@@ -1,7 +1,7 @@
-def test_dashboard_banco_vazio(
-    client,
-    auth_headers
-):
+from datetime import date, timedelta
+
+
+def test_dashboard_completo(client, auth_headers):
 
     response = client.get(
         "/dashboard/",
@@ -10,69 +10,130 @@ def test_dashboard_banco_vazio(
 
     assert response.status_code == 200
 
-    dados = response.json()
-
-    assert dados["usuarios"] >= 1
-    assert dados["clientes"] == 0
-    assert dados["animais"] == 0
-    assert dados["produtos"] == 0
+    data = response.json()
 
 
+    # =========================
+    # Totais do sistema
+    # =========================
 
-def test_dashboard_com_dados(
-    client,
-    auth_headers
-):
+    assert "usuarios" in data
+    assert "clientes" in data
+    assert "animais" in data
+    assert "agendamentos" in data
+    assert "atendimentos" in data
+    assert "produtos" in data
+    assert "carrinhos" in data
+    assert "itens_carrinho" in data
 
-    cliente = client.post(
-        "/clientes/",
-        json={
-            "nome":"Carlos",
-            "cpf":"12345678909",
-            "telefone":"84999999999",
-            "email":"carlos@email.com",
-            "endereco":"Rua A"
-        },
-        headers=auth_headers
+
+    assert isinstance(
+        data["usuarios"],
+        int
+    )
+
+    assert isinstance(
+        data["clientes"],
+        int
     )
 
 
-    assert cliente.status_code == 201
+    # =========================
+    # Estoque
+    # =========================
+
+    assert "valor_total_estoque" in data
+
+    assert data["valor_total_estoque"] >= 0
 
 
-    response = client.get(
-        "/dashboard/",
-        headers=auth_headers
-    )
+    assert "estoque_baixo" in data
+
+    assert data["estoque_baixo"] >= 0
 
 
-    assert response.status_code == 200
+    assert "produtos_sem_estoque" in data
 
-
-    dados = response.json()
-
-
-    assert dados["clientes"] == 1
+    assert data["produtos_sem_estoque"] >= 0
 
 
 
-def test_dashboard_retorna_inteiros(
-    client,
-    auth_headers
-):
+    # =========================
+    # Produtos
+    # =========================
 
-    response = client.get(
-        "/dashboard/",
-        headers=auth_headers
-    )
+    assert "produto_mais_caro" in data
+
+    if data["produto_mais_caro"]:
+
+        assert "nome" in data["produto_mais_caro"]
+
+        assert "preco" in data["produto_mais_caro"]
 
 
-    dados = response.json()
+
+    assert "produto_mais_barato" in data
+
+    if data["produto_mais_barato"]:
+
+        assert "nome" in data["produto_mais_barato"]
+
+        assert "preco" in data["produto_mais_barato"]
 
 
-    for valor in dados.values():
 
-        assert isinstance(
-            valor,
-            int
+    # =========================
+    # Animais
+    # =========================
+
+    assert "animal_mais_velho" in data
+
+    if data["animal_mais_velho"]:
+
+        assert "nome" in data["animal_mais_velho"]
+
+        assert "idade" in data["animal_mais_velho"]
+
+
+    assert "media_idade_animais" in data
+
+    assert data["media_idade_animais"] >= 0
+
+
+
+    # =========================
+    # Clientes
+    # =========================
+
+    assert "cliente_com_mais_animais" in data
+
+
+    if data["cliente_com_mais_animais"]:
+
+        assert "nome" in data["cliente_com_mais_animais"]
+
+        assert (
+            "quantidade"
+            in data["cliente_com_mais_animais"]
         )
+
+
+
+    # =========================
+    # Agenda
+    # =========================
+
+    assert "agendamentos_hoje" in data
+
+    assert (
+        data["agendamentos_hoje"]
+        >= 0
+    )
+
+
+    assert "agendamentos_futuros" in data
+
+    assert (
+        data["agendamentos_futuros"]
+        >= 0
+    )

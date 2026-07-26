@@ -2,16 +2,30 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
+
 from sqlalchemy.orm import Session
 
+
 from backend.auth.token import decode_token
+
 from backend.database.database import get_session
+
 from backend.models.usuario_model import Usuarios
-from backend.services.implementations.token_service_impl import TokenService
-from backend.services.implementations.usuario_service_impl import UsuarioServiceImpl
+
+from backend.services.implementations.token_service_impl import (
+    TokenService
+)
+
+from backend.services.implementations.usuario_service_impl import (
+    UsuarioServiceImpl
+)
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login/")
+
+oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl="/login/"
+)
+
 
 
 SessionDep = Annotated[
@@ -20,23 +34,73 @@ SessionDep = Annotated[
 ]
 
 
-def get_token_service(session: SessionDep):
-    return TokenService(session)
 
 
 
-def get_usuario_service(session: SessionDep):
-    return UsuarioServiceImpl(session)
+def get_token_service(
+    session: SessionDep
+):
+
+    return TokenService(
+        session
+    )
+
+
+
+
+
+def get_usuario_service(
+    session: SessionDep
+):
+
+    return UsuarioServiceImpl(
+        session
+    )
+
+
 
 
 
 def get_current_user(
-    token: Annotated[str, Depends(oauth2_scheme)],
-    token_service: TokenService = Depends(get_token_service),
-    usuario_service: UsuarioServiceImpl = Depends(get_usuario_service)
+
+    token: Annotated[
+        str,
+        Depends(oauth2_scheme)
+    ],
+
+
+    token_service: TokenService = Depends(
+        get_token_service
+    ),
+
+
+    usuario_service: UsuarioServiceImpl = Depends(
+        get_usuario_service
+    )
+
 ):
 
-    if token_service.esta_revogado(token):
+    """
+    Recupera usuário autenticado.
+
+    Fluxo:
+
+    1 - Verifica token revogado
+
+    2 - Decodifica JWT
+
+    3 - Busca usuário no banco
+
+    4 - Verifica usuário ativo
+
+    5 - Retorna usuário logado
+    """
+
+
+
+    if token_service.esta_revogado(
+        token
+    ):
 
         raise HTTPException(
             status_code=401,
@@ -44,18 +108,26 @@ def get_current_user(
         )
 
 
-    payload = decode_token(token)
+
+    payload = decode_token(
+        token
+    )
+
 
 
     if not payload:
 
         raise HTTPException(
             status_code=401,
-            detail="Token inválido ou expirado."
+            detail="Token inválido."
         )
 
 
-    email = payload.get("sub")
+
+    email = payload.get(
+        "sub"
+    )
+
 
 
     if not email:
@@ -66,7 +138,11 @@ def get_current_user(
         )
 
 
-    usuario = usuario_service.buscar_por_email(email)
+
+    usuario = usuario_service.buscar_por_email(
+        email
+    )
+
 
 
     if not usuario:
@@ -77,11 +153,19 @@ def get_current_user(
         )
 
 
+
+
+
     return usuario
 
 
 
-# USUÁRIO LOGADO DISPONÍVEL PARA AS ROTAS
+
+
+# ==========================================================
+# USUÁRIO LOGADO DISPONÍVEL NAS ROTAS
+# ==========================================================
+
 
 UsuarioLogado = Annotated[
     Usuarios,

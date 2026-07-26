@@ -6,8 +6,15 @@ from pwdlib import PasswordHash
 from sqlalchemy.orm import Session
 
 from backend.database.database import get_session
-from backend.auth.token import create_access_token
-from backend.services.implementations.usuario_service_impl import UsuarioServiceImpl
+
+from backend.auth.token import (
+    create_access_token
+)
+
+from backend.services.implementations.usuario_service_impl import (
+    UsuarioServiceImpl
+)
+
 
 
 router = APIRouter(
@@ -16,7 +23,9 @@ router = APIRouter(
 )
 
 
+
 senha_context = PasswordHash.recommended()
+
 
 
 SessionDep = Annotated[
@@ -25,19 +34,34 @@ SessionDep = Annotated[
 ]
 
 
+
 def get_usuario_service(
     session: SessionDep
 ):
 
-    return UsuarioServiceImpl(session)
+    return UsuarioServiceImpl(
+        session
+    )
+
+
 
 
 
 @router.post("/")
 def login(
+
     form_data: OAuth2PasswordRequestForm = Depends(),
-    service: UsuarioServiceImpl = Depends(get_usuario_service)
+
+    service: UsuarioServiceImpl = Depends(
+        get_usuario_service
+    )
+
 ):
+
+
+    # ==========================================
+    # BUSCAR USUÁRIO
+    # ==========================================
 
     usuario = service.buscar_por_email(
         form_data.username
@@ -48,13 +72,21 @@ def login(
 
         raise HTTPException(
             status_code=401,
-            detail="Usuário não encontrado"
+            detail="Usuário não encontrado."
         )
 
 
+
+    # ==========================================
+    # VALIDAR SENHA
+    # ==========================================
+
     senha_valida = senha_context.verify(
+
         form_data.password,
+
         usuario.senha_hash
+
     )
 
 
@@ -62,20 +94,45 @@ def login(
 
         raise HTTPException(
             status_code=401,
-            detail="Senha inválida"
+            detail="Senha inválida."
         )
 
 
+
+    # ==========================================
+    # CRIAR TOKEN
+    # ==========================================
+
     token = create_access_token(
+
         {
-            "sub": usuario.email
+
+            "sub":
+            usuario.email,
+
+
+            "perfil":
+            usuario.perfil,
+
+
+            "usuario_id":
+            usuario.id
+
         }
+
     )
+
 
 
     return {
 
-        "access_token": token,
 
-        "token_type": "bearer"
+        "access_token":
+        token,
+
+
+        "token_type":
+        "bearer"
+
+
     }

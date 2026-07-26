@@ -1,93 +1,279 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+
 from backend.database.database import get_session
+
+
 from backend.schemas.animal_schema import (
     AnimalCreate,
     AnimalUpdate,
     AnimalResponse
 )
-from backend.schemas.historico_schema import AnimalHistoricoResponse
-from backend.services.implementations.atendimento_service_impl import AtendimentoServiceImpl
-from backend.services.implementations.animal_service_impl import AnimalServiceImpl
+
+
+from backend.schemas.historico_schema import (
+    AnimalHistoricoResponse
+)
+
+
+from backend.services.implementations.animal_service_impl import (
+    AnimalServiceImpl
+)
+
+
+from backend.services.implementations.atendimento_service_impl import (
+    AtendimentoServiceImpl
+)
+
+
+from backend.models.usuario_model import Usuarios
+
+
+from backend.auth.permissions import exigir_perfil
 from backend.auth.dependencies import get_current_user
+
+
 
 router = APIRouter(
     prefix="/animais",
-    tags=["Animais"],
-    dependencies=[Depends(get_current_user)]  #protege tudo aqui
+    tags=["Animais"]
 )
 
-def get_service(session: Session = Depends(get_session)):
-    return AnimalServiceImpl(session)
-
-@router.post("/", response_model=AnimalResponse)
-def criar(animal: AnimalCreate, service=Depends(get_service)):
-    return service.criar(animal)
 
 
-#PAGINAÇÃO e Filtro
-@router.get("/",response_model=list[AnimalResponse])
-def listar(
-    skip: int = 0,
-    limit: int = 10,
-    nome: str | None = None,
-    especie: str | None = None,
-    raca: str | None = None,
-    idade: int | None = None,
-    cliente_id: int | None = None,
-    sort_by: str = "id",
-    order: str = "asc",
-    service: AnimalServiceImpl = Depends(get_service),
+# ==========================================================
+# SERVICE ANIMAL
+# ==========================================================
+
+
+def get_service(
+    session: Session = Depends(get_session),
+    usuario_logado: Usuarios = Depends(get_current_user)
 ):
-    return service.listar(
-        skip=skip,
-        limit=limit,
-        nome=nome,
-        especie=especie,
-        raca=raca,
-        idade=idade,
-        cliente_id=cliente_id,
-        sort_by=sort_by,
-        order=order,
+
+    return AnimalServiceImpl(
+        session,
+        usuario_logado
     )
 
 
 
-@router.get("/{id}", response_model=AnimalResponse)
-def buscar(id: int, service=Depends(get_service)):
-    return service.buscar_por_id(id)
-
-@router.put("/{id}", response_model=AnimalResponse)
-def atualizar(id: int, animal: AnimalUpdate, service=Depends(get_service)):
-    return service.atualizar(id, animal)
-
-@router.delete("/{id}")
-def deletar(id: int, service=Depends(get_service)):
-    return {"success": service.deletar(id)}
+# ==========================================================
+# SERVICE ATENDIMENTO
+# ==========================================================
 
 
-def get_atendimento_service(session: Session = Depends(get_session)):
-    return AtendimentoServiceImpl(session)
-
-
-# HISTORICO DE ACORDO COM ATENDIMENTOS
-@router.get(
-    "/{id}/historico",
-    response_model=AnimalHistoricoResponse,
-    dependencies=[Depends(get_current_user)],
-)
-def historico(
-    id: int,
-    service: AtendimentoServiceImpl = Depends(get_atendimento_service),
+def get_atendimento_service(
+    session: Session = Depends(get_session)
 ):
 
-    resultado = service.historico_completo(id)
+    return AtendimentoServiceImpl(
+        session
+    )
+
+
+
+# ==========================================================
+# CRIAR
+# ==========================================================
+
+
+@router.post(
+    "/",
+    response_model=AnimalResponse,
+    status_code=201
+)
+def criar(
+
+    animal: AnimalCreate,
+
+    service: AnimalServiceImpl = Depends(
+        get_service
+    )
+
+):
+
+    return service.criar(
+        animal
+    )
+
+
+
+# ==========================================================
+# LISTAR
+# ==========================================================
+
+
+@router.get(
+    "/",
+    response_model=list[AnimalResponse]
+)
+def listar(
+
+    pagina: int = 1,
+
+    limite: int = 10,
+
+    nome: str | None = None,
+
+    ordem: str = "asc",
+
+
+    service: AnimalServiceImpl = Depends(
+        get_service
+    )
+
+):
+
+
+    return service.listar(
+
+        pagina=pagina,
+
+        limite=limite,
+
+        nome=nome,
+
+        ordem=ordem
+
+    )
+
+
+
+# ==========================================================
+# BUSCAR POR ID
+# ==========================================================
+
+
+@router.get(
+    "/{id}",
+    response_model=AnimalResponse
+)
+def buscar(
+
+    id: int,
+
+
+    service: AnimalServiceImpl = Depends(
+        get_service
+    )
+
+):
+
+    return service.buscar_por_id(
+        id
+    )
+
+
+
+# ==========================================================
+# ATUALIZAR
+# ==========================================================
+
+
+@router.put(
+    "/{id}",
+    response_model=AnimalResponse
+)
+def atualizar(
+
+    id: int,
+
+    animal: AnimalUpdate,
+
+
+    service: AnimalServiceImpl = Depends(
+        get_service
+    )
+
+):
+
+
+    return service.atualizar(
+
+        id,
+
+        animal
+
+    )
+
+
+
+# ==========================================================
+# DELETAR
+# ==========================================================
+
+
+@router.delete(
+    "/{id}"
+)
+def deletar(
+
+    id: int,
+
+
+    service: AnimalServiceImpl = Depends(
+        get_service
+    )
+
+):
+
+
+    return service.deletar(
+        id
+    )
+
+
+
+# ==========================================================
+# HISTÓRICO
+# ==========================================================
+
+
+@router.get(
+    "/{id}/historico",
+    response_model=AnimalHistoricoResponse
+)
+def historico(
+
+    id: int,
+
+
+    service_animal: AnimalServiceImpl = Depends(
+        get_service
+    ),
+
+
+    service_atendimento: AtendimentoServiceImpl = Depends(
+        get_atendimento_service
+    )
+
+):
+
+
+    service_animal.buscar_por_id(
+        id
+    )
+
+
+
+    resultado = service_atendimento.historico_completo(
+        id
+    )
+
+
 
     if resultado is None:
+
         raise HTTPException(
+
             status_code=404,
-            detail="Animal não encontrado"
+
+            detail="Histórico não encontrado."
+
         )
+
+
 
     return resultado
