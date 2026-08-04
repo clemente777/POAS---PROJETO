@@ -1,0 +1,127 @@
+.dashboard{
+    display:flex;
+    min-height:100vh;
+    background:#f5f7f7;
+}
+
+
+.dashboard-content{
+    flex:1;
+    padding:30px;
+    transition:.3s;
+}
+
+
+.dashboard-content.aberto{
+    margin-left:250px;
+}
+
+
+.dashboard-content.fechado{
+    margin-left:70px;
+}
+
+.dashboard-header h1{
+    font-size:32px;
+    color:#333;
+}
+
+
+.dashboard-header p{
+    color:#777;
+    margin-top:8px;
+}
+
+
+.cards{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:25px;
+    margin-top:40px;
+}
+
+
+.card{
+    background:white;
+    padding:30px;
+    border-radius:20px;
+    box-shadow:0 5px 20px rgba(0,0,0,.08);
+    transition:.3s;
+}
+
+
+.card:hover{
+    transform:translateY(-5px);
+}
+
+
+.card h3{
+    color:#777;
+    font-size:16px;
+}
+
+
+.card strong{
+    display:block;
+    margin-top:15px;
+    font-size:40px;
+    color:#18a999;
+}
+
+
+.panel{
+    background:white;
+    margin-top:40px;
+    padding:30px;
+    border-radius:20px;
+}
+
+
+.panel h2{
+    color:#333;
+    margin-bottom:25px;
+}
+
+
+.appointment{
+    padding:18px;
+    margin-top:15px;
+    border-radius:15px;
+    background:#f5f7f7;
+    color:#333;
+    font-size:18px;
+}
+
+
+.appointment span{
+    display:block;
+    margin-top:8px;
+    color:#777;
+    font-size:14px;
+}
+
+
+
+@media(max-width:1100px){
+
+    .cards{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+}
+
+
+
+@media(max-width:700px){
+
+    .dashboard-content{
+        margin-left:70px;
+        padding:20px;
+    }
+
+
+    .cards{
+        grid-template-columns:1fr;
+    }
+
+}

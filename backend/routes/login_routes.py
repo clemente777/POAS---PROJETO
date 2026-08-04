@@ -126,13 +126,18 @@ def login(
 
     return {
 
+        "access_token": token,
 
-        "access_token":
-        token,
+        "token_type": "bearer",
 
+        "usuario": {
 
-        "token_type":
-        "bearer"
+            "id": usuario.id,
 
+            "email": usuario.email,
+
+            "perfil": usuario.perfil
+
+        }
 
     }

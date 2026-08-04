@@ -179,33 +179,17 @@ def listar(
 # ==================================================
 
 
-@router.get(
-    "/{id}",
-    response_model=AgendamentoResponse
-)
+@router.get("/{id}",response_model=AgendamentoResponse)
 def buscar(
-
     id:int,
-
-
     usuario_logado: Usuarios = Depends(
-
         exigir_perfil(
-
             "Cliente",
-
             "Veterinário",
-
             "Administrador"
-
         )
-
     ),
-
-
-    service: AgendamentoServiceImpl = Depends(
-        get_service
-    )
+    service: AgendamentoServiceImpl = Depends(get_service)
 
 ):
 
@@ -227,38 +211,14 @@ def buscar(
     response_model=AgendamentoResponse
 )
 def atualizar(
-
     id:int,
-
     agendamento:AgendamentoUpdate,
-
-
     usuario_logado:Usuarios = Depends(
+        exigir_perfil("Veterinário","Administrador")),
+    service:AgendamentoServiceImpl = Depends(get_service)
+    ):
 
-        exigir_perfil(
-
-            "Veterinário",
-
-            "Administrador"
-
-        )
-
-    ),
-
-
-    service:AgendamentoServiceImpl = Depends(
-        get_service
-    )
-
-):
-
-    return service.atualizar(
-
-        id,
-
-        agendamento
-
-    )
+    return service.atualizar(id,agendamento)
 
 
 
@@ -271,62 +231,26 @@ def atualizar(
 # ==================================================
 
 
-@router.post(
-    "/{id}/cancelar",
-    response_model=AgendamentoResponse
-)
+@router.post("/{id}/cancelar", response_model=AgendamentoResponse)
 def cancelar(
-
     id:int,
-
-
     usuario_logado:Usuarios = Depends(
-
-        exigir_perfil(
-             "Cliente",
-            "Veterinário",
-
-            "Administrador"
-
-        )
-
-    ),
-
-
-    service:AgendamentoServiceImpl = Depends(
-        get_service
-    )
-
-):
-
-    return service.cancelar(
-        id
-    )
+        exigir_perfil("Cliente","Veterinário","Administrador")),
+    service:AgendamentoServiceImpl = Depends(get_service)
+    ):
+    
+    return service.cancelar(id)
 
 
 
 
 
 
-@router.delete(
-    "/{id}"
-)
+@router.delete("/{id}")
 def deletar(
-
     id:int,
-
-    usuario_logado: Usuarios = Depends(
-        exigir_perfil(
-            "Administrador"
-        )
-    ),
-
-    service: AgendamentoServiceImpl = Depends(
-        get_service
-    )
-
-):
-
-    return service.deletar(
-        id
-    )
+    usuario_logado: Usuarios = Depends(exigir_perfil("Administrador")),
+    service: AgendamentoServiceImpl = Depends(get_service)
+    ):
+    
+    return service.deletar(id)
