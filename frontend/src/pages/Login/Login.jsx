@@ -68,20 +68,57 @@ function Login() {
 
         catch (erro) {
 
-            if (erro.response?.status === 401) {
+            console.error(
+                "Erro login:",
+                erro.response
+            );
 
-                setMensagemErro("Usuário ou senha inválidos.");
 
-            } else {
+            if (erro.response) {
 
-                setMensagemErro("Erro ao conectar com o servidor.");
+
+                const detalhe = erro.response.data?.detail;
+
+
+                if (Array.isArray(detalhe)) {
+
+                    setMensagemErro(
+                        detalhe
+                        .map(item => item.msg)
+                        .join(", ")
+                    );
+
+                }
+
+
+                else if (detalhe) {
+
+                    setMensagemErro(detalhe);
+
+                }
+
+
+                else {
+
+                    setMensagemErro(
+                        `Erro ${erro.response.status}`
+                    );
+
+                }
+
+
+            } 
+            
+            else {
+
+                setMensagemErro(
+                    "Servidor indisponível."
+                );
 
             }
 
         }
-
-    }
-
+}
     return (
 
         <div className="login">
@@ -134,7 +171,9 @@ function Login() {
 
                     <div className="links">
 
-                        <a href="#">Criar conta</a>
+                        <a href="/cadastro">
+                            Criar conta
+                        </a>
 
                         <a href="#">Esqueci minha senha</a>
 

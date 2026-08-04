@@ -5,11 +5,15 @@ from fastapi.security import OAuth2PasswordRequestForm
 from pwdlib import PasswordHash
 from sqlalchemy.orm import Session
 
+
+
 from backend.database.database import get_session
 
 from backend.auth.token import (
     create_access_token
 )
+from sqlalchemy import select
+from backend.models.cliente_model import Clientes
 
 from backend.services.implementations.usuario_service_impl import (
     UsuarioServiceImpl
@@ -88,8 +92,6 @@ def login(
         usuario.senha_hash
 
     )
-
-
     if not senha_valida:
 
         raise HTTPException(
@@ -98,7 +100,28 @@ def login(
         )
 
 
+# ==========================================
+# BUSCAR CLIENTE SE FOR CLIENTE
+# ==========================================
 
+    if usuario.perfil == "Cliente":
+
+        cliente = service.session.scalar(
+
+            select(Clientes).where(
+
+                Clientes.usuario_id == usuario.id
+
+            )
+
+        )
+
+        if not cliente:
+
+            raise HTTPException(
+                status_code=404,
+                detail="Este usuário não possui cadastro de cliente."
+            )
     # ==========================================
     # CRIAR TOKEN
     # ==========================================
@@ -133,6 +156,8 @@ def login(
         "usuario": {
 
             "id": usuario.id,
+            
+            "nome": usuario.nome,
 
             "email": usuario.email,
 

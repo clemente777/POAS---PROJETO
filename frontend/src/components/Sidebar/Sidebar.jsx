@@ -58,7 +58,7 @@ function Sidebar({ perfil, setSidebarAberto }) {
 
             <div className="brand">
 
-                {aberto ? "🐾 POAS" : "🐾"}
+                {aberto ? "🐾 Petonline" : "🐾"}
 
             </div>
 

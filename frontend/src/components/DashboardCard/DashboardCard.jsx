@@ -8,7 +8,7 @@ function DashboardCard({
 
     icone,
 
-    cor = "#18a999"
+    cor = "#0d8297"
 
 }) {
 

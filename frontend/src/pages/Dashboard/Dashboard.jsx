@@ -32,7 +32,7 @@ function Dashboard() {
         }
 
     }, [usuario]);
-    
+
 
 async function carregarDashboard() {
 
@@ -99,7 +99,7 @@ async function carregarDashboard() {
 
                     <p>
 
-                        Bem-vindo ao sistema POAS.
+                        Bem-vindo ao sistema Petonline24h
 
                     </p>
 

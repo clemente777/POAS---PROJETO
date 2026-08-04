@@ -174,7 +174,7 @@ function Home() {
 
 
                 <p>
-                    O POAS ajuda clínicas veterinárias
+                    O Petonline24h ajuda clínicas veterinárias
                     a organizarem sua rotina,
                     melhorarem o atendimento e
                     acompanharem cada paciente.
@@ -190,7 +190,7 @@ function Home() {
 
             <footer id="contato">
 
-                🐾 POAS Clínica Veterinária
+                🐾 Petonline24h Clínica Veterinária
 
             </footer>
 

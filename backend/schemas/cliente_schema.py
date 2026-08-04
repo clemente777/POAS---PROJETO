@@ -8,6 +8,7 @@ class ClienteCreate(BaseModel):
     telefone: str
     email: EmailStr
     endereco: str
+    
 
 
 # UPDATE
