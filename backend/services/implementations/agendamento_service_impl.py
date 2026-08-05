@@ -459,15 +459,18 @@ class AgendamentoServiceImpl:
         )
 
 
+        dados = agendamento.model_dump()
+
+
+        if self.obter_perfil() == "Veterinário":
+
+            dados["veterinario_id"] = self.usuario_logado.id
+
 
         novo = Agendamentos(
-
-            **agendamento.model_dump(),
-
+            **dados,
             status="Pendente"
-
         )
-
 
 
         try:
@@ -492,23 +495,61 @@ class AgendamentoServiceImpl:
 
 
 
-        except Exception:
-
+        except Exception as e:
 
             self.session.rollback()
 
-
+            print("ERRO AO CRIAR AGENDAMENTO:", e)
 
             raise HTTPException(
-
                 status_code=500,
+                detail=str(e)
+            )
 
-                detail=
-                "Erro ao criar agendamento."
+    def atribuir_veterinario(
+    self,
+    id: int,
+    veterinario_id: int
+):
 
+        agendamento = self.buscar_por_id(id)
+
+
+        veterinario = self.session.scalar(
+            select(Usuarios)
+            .where(
+                Usuarios.id == veterinario_id
+            )
+        )
+
+
+        if not veterinario:
+
+            raise HTTPException(
+                status_code=404,
+                detail="Veterinário não encontrado."
             )
 
 
+        if veterinario.perfil != "Veterinário":
+
+            raise HTTPException(
+                status_code=400,
+                detail="Usuário informado não é veterinário."
+            )
+
+
+        agendamento.veterinario_id = veterinario_id
+
+
+        self.session.commit()
+
+        self.session.refresh(
+            agendamento
+        )
+
+
+        return agendamento
 
 
 

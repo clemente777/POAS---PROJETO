@@ -150,21 +150,26 @@ def criar_agendamento(client, auth_headers):
 # =====================================================
 
 
-def test_deletar_agendamento(client, auth_headers):
+def test_deletar_agendamento(client, auth_headers, criar_cliente):
 
 
-    # criar animal antes
+    cliente = criar_cliente
+
 
     animal = client.post(
         "/animais/",
         headers=auth_headers,
         json={
             "nome": "Rex",
-            "idade": 3,
+            "idade": 5,
             "raca": "Labrador",
-            "cliente_id": 1
+            "especie": "Cachorro",
+            "cliente_id": cliente.id
         }
     )
+
+
+    print(animal.json())
 
 
     assert animal.status_code == 201
