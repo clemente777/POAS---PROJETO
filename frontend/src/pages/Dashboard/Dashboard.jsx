@@ -10,6 +10,17 @@ import DashboardSection from "../../components/DashboardSection/DashboardSection
 
 import { useAuth } from "../../contexts/AuthContext";
 
+import ChartCard 
+from "../../components/ChartCard/ChartCard";
+import UsuariosChart 
+from "../../components/Charts/UsuariosChart";
+import EstoqueChart 
+from "../../components/Charts/EstoqueChart";
+import AgendamentosChart 
+from "../../components/Charts/AgendamentosChart";
+import AnimaisEspecieChart from "../../components/Charts/AnimaisEspecieChart";
+
+
 function Dashboard() {
 
     const { usuario } = useAuth();
@@ -21,7 +32,8 @@ function Dashboard() {
     const [carregando, setCarregando] = useState(true);
 
     const [erro, setErro] = useState("");
-    
+
+
 
     useEffect(() => {
 
@@ -34,44 +46,57 @@ function Dashboard() {
     }, [usuario]);
 
 
-async function carregarDashboard() {
+    async function carregarDashboard() {
 
-    try {
-
-
-        if(usuario?.perfil === "Administrador"){
+        try {
 
 
-            const resposta = await api.get("/dashboard/");
-
-            setDados(resposta.data);
+            if(usuario?.perfil === "Administrador"){
 
 
-        } 
-        else {
+                const resposta = await api.get("/dashboard/");
+                console.log(resposta.data);
+                setDados(resposta.data);
 
 
-            setDados({});
+            } 
+            else {
+
+
+                setDados({});
+
+
+            }
 
 
         }
 
+        catch(error){
+
+            console.error(error);
+
+            setErro("Erro ao carregar o Dashboard.");
+
+        }
+
+        finally{
+
+            setCarregando(false);
+
+        }
 
     }
 
-    catch(error){
+    if(carregando){
+        return (
 
-        console.error(error);
+            <div className="loading-dashboard">
 
-        setErro("Erro ao carregar o Dashboard.");
+                ⏳ Carregando Dashboard...
 
-    }
+            </div>
 
-    finally{
-
-        setCarregando(false);
-
-    }
+    );
 
 }
 
@@ -93,27 +118,66 @@ async function carregarDashboard() {
 
                 <header className="dashboard-header">
 
-                    <h1>
-                        Dashboard {usuario?.perfil}
-                    </h1>
+                    <div className="dashboard-title">
 
-                    <p>
+                        <h1>
+                            Dashboard {usuario?.perfil}
+                        </h1>
 
-                        Bem-vindo ao sistema Petonline24h
+                        <p>
+                            Bem-vindo ao sistema Petonline24h
+                        </p>
 
-                    </p>
+                    </div>
+
+
+                    {
+                    usuario?.perfil === "Administrador" && (
+
+                        <button
+                            className="btn-refresh"
+                            onClick={() => {
+
+                                setCarregando(true);
+
+                                carregarDashboard();
+
+                            }}
+                        >
+
+                            🔄 Atualizar
+
+                        </button>
+
+                    )
+                    }
+
 
                 </header>
 
                 {
                 usuario?.perfil === "Administrador" && (
                 <>
+
                 <DashboardSection titulo="📊 Estatísticas Gerais">
+
 
                     <DashboardCard
                         titulo="Usuários"
                         valor={dados.usuarios}
                         icone="👤"
+                    />
+
+                    <DashboardCard
+                        titulo="Administradores"
+                        valor={dados.administradores}
+                        icone="👑"
+                    />
+
+                    <DashboardCard
+                        titulo="Veterinários"
+                        valor={dados.veterinarios}
+                        icone="🩺"
                     />
 
                     <DashboardCard
@@ -230,11 +294,49 @@ async function carregarDashboard() {
 
                 </DashboardSection>
 
+                <DashboardSection  titulo="📊 análise">
+
+
+                    <div className="chart-container">
+
+
+                        <ChartCard titulo="Usuários por perfil">
+
+                            <UsuariosChart dados={dados}/>
+
+                        </ChartCard>
+
+
+                        <ChartCard titulo="Situação do Estoque">
+
+                            <EstoqueChart dados={dados}/>
+
+                        </ChartCard>
+
+
+                        <ChartCard titulo="Agendamentos da semana">
+
+                            <AgendamentosChart dados={dados}/>
+
+                        </ChartCard>
+
+                        <ChartCard titulo="Animais por espécie">
+
+                            <AnimaisEspecieChart dados={dados}/>
+
+                        </ChartCard>
+
+                    </div>
+
+
+                </DashboardSection>
+
                 </>
 
                 )
                 }
                 {
+                
                 usuario?.perfil === "Veterinário" && (
                 <>
                 <DashboardSection titulo="🩺 Área do Veterinário">
@@ -294,6 +396,7 @@ async function carregarDashboard() {
                 </>       
                 )
                 }
+
                    
             </main>
 

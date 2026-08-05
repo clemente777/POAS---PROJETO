@@ -165,7 +165,49 @@ class DashboardServiceImpl:
             )
         )
 
+    def _agendamentos_semana(self):
 
+            resultado = self.session.execute(
+
+                select(
+                    func.date(
+                        Agendamentos.data_agendamento
+                    ).label("dia"),
+
+                    func.count(
+                        Agendamentos.id
+                    ).label("quantidade")
+                )
+
+                .where(
+                    Agendamentos.data_agendamento >= date.today()
+                )
+
+                .group_by(
+                    func.date(
+                        Agendamentos.data_agendamento
+                    )
+                )
+
+                .order_by(
+                    func.date(
+                        Agendamentos.data_agendamento
+                    )
+                )
+
+            ).all()
+
+
+            return [
+
+                {
+                    "dia": str(item.dia),
+                    "quantidade": item.quantidade
+                }
+
+                for item in resultado
+
+            ]
 
     def _cliente_com_mais_animais(self):
 
@@ -198,8 +240,40 @@ class DashboardServiceImpl:
             "quantidade": resultado.quantidade
         }
 
+    def _usuarios_por_perfil(self, perfil: str):
+
+        return self.session.scalar(
+
+            select(func.count())
+            .select_from(Usuarios)
+            .where(
+                Usuarios.perfil == perfil
+            )
+
+        ) or 0
+    def _animais_por_especie(self):
+
+        resultado = self.session.execute(
+
+            select(
+                Animais.especie,
+                func.count(Animais.id).label("quantidade")
+            )
+
+            .group_by(
+                Animais.especie
+            )
+
+        ).all()
 
 
+        return {
+
+            item.especie: item.quantidade
+
+            for item in resultado
+
+        }
     def dashboard(self):
 
         return {
@@ -207,6 +281,15 @@ class DashboardServiceImpl:
             # Totais
 
             "usuarios": self._total(Usuarios),
+            
+            "administradores":
+                self._usuarios_por_perfil("Administrador"),
+
+            "veterinarios":
+                self._usuarios_por_perfil("Veterinário"),
+
+            "clientes_sistema":
+                self._usuarios_por_perfil("Cliente"),
 
             "clientes": self._total(Clientes),
 
@@ -252,7 +335,9 @@ class DashboardServiceImpl:
             "media_idade_animais":
                 self._media_idade_animais(),
 
-
+            "animais_por_especie":
+                self._animais_por_especie(),
+                
             # Clientes
 
             "cliente_com_mais_animais":
@@ -265,5 +350,9 @@ class DashboardServiceImpl:
                 self._agendamentos_hoje(),
 
             "agendamentos_futuros":
-                self._agendamentos_futuros()
-        }
+                self._agendamentos_futuros(),
+
+            "agendamentos_semana":
+                self._agendamentos_semana()
+
+}
