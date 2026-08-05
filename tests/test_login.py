@@ -1,22 +1,26 @@
-def criar_usuario(client):
+from backend.models.usuario_model import Usuarios
+from pwdlib import PasswordHash
 
-    return client.post(
-        "/usuarios/",
-        json={
-            "nome":"Admin",
-            "email":"admin@test.com",
-            "senha":"123456"
-        }
+senha_context = PasswordHash.recommended()
+def criar_usuario(session):
+
+    usuario = Usuarios(
+        nome="Admin",
+        email="admin@test.com",
+        senha_hash=senha_context.hash("123456"),
+        perfil="Administrador"
     )
 
+    session.add(usuario)
 
+    session.commit()
 
-def test_login_sucesso(client):
+    session.refresh(usuario)
 
+    return usuario
+def test_login_sucesso(client, session):
 
-    criar_usuario(client)
-
-
+    criar_usuario(session)
 
     response = client.post(
         "/login/",
@@ -55,11 +59,9 @@ def test_login_usuario_inexistente(client):
 
 
 
-def test_login_senha_errada(client):
+def test_login_senha_errada(client, session):
 
-
-    criar_usuario(client)
-
+    criar_usuario(session)
 
 
     response = client.post(
