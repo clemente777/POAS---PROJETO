@@ -19,6 +19,10 @@ from "../../components/Charts/EstoqueChart";
 import AgendamentosChart 
 from "../../components/Charts/AgendamentosChart";
 import AnimaisEspecieChart from "../../components/Charts/AnimaisEspecieChart";
+import ConsultasVeterinarioChart 
+from "../../components/Charts/ConsultasVeterinarioChart";
+import VacinasVeterinarioChart 
+from "../../components/Charts/VacinasVeterinarioChart";
 
 
 function Dashboard() {
@@ -54,13 +58,37 @@ function Dashboard() {
             if(usuario?.perfil === "Administrador"){
 
 
-                const resposta = await api.get("/dashboard/");
-                console.log(resposta.data);
+                const resposta = await api.get(
+                    "/dashboard/admin"
+                );
+
                 setDados(resposta.data);
 
 
-            } 
-            else {
+            }
+
+
+            else if(usuario?.perfil === "Veterinário"){
+
+
+                const resposta = await api.get(
+                    "/dashboard/veterinario"
+                );
+
+
+                console.log(
+                    "Dashboard Veterinário:",
+                    resposta.data
+                );
+
+
+                setDados(resposta.data);
+
+
+            }
+
+
+            else if(usuario?.perfil === "Cliente"){
 
 
                 setDados({});
@@ -71,13 +99,17 @@ function Dashboard() {
 
         }
 
+
         catch(error){
 
             console.error(error);
 
-            setErro("Erro ao carregar o Dashboard.");
+            setErro(
+                "Erro ao carregar o Dashboard."
+            );
 
         }
+
 
         finally{
 
@@ -132,22 +164,23 @@ function Dashboard() {
 
 
                     {
-                    usuario?.perfil === "Administrador" && (
 
-                        <button
-                            className="btn-refresh"
-                            onClick={() => {
+                    usuario?.perfil !== "Cliente" && (
 
-                                setCarregando(true);
+                    <button
+                        className="btn-refresh"
+                        onClick={() => {
 
-                                carregarDashboard();
+                            setCarregando(true);
 
-                            }}
-                        >
+                            carregarDashboard();
 
-                            🔄 Atualizar
+                        }}
+                    >
 
-                        </button>
+                        🔄 Atualizar
+
+                    </button>
 
                     )
                     }
@@ -335,38 +368,102 @@ function Dashboard() {
 
                 )
                 }
-                {
                 
+                {
                 usuario?.perfil === "Veterinário" && (
+
                 <>
+
                 <DashboardSection titulo="🩺 Área do Veterinário">
+
 
                     <DashboardCard
                         titulo="Consultas hoje"
-                        valor="0"
+                        valor={dados.consultas_hoje}
                         icone="📅"
                     />
 
+
                     <DashboardCard
-                        titulo="Próximos atendimentos"
-                        valor="0"
+                        titulo="Próximas consultas"
+                        valor={dados.proximas_consultas}
                         icone="🕒"
                     />
 
-                    <DashboardCard
-                        titulo="Animais atendidos"
-                        valor="0"
-                        icone="🐾"
-                    />
 
                     <DashboardCard
-                        titulo="Históricos"
-                        valor="0"
+                        titulo="Atendimentos realizados"
+                        valor={dados.atendimentos_realizados}
                         icone="📋"
                     />
 
-            </DashboardSection>
+
+                    <DashboardCard
+                        titulo="Animais atendidos"
+                        valor={dados.animais_atendidos}
+                        icone="🐾"
+                    />
+
+
+                    <DashboardCard
+                        titulo="Vacinas aplicadas"
+                        valor={dados.vacinas_aplicadas}
+                        icone="💉"
+                    />
+
+
+                    <DashboardCard
+                        titulo="Próximas doses"
+                        valor={dados.proximas_doses}
+                        icone="💊"
+                    />
+
+                 </DashboardSection>    
+
+                 <DashboardSection  titulo="📊 análise">
+
+
+                    <div className="chart-container">
+
+                            <ChartCard titulo="Consultas da semana">
+
+                                <ConsultasVeterinarioChart 
+                                    dados={dados}
+                                />
+
+                            </ChartCard>
+                            
+                            <ChartCard titulo="Controle de vacinas">
+
+                                <VacinasVeterinarioChart
+                                    dados={dados}
+                                />
+
+                            </ChartCard>
+
+
+                            <ChartCard titulo="Agendamentos da semana">
+
+                                <AgendamentosChart dados={dados}/>
+
+                            </ChartCard>
+
+                            <ChartCard titulo="Animais por espécie">
+
+                                <AnimaisEspecieChart dados={dados}/>
+
+                            </ChartCard>
+
+                    </div>
+
+
+                </DashboardSection>
+
+
+
+
                 </>
+
                 )
                 }
                 {
