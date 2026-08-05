@@ -5,13 +5,14 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.database.database import Base
 
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from backend.models.cliente_model import Clientes
     from backend.models.agendamento_model import Agendamentos
     from backend.models.atendimento_model import Atendimentos
-
+    from backend.models.aplicacao_vacina_model import AplicacoesVacina
 
 class Animais(Base):
     __tablename__ = "animais"
@@ -49,3 +50,14 @@ class Animais(Base):
         back_populates="animal",
         lazy="selectin"
     )
+    
+
+    aplicacoes_vacina: Mapped[list["AplicacoesVacina"]] = relationship(
+
+    "AplicacoesVacina",
+
+    back_populates="animal",
+
+    cascade="all, delete-orphan"
+
+)

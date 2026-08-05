@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from backend.models.atendimento_model import Atendimentos
     from backend.models.cliente_model import Clientes
+    from backend.models.aplicacao_vacina_model import AplicacoesVacina
 
 class Usuarios(Base):
     __tablename__ = "usuarios"
@@ -33,7 +34,15 @@ class Usuarios(Base):
         lazy="selectin"
     )
     cliente: Mapped["Clientes"] = relationship(
-    back_populates="usuario",
-    uselist=False
-)
+        back_populates="usuario",
+        uselist=False
+    )
+    
+    aplicacoes_vacina: Mapped[list["AplicacoesVacina"]] = relationship(
+
+        "AplicacoesVacina",
+
+        back_populates="veterinario"
+
+    )
     

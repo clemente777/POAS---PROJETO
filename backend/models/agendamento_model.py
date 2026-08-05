@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from backend.models.animal_model import Animais
+    from backend.models.usuario_model import Usuarios
 
 
 
@@ -20,12 +21,10 @@ class Agendamentos(Base):
     __tablename__ = "agendamentos"
 
 
-
     id: Mapped[int] = mapped_column(
         Integer,
         primary_key=True
     )
-
 
 
     data_agendamento: Mapped[datetime] = mapped_column(
@@ -34,12 +33,10 @@ class Agendamentos(Base):
     )
 
 
-
     descricao: Mapped[str] = mapped_column(
         String(255),
         nullable=False
     )
-
 
 
     status: Mapped[str] = mapped_column(
@@ -47,7 +44,6 @@ class Agendamentos(Base):
         nullable=False,
         default="Pendente"
     )
-
 
 
     animal_id: Mapped[int] = mapped_column(
@@ -59,7 +55,21 @@ class Agendamentos(Base):
     )
 
 
+    veterinario_id: Mapped[int | None] = mapped_column(
+        ForeignKey(
+            "usuarios.id"
+        ),
+        nullable=True
+    )
+
 
     animal: Mapped["Animais"] = relationship(
+        "Animais",
         back_populates="agendamentos"
+    )
+
+
+    veterinario: Mapped["Usuarios"] = relationship(
+        "Usuarios",
+        foreign_keys="Agendamentos.veterinario_id"
     )
