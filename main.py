@@ -20,6 +20,8 @@ from backend.routes import (
     carrinho_routes,
     item_carrinho_routes,
     dashboard_routes,
+    aplicacao_vacina_routes,
+    vacina_routes
     
 )
 
@@ -37,20 +39,18 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-app.add_exception_handler(
-    RequestValidationError,
-    tratar_validacao
-)
-
-origins = [
-    "http://localhost:5173",
-]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
+
     allow_credentials=True,
+
     allow_methods=["*"],
+
     allow_headers=["*"],
 )
 
@@ -66,6 +66,8 @@ app.include_router(produto_routes.router)
 app.include_router(carrinho_routes.router)
 app.include_router(item_carrinho_routes.router)
 app.include_router(dashboard_routes.router)
+app.include_router(aplicacao_vacina_routes.router)
+app.include_router(vacina_routes.router)
 
 
 if __name__ == "__main__":
