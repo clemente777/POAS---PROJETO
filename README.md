@@ -195,6 +195,30 @@ http://localhost:5173
 
 ---
 
+## 💉 Vacinas
+
+```
+GET    /vacinas
+GET    /vacinas/{id}
+POST   /vacinas
+PUT    /vacinas/{id}
+DELETE /vacinas/{id}
+```
+
+---
+
+## 💊 Aplicações de Vacinas
+
+```
+GET    /aplicacoes-vacina
+GET    /aplicacoes-vacina/{id}
+POST   /aplicacoes-vacina
+PUT    /aplicacoes-vacina/{id}
+DELETE /aplicacoes-vacina/{id}
+```
+
+---
+
 ## 👨‍⚕️ Veterinários
 
 - ✅ Cadastro
