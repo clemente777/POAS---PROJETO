@@ -38,7 +38,358 @@ O projeto é executado em containers e orquestrado com Kubernetes, usando infrae
 <br>
 <br>
 <br>
- 
+# 🐾 POAS - Sistema para Clínica Veterinária
+
+Sistema desenvolvido para a disciplina **POAS**, com o objetivo de gerenciar uma clínica veterinária, permitindo o controle de usuários, clientes, animais, produtos, atendimentos e agendamentos, através de uma API REST desenvolvida em **FastAPI** e uma interface moderna em **React**.
+
+---
+
+# 🚀 Tecnologias Utilizadas
+
+## Backend
+- 🐍 Python
+- ⚡ FastAPI
+- 🔐 JWT (JSON Web Token)
+- 🗄️ SQLAlchemy
+- 🗃️ SQLite
+- 🔒 Pwdlib (Hash de Senhas)
+- 📄 Swagger/OpenAPI
+
+## Frontend
+- ⚛️ React
+- 📡 Axios
+- 🎨 CSS
+- 📊 Recharts
+- ⚡ Vite
+
+---
+
+# 📁 Estrutura do Projeto
+
+```text
+POAS---PROJETO/
+
+├── backend/
+│   ├── models/
+│   ├── routes/
+│   ├── services/
+│   ├── schemas/
+│   ├── config/
+│   ├── database/
+│   └── main.py
+│
+├── frontend/
+│   ├── src/
+│   │   ├── pages/
+│   │   ├── components/
+│   │   ├── services/
+│   │   ├── assets/
+│   │   └── App.jsx
+│
+├── tests/
+│
+└── README.md
+```
+
+---
+
+# ▶️ Como rodar o Backend
+
+## 1. Abra um terminal
+- PowerShell
+- CMD
+
+---
+
+## 2. Navegue até a pasta do backend
+
+```bash
+cd C:\Users\COMPUTER\Documents\POAS---PROJETO\backend
+```
+
+---
+
+## 3. Crie e ative um ambiente virtual (recomendado)
+
+```bash
+python -m venv venv
+```
+
+### Windows
+
+```bash
+venv\Scripts\activate
+```
+
+---
+
+## 4. Instale as dependências
+
+```bash
+pip install -r requirements.txt
+```
+
+Caso não exista um arquivo `requirements.txt`, instale as principais dependências:
+
+```bash
+pip install fastapi uvicorn sqlalchemy python-dotenv pwdlib python-jose python-multipart
+```
+
+---
+
+## 5. Inicie a API
+
+```bash
+uvicorn main:app --reload
+```
+
+A API ficará disponível em:
+
+```
+http://127.0.0.1:8000
+```
+
+---
+
+## 📄 Documentação da API (Swagger)
+
+Após iniciar a aplicação, acesse:
+
+```
+http://127.0.0.1:8000/docs
+```
+
+ou
+
+```
+http://127.0.0.1:8000/redoc
+```
+
+---
+
+# 💻 Como rodar o Frontend
+
+## 1. Abra outro terminal
+
+- PowerShell
+- CMD
+
+---
+
+## 2. Navegue até a pasta do frontend
+
+```bash
+cd C:\Users\COMPUTER\Documents\POAS---PROJETO\frontend
+```
+
+---
+
+## 3. Instale as dependências
+
+```bash
+npm install
+```
+
+---
+
+## 4. Execute o projeto
+
+```bash
+npm run dev
+```
+
+O React será iniciado em:
+
+```
+http://localhost:5173
+```
+
+---
+
+# 🔐 Funcionalidades
+
+## 👤 Usuários
+
+- ✅ Cadastro
+- ✅ Login
+- ✅ Logout
+- ✅ Autenticação JWT
+- ✅ Controle de permissões por perfil
+
+---
+
+## 🐶 Animais
+
+- ✅ Cadastro
+- ✅ Consulta
+- ✅ Atualização
+- ✅ Exclusão
+
+---
+
+## 👨‍⚕️ Veterinários
+
+- ✅ Cadastro
+- ✅ Controle de acesso
+
+---
+
+## 👥 Clientes
+
+- ✅ Cadastro
+- ✅ Atualização
+- ✅ Busca
+- ✅ Validação de CPF
+- ✅ Validação de e-mail
+
+---
+
+## 📅 Agendamentos
+
+- ✅ Cadastro
+- ✅ Atualização
+- ✅ Cancelamento
+- ✅ Consultas futuras
+
+---
+
+## 🩺 Atendimentos
+
+- ✅ Registro de atendimento
+- ✅ Histórico
+
+---
+
+## 📦 Produtos
+
+- ✅ Cadastro
+- ✅ Controle de estoque
+- ✅ Consulta
+- ✅ Atualização
+
+---
+
+## 📊 Dashboard
+
+- ✅ Total de usuários
+- ✅ Total de clientes
+- ✅ Total de animais
+- ✅ Total de produtos
+- ✅ Total de atendimentos
+- ✅ Total de agendamentos
+- ✅ Valor total do estoque
+- ✅ Produtos sem estoque
+- ✅ Produtos com estoque baixo
+- ✅ Animal mais velho
+- ✅ Cliente com mais animais
+- ✅ Média de idade dos animais
+- ✅ Agendamentos do dia
+- ✅ Agendamentos futuros
+- ✅ Gráficos estatísticos
+
+---
+
+# 🔐 Segurança
+
+- 🔒 Autenticação JWT
+- 🔑 Senhas criptografadas
+- 👥 Controle de acesso por perfil
+- 🚫 Rotas protegidas
+- ✅ Validação de dados
+- 🔒 Logout com revogação de token
+
+---
+
+# 📡 API Endpoints
+
+## Login
+
+```
+POST /login
+```
+
+---
+
+## Usuários
+
+```
+GET    /usuarios
+GET    /usuarios/{id}
+POST   /usuarios
+PUT    /usuarios/{id}
+DELETE /usuarios/{id}
+```
+
+---
+
+## Clientes
+
+```
+GET    /clientes
+GET    /clientes/{id}
+POST   /clientes
+PUT    /clientes/{id}
+DELETE /clientes/{id}
+```
+
+---
+
+## Animais
+
+```
+GET    /animais
+GET    /animais/{id}
+POST   /animais
+PUT    /animais/{id}
+DELETE /animais/{id}
+```
+
+---
+
+## Produtos
+
+```
+GET    /produtos
+GET    /produtos/{id}
+POST   /produtos
+PUT    /produtos/{id}
+DELETE /produtos/{id}
+```
+
+---
+
+## Agendamentos
+
+```
+GET    /agendamentos
+GET    /agendamentos/{id}
+POST   /agendamentos
+PUT    /agendamentos/{id}
+DELETE /agendamentos/{id}
+```
+
+---
+
+## Atendimentos
+
+```
+GET    /atendimentos
+GET    /atendimentos/{id}
+POST   /atendimentos
+PUT    /atendimentos/{id}
+DELETE /atendimentos/{id}
+```
+
+---
+
+## Dashboard
+
+```
+GET /dashboard
+```
+
+---
+
 # **Cronograma**
 
 ## 1º Bimestre – Planejamento e Estruturação do Projeto
