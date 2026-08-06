@@ -1,31 +1,7 @@
-# POAS---PROJETO
 
-Sistema para clínica veterinária que permite agendamento de consultas online, gerenciamento de pacientes, históricos e comunicação com tutores. A aplicação usa API REST, autenticação JWT e arquitetura stateless, com frontend moderno e backend integrado.
+# 🐾 POAS - Sistema para Clínica Veterinária
 
-O projeto é executado em containers e orquestrado com Kubernetes, usando infraestrutura como código para garantir escalabilidade, organização e facilidade de deploy.
-- **Backend:** API REST em Flask  
-- **Frontend:** Interface web consumindo  `fetch`  
-- **Persistência:** Arquivo JSON (`pizzas.json`)  
-
----
-
-## Tecnologias Utilizadas
-### backend
--  Node.js
-- API REST
-- JWT (JSON Web Token)
-### frontend
-- Next.js
-- JavaScript (Fetch API)
-- HTML
-- CSS
-### infraestrutura e DevOps
-- Docker
-- Podman
-- Containerd
-- Kubernetes
-- Rancher Desktop
-- YAML (Infraestrutura como Código)
+Sistema desenvolvido para a disciplina **POAS**, com o objetivo de gerenciar uma clínica veterinária, permitindo o controle de usuários, clientes, animais, produtos, atendimentos e agendamentos, através de uma API REST desenvolvida em **FastAPI** e uma interface moderna em **React**.
 
 ---
 
@@ -35,15 +11,7 @@ O projeto é executado em containers e orquestrado com Kubernetes, usando infrae
 - Bruno Ildo 
 - Weslley Wender
 
-<br>
-<br>
-<br>
-# 🐾 POAS - Sistema para Clínica Veterinária
-
-Sistema desenvolvido para a disciplina **POAS**, com o objetivo de gerenciar uma clínica veterinária, permitindo o controle de usuários, clientes, animais, produtos, atendimentos e agendamentos, através de uma API REST desenvolvida em **FastAPI** e uma interface moderna em **React**.
-
 ---
-
 # 🚀 Tecnologias Utilizadas
 
 ## Backend
