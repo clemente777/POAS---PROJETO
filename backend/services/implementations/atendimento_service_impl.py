@@ -1,29 +1,26 @@
-from fastapi import HTTPException
-from sqlalchemy import select, asc, desc
-from sqlalchemy.orm import Session
 from datetime import datetime, timezone
 
+from fastapi import HTTPException
 
 from backend.models.atendimento_model import Atendimentos
 from backend.models.animal_model import Animais
-from backend.models.cliente_model import Clientes
 from backend.models.usuario_model import Usuarios
-
 
 from backend.schemas.atendimento_schema import (
     AtendimentoCreate,
     AtendimentoUpdate
 )
 
+from backend.repositories.atendimento_repository import (
+    AtendimentoRepository
+)
 
 
 class AtendimentoServiceImpl:
 
-
     """
-    Service responsável pelas regras
-    de negócio dos atendimentos.
-
+    Service responsável pelas regras de negócio
+    dos atendimentos.
 
     Regras:
 
@@ -36,29 +33,22 @@ class AtendimentoServiceImpl:
     - Atendimento finalizado não pode ser alterado.
     """
 
-
-
     def __init__(
         self,
-        session: Session,
+        repository: AtendimentoRepository,
         usuario_logado: Usuarios
     ):
 
-        self.session = session
+        self.repository = repository
         self.usuario_logado = usuario_logado
 
-
-
-
-    # ==================================================
+    # ==========================================================
     # PERFIL
-    # ==================================================
-
+    # ==========================================================
 
     def obter_perfil(self):
 
         perfil = self.usuario_logado.perfil
-
 
         if hasattr(
             perfil,
@@ -67,128 +57,82 @@ class AtendimentoServiceImpl:
 
             return perfil.nome
 
-
         return perfil
 
-
-
-
-
-    # ==================================================
+    # ==========================================================
     # PERMISSÃO
-    # ==================================================
-
+    # ==========================================================
 
     def validar_permissao(self):
 
         perfil = self.obter_perfil()
-
 
         if perfil not in (
             "Veterinário",
             "Administrador"
         ):
 
-
             raise HTTPException(
-
                 status_code=403,
-
-                detail=
-                "Sem permissão para gerenciar atendimentos."
-
+                detail=(
+                    "Sem permissão para "
+                    "gerenciar atendimentos."
+                )
             )
 
-
-
-
-
-    # ==================================================
-    # BUSCAR USUÁRIO
-    # ==================================================
-
+    # ==========================================================
+    # USUÁRIO
+    # ==========================================================
 
     def buscar_usuario(
         self,
-        usuario_id:int
-    ):
+        usuario_id: int
+    ) -> Usuarios:
 
-
-        usuario = self.session.scalar(
-
-            select(Usuarios)
-            .where(
-                Usuarios.id == usuario_id
-            )
-
+        usuario = self.repository.buscar_usuario(
+            usuario_id
         )
-
 
         if not usuario:
 
-
             raise HTTPException(
-
                 status_code=404,
-
-                detail=
-                "Usuário não encontrado."
-
+                detail="Usuário não encontrado."
             )
-
 
         return usuario
 
-
-
-
-
-    # ==================================================
-    # VALIDAR USUÁRIO ATIVO
-    # ==================================================
-
+    # ==========================================================
+    # USUÁRIO ATIVO
+    # ==========================================================
 
     def validar_usuario_ativo(
         self,
-        usuario:Usuarios
+        usuario: Usuarios
     ):
-
 
         if hasattr(
             usuario,
             "ativo"
         ):
 
-
             if not usuario.ativo:
 
-
                 raise HTTPException(
-
                     status_code=403,
-
-                    detail=
-                    "Usuário desativado."
-
+                    detail="Usuário desativado."
                 )
 
-
-
-
-
-    # ==================================================
-    # VALIDAR VETERINÁRIO
-    # ==================================================
-
+    # ==========================================================
+    # VETERINÁRIO
+    # ==========================================================
 
     def validar_veterinario(
         self,
-        usuario:Usuarios
+        usuario: Usuarios
     ):
 
-
         perfil = usuario.perfil
-
 
         if hasattr(
             perfil,
@@ -197,76 +141,48 @@ class AtendimentoServiceImpl:
 
             perfil = perfil.nome
 
-
-
         if perfil not in (
-
             "Veterinário",
             "Administrador"
-
         ):
 
-
             raise HTTPException(
-
                 status_code=403,
-
-                detail=
-                "Usuário informado não é veterinário."
-
+                detail=(
+                    "Usuário informado "
+                    "não é veterinário."
+                )
             )
 
-
-
-
-
-    # ==================================================
-    # BUSCAR ANIMAL
-    # ==================================================
-
+    # ==========================================================
+    # ANIMAL
+    # ==========================================================
 
     def buscar_animal(
         self,
-        animal_id:int
-    ):
+        animal_id: int
+    ) -> Animais:
 
-
-        animal = self.session.scalar(
-
-            select(Animais)
-            .where(
-
-                Animais.id == animal_id
-
-            )
-
+        animal = self.repository.buscar_animal(
+            animal_id
         )
-
-
 
         if not animal:
 
-
             raise HTTPException(
-
                 status_code=404,
-
-                detail=
-                "Animal não encontrado."
-
+                detail="Animal não encontrado."
             )
-
 
         self.validar_acesso_animal(
             animal
         )
 
-
         return animal
-    
-        # ==================================================
-    # VALIDAR ACESSO AO ANIMAL
-    # ==================================================
+
+    # ==========================================================
+    # ACESSO AO ANIMAL
+    # ==========================================================
 
     def validar_acesso_animal(
         self,
@@ -275,200 +191,124 @@ class AtendimentoServiceImpl:
 
         perfil = self.obter_perfil()
 
-
-        # Veterinário e Administrador acessam tudo
+        # Veterinário e Administrador
+        # possuem acesso total.
 
         if perfil in (
-
             "Veterinário",
             "Administrador"
-
         ):
 
             return
 
-
-
-
-        # Cliente só acessa seus animais
+        # Cliente só acessa
+        # os próprios animais.
 
         if perfil == "Cliente":
 
-
-            cliente = self.session.scalar(
-
-                select(Clientes)
-                .where(
-
-                    Clientes.usuario_id ==
+            cliente = (
+                self.repository
+                .buscar_cliente_por_usuario(
                     self.usuario_logado.id
-
                 )
-
             )
-
 
             if not cliente:
 
-
                 raise HTTPException(
-
                     status_code=403,
-
-                    detail=
-                    "Cliente não encontrado."
-
+                    detail="Cliente não encontrado."
                 )
-
-
 
             if animal.cliente_id != cliente.id:
 
-
                 raise HTTPException(
-
                     status_code=403,
-
-                    detail=
-                    "Você não possui acesso a este animal."
-
+                    detail=(
+                        "Você não possui acesso "
+                        "a este animal."
+                    )
                 )
-
 
             return
 
-
-
-
-
         raise HTTPException(
-
             status_code=403,
-
-            detail=
-            "Perfil sem permissão."
-
+            detail="Perfil sem permissão."
         )
 
-
-
-
-
-    # ==================================================
-    # BUSCAR ATENDIMENTO POR ID
-    # ==================================================
+    # ==========================================================
+    # ATENDIMENTO
+    # ==========================================================
 
     def buscar_por_id(
         self,
-        id:int
-    ):
+        id: int
+    ) -> Atendimentos:
 
-
-        atendimento = self.session.scalar(
-
-            select(Atendimentos)
-            .where(
-
-                Atendimentos.id == id
-
-            )
-
+        atendimento = (
+            self.repository
+            .buscar_por_id(id)
         )
-
 
         if not atendimento:
 
-
             raise HTTPException(
-
                 status_code=404,
-
-                detail=
-                "Atendimento não encontrado."
-
+                detail="Atendimento não encontrado."
             )
 
-
+        # Verifica existência e
+        # permissão sobre o animal.
 
         self.buscar_animal(
-
             atendimento.animal_id
-
         )
-
-
 
         return atendimento
 
-
-
-
-
-    # ==================================================
+    # ==========================================================
     # VALIDAÇÕES
-    # ==================================================
-
+    # ==========================================================
 
     def validar_diagnostico(
         self,
-        diagnostico:str
+        diagnostico: str
     ):
 
-
-        if not diagnostico or not diagnostico.strip():
-
+        if (
+            not diagnostico
+            or not diagnostico.strip()
+        ):
 
             raise HTTPException(
-
                 status_code=400,
-
-                detail=
-                "Diagnóstico obrigatório."
-
+                detail="Diagnóstico obrigatório."
             )
-
-
-
-
 
     def validar_observacoes(
         self,
-        observacoes:str | None
+        observacoes: str | None
     ):
 
-
         if observacoes is None:
-
             return
-
-
 
         if not observacoes.strip():
 
-
             raise HTTPException(
-
                 status_code=400,
-
-                detail=
-                "Observações inválidas."
-
+                detail="Observações inválidas."
             )
-
-
-
-
 
     def validar_data(
         self,
-        data:datetime
+        data: datetime
     ):
-
 
         agora = datetime.now(
             timezone.utc
         )
-
 
         if data.tzinfo is None:
 
@@ -476,60 +316,39 @@ class AtendimentoServiceImpl:
                 tzinfo=timezone.utc
             )
 
-
-
         if data > agora:
 
-
             raise HTTPException(
-
                 status_code=400,
-
-                detail=
-                "A data do atendimento não pode ser futura."
-
+                detail=(
+                    "A data do atendimento "
+                    "não pode ser futura."
+                )
             )
-
-
-
-
 
     def validar_duplicidade(
         self,
-        animal_id:int,
-        data:datetime
+        animal_id: int,
+        data: datetime,
+        excluir_id: int | None = None
     ):
-
-
-        existe = self.session.scalar(
-
-            select(Atendimentos)
-            .where(
-
-                Atendimentos.animal_id == animal_id,
-
-                Atendimentos.data_atendimento == data
-
+        existe = (
+            self.repository
+            .buscar_duplicado(
+                animal_id,
+                data,
+                excluir_id
             )
-
         )
 
-
         if existe:
-
-
             raise HTTPException(
-
                 status_code=409,
-
-                detail=
-                "Já existe atendimento registrado nesta data."
-
+                detail=(
+                    "Já existe atendimento "
+                    "registrado nesta data."
+                )
             )
-
-
-
-
 
     def validar_finalizado(
         self,
@@ -537,875 +356,415 @@ class AtendimentoServiceImpl:
         campos: list[str] | None = None
     ):
 
-        if hasattr(
-            atendimento,
+        if atendimento.status != "Finalizado":
+            return
+
+        campos_bloqueados = [
+            "data_atendimento",
+            "usuario_id",
+            "animal_id",
             "status"
-        ):
+        ]
 
-            if atendimento.status == "Finalizado":
+        if not campos:
+            return
 
-                campos_bloqueados = [
-                    "data_atendimento",
-                    "usuario_id",
-                    "animal_id",
-                    "status"
-                ]
+        for campo in campos:
 
-                if campos:
+            if campo in campos_bloqueados:
 
-                    for campo in campos:
+                raise HTTPException(
+                    status_code=409,
+                    detail=(
+                        "Atendimento finalizado "
+                        "não pode ser alterado."
+                    )
+                )
 
-                        if campo in campos_bloqueados:
-
-                            raise HTTPException(
-                                status_code=409,
-                                detail="Atendimento finalizado não pode ser alterado."
-                            )
-
-    # ==================================================
-    # CRIAR ATENDIMENTO
-    # ==================================================
+    # ==========================================================
+    # CRIAR
+    # ==========================================================
 
     def criar(
         self,
         atendimento: AtendimentoCreate
     ):
 
-
-        # somente veterinário/admin
-
         self.validar_permissao()
 
-
-
         self.buscar_animal(
-
             atendimento.animal_id
-
         )
-
-
 
         self.validar_diagnostico(
-
             atendimento.diagnostico
-
         )
-
-
 
         self.validar_observacoes(
-
             atendimento.observacoes
-
         )
-
-
 
         self.validar_data(
-
             atendimento.data_atendimento
-
         )
-
-
 
         veterinario = self.buscar_usuario(
-
             atendimento.usuario_id
-
         )
-
-
 
         self.validar_usuario_ativo(
-
             veterinario
-
         )
-
-
 
         self.validar_veterinario(
-
             veterinario
-
         )
-
-
 
         self.validar_duplicidade(
-
             atendimento.animal_id,
-
             atendimento.data_atendimento
-
         )
-
-
-
 
         novo = Atendimentos(
-
             **atendimento.model_dump()
-
         )
 
 
 
-        try:
-
-
-            self.session.add(
+        return self.repository.criar(
                 novo
             )
 
-
-            self.session.commit()
-
-
-
-            self.session.refresh(
-                novo
-            )
-
-
-            return novo
-
-
-
-        except Exception:
-
-
-            self.session.rollback()
-
-
-
-            raise HTTPException(
-
-                status_code=500,
-
-                detail=
-                "Erro ao criar atendimento."
-
-            )
-        # ==================================================
-    # LISTAR ATENDIMENTOS
-    # ==================================================
+    # ==========================================================
+    # LISTAR
+    # ==========================================================
 
     def listar(
         self,
-        skip:int = 0,
-        limit:int = 10,
-        animal_id:int | None = None,
-        usuario_id:int | None = None,
-        diagnostico:str | None = None,
-        data:datetime | None = None,
-        sort_by:str = "data_atendimento",
-        order:str = "asc"
+        skip: int = 0,
+        limit: int = 10,
+        animal_id: int | None = None,
+        usuario_id: int | None = None,
+        diagnostico: str | None = None,
+        data: datetime | None = None,
+        sort_by: str = "data_atendimento",
+        order: str = "asc"
     ):
-
-
-        query = select(
-            Atendimentos
-        )
-
 
         perfil = self.obter_perfil()
 
+        # ------------------------------------------------------
+        # PAGINAÇÃO
+        # ------------------------------------------------------
 
+        if skip < 0:
+            skip = 0
 
-        # ==============================================
-        # CLIENTE VISUALIZA SOMENTE SEUS ANIMAIS
-        # ==============================================
+        if limit <= 0:
+            limit = 10
+
+        if limit > 100:
+            limit = 100
+
+        # ------------------------------------------------------
+        # ACESSO DO CLIENTE
+        # ------------------------------------------------------
+
+        cliente_id = None
 
         if perfil == "Cliente":
 
-
-            cliente = self.session.scalar(
-
-                select(Clientes)
-                .where(
-
-                    Clientes.usuario_id ==
+            cliente = (
+                self.repository
+                .buscar_cliente_por_usuario(
                     self.usuario_logado.id
-
                 )
-
             )
-
 
             if not cliente:
 
-
                 raise HTTPException(
-
                     status_code=403,
-
-                    detail=
-                    "Cliente não encontrado."
-
+                    detail="Cliente não encontrado."
                 )
 
+            cliente_id = cliente.id
 
+        elif perfil not in (
+            "Veterinário",
+            "Administrador"
+        ):
 
-            query = (
-
-                query
-
-                .join(
-                    Animais
-                )
-
-                .where(
-
-                    Animais.cliente_id ==
-                    cliente.id
-
-                )
-
+            raise HTTPException(
+                status_code=403,
+                detail="Perfil sem permissão."
             )
 
+        # ------------------------------------------------------
+        # BUSCA
+        # ------------------------------------------------------
 
-
-
-        # ==============================================
-        # FILTROS
-        # ==============================================
-
-
-        if animal_id is not None:
-
-
-            query = query.where(
-
-                Atendimentos.animal_id ==
-                animal_id
-
-            )
-
-
-
-        if usuario_id is not None:
-
-
-            query = query.where(
-
-                Atendimentos.usuario_id ==
-                usuario_id
-
-            )
-
-
-
-        if diagnostico:
-
-
-            query = query.where(
-
-                Atendimentos.diagnostico.ilike(
-
-                    f"%{diagnostico.strip()}%"
-
-                )
-
-            )
-
-
-
-        if data:
-
-
-            query = query.where(
-
-                Atendimentos.data_atendimento ==
-                data
-
-            )
-
-
-
-
-
-        # ==============================================
-        # ORDENAÇÃO
-        # ==============================================
-
-
-        campos = {
-
-
-            "id":
-
-            Atendimentos.id,
-
-
-            "data_atendimento":
-
-            Atendimentos.data_atendimento,
-
-
-            "diagnostico":
-
-            Atendimentos.diagnostico,
-
-
-            "animal_id":
-
-            Atendimentos.animal_id,
-
-
-            "usuario_id":
-
-            Atendimentos.usuario_id
-
-
-        }
-
-
-
-        coluna = campos.get(
-
-            sort_by,
-
-            Atendimentos.data_atendimento
-
+        return self.repository.listar(
+            skip=skip,
+            limit=limit,
+            animal_id=animal_id,
+            usuario_id=usuario_id,
+            diagnostico=diagnostico,
+            data=data,
+            cliente_id=cliente_id,
+            sort_by=sort_by,
+            order=order
         )
 
-
-
-
-        if order.lower() == "desc":
-
-
-            query = query.order_by(
-
-                desc(coluna)
-
-            )
-
-        else:
-
-
-            query = query.order_by(
-
-                asc(coluna)
-
-            )
-
-
-
-
-
-        # ==============================================
-        # PAGINAÇÃO
-        # ==============================================
-
-
-        if skip < 0:
-
-            skip = 0
-
-
-
-        if limit <= 0:
-
-            limit = 10
-
-
-
-        if limit > 100:
-
-            limit = 100
-
-
-
-
-
-        query = (
-
-            query
-
-            .offset(skip)
-
-            .limit(limit)
-
-        )
-
-
-
-
-        return self.session.scalars(
-
-            query
-
-        ).all()
-
-
-
-
-
-    # ==================================================
-    # ATUALIZAR ATENDIMENTO
-    # ==================================================
+    # ==========================================================
+    # ATUALIZAR
+    # ==========================================================
 
     def atualizar(
         self,
-        id:int,
-        atendimento:AtendimentoUpdate
+        id: int,
+        atendimento: AtendimentoUpdate
     ):
-
 
         self.validar_permissao()
 
-
-        db = self.buscar_por_id(id)
-
+        db = self.buscar_por_id(
+            id
+        )
 
         dados = atendimento.model_dump(
             exclude_unset=True
         )
 
-
         self.validar_finalizado(
             db,
             list(dados.keys())
-)
+        )
 
+        # ------------------------------------------------------
+        # DIAGNÓSTICO
+        # ------------------------------------------------------
 
         if "diagnostico" in dados:
 
-
             self.validar_diagnostico(
-
                 dados["diagnostico"]
-
             )
-
 
             db.diagnostico = (
-
                 dados["diagnostico"].strip()
-
             )
 
-
-
-
+        # ------------------------------------------------------
+        # OBSERVAÇÕES
+        # ------------------------------------------------------
 
         if "observacoes" in dados:
 
-
             self.validar_observacoes(
-
                 dados["observacoes"]
-
             )
-
 
             db.observacoes = (
-
                 dados["observacoes"]
-
             )
 
-
-
-
+        # ------------------------------------------------------
+        # DATA
+        # ------------------------------------------------------
 
         if "data_atendimento" in dados:
 
-
             self.validar_data(
-
                 dados["data_atendimento"]
-
             )
 
+            # Verificar duplicidade
+            # para a nova data.
+
+            self.validar_duplicidade(
+                db.animal_id,
+                dados["data_atendimento"],
+                excluir_id=db.id
+            )
 
             db.data_atendimento = (
-
                 dados["data_atendimento"]
-
             )
 
-
-
-
+        # ------------------------------------------------------
+        # VETERINÁRIO
+        # ------------------------------------------------------
 
         if "usuario_id" in dados:
 
-
             veterinario = self.buscar_usuario(
-
                 dados["usuario_id"]
-
             )
-
 
             self.validar_usuario_ativo(
-
                 veterinario
-
             )
-
 
             self.validar_veterinario(
-
                 veterinario
-
             )
-
 
             db.usuario_id = (
-
                 dados["usuario_id"]
-
             )
 
 
-
-
-
-        try:
-
-
-            self.session.commit()
-
-
-
-            self.session.refresh(
-
+        return self.repository.atualizar(
                 db
-
             )
 
 
 
-            return db
-
-
-
-
-        except Exception:
-
-
-            self.session.rollback()
-
-
-
-            raise HTTPException(
-
-                status_code=500,
-
-                detail=
-                "Erro ao atualizar atendimento."
-
-            )
-        # ==================================================
-    # CANCELAR ATENDIMENTO
-    # ==================================================
+    # ==========================================================
+    # CANCELAR
+    # ==========================================================
 
     def cancelar(
         self,
-        id:int
+        id: int
     ):
-
 
         self.validar_permissao()
 
-
         atendimento = self.buscar_por_id(
-
             id
-
         )
 
+        if atendimento.status == "Finalizado":
 
-
-        if hasattr(
-            atendimento,
-            "status"
-        ):
-
-
-            if atendimento.status == "Finalizado":
-
-
-                raise HTTPException(
-
-                    status_code=409,
-
-                    detail=
-                    "Não é possível cancelar atendimento finalizado."
-
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    "Não é possível cancelar "
+                    "atendimento finalizado."
                 )
+            )
 
+        atendimento.status = "Cancelado"
 
-
-            atendimento.status = "Cancelado"
-
-
-
-            self.session.commit()
-
-
-
-            self.session.refresh(
-
+        return self.repository.atualizar(
                 atendimento
-
             )
 
 
 
-        return atendimento
-
-
-
-
-
-    # ==================================================
-    # DELETAR ATENDIMENTO
-    # ==================================================
+    # ==========================================================
+    # DELETAR
+    # ==========================================================
 
     def deletar(
         self,
-        id:int
+        id: int
     ):
-
 
         self.validar_permissao()
 
-
-
         self.buscar_por_id(
-
             id
-
         )
-
-
 
         raise HTTPException(
-
             status_code=409,
-
-            detail= 
-        "Atendimentos não podem ser excluídos. Histórico deve ser preservado."
+            detail=(
+                "Atendimentos não podem ser "
+                "excluídos. Histórico deve ser preservado."
+            )
         )
 
-
-    
-
-
-    # ==================================================
-    # HISTÓRICO COMPLETO DO ANIMAL
-    # ==================================================
+    # ==========================================================
+    # HISTÓRICO
+    # ==========================================================
 
     def historico_completo(
         self,
-        animal_id:int,
-        skip:int = 0,
-        limit:int = 10
+        animal_id: int,
+        skip: int = 0,
+        limit: int = 10
     ):
 
-
         animal = self.buscar_animal(
-
             animal_id
-
         )
 
+        if skip < 0:
+            skip = 0
 
+        if limit <= 0:
+            limit = 10
 
-        atendimentos = self.session.scalars(
+        if limit > 100:
+            limit = 100
 
-            select(Atendimentos)
-
-            .where(
-
-                Atendimentos.animal_id ==
-                animal_id
-
+        atendimentos = (
+            self.repository
+            .listar_historico(
+                animal_id,
+                skip,
+                limit
             )
-
-            .order_by(
-
-                desc(
-
-                    Atendimentos.data_atendimento
-
-                )
-
-            )
-
-            .offset(skip)
-
-            .limit(limit)
-
-        ).all()
-
-
-
-
+        )
 
         historico = []
 
-
-
-
         for atendimento in atendimentos:
-
 
             veterinario = None
 
-
-
             if atendimento.usuario:
 
-
                 veterinario = (
-
                     atendimento.usuario.nome
-
                 )
 
+            historico.append(
+                {
+                    "id": atendimento.id,
 
+                    "data": (
+                        atendimento.data_atendimento
+                    ),
 
+                    "veterinario": veterinario,
 
-            historico.append({
+                    "diagnostico": (
+                        atendimento.diagnostico
+                    ),
 
-
-                "id":
-
-                atendimento.id,
-
-
-
-                "data":
-
-                atendimento.data_atendimento,
-
-
-
-                "veterinario":
-
-                veterinario,
-
-
-
-                "diagnostico":
-
-                atendimento.diagnostico,
-
-
-
-                "observacoes":
-
-                atendimento.observacoes
-
-
-
-            })
-
-
-
-
-
-
+                    "observacoes": (
+                        atendimento.observacoes
+                    )
+                }
+            )
 
         cliente = animal.cliente
 
-
-
-
         return {
-
-
             "animal": {
-
-
-                "id":
-
-                animal.id,
-
-
-                "nome":
-
-                animal.nome,
-
-
-                "especie":
-
-                animal.especie,
-
-
-                "raca":
-
-                animal.raca,
-
-
-                "idade":
-
-                animal.idade
-
-
+                "id": animal.id,
+                "nome": animal.nome,
+                "especie": animal.especie,
+                "raca": animal.raca,
+                "idade": animal.idade
             },
-
-
 
             "cliente": {
-
-
-                "id":
-
-                cliente.id,
-
-
-                "nome":
-
-                cliente.nome,
-
-
-                "telefone":
-
-                cliente.telefone,
-
-
-                "email":
-
-                cliente.email
-
-
+                "id": cliente.id,
+                "nome": cliente.nome,
+                "telefone": cliente.telefone,
+                "email": cliente.email
             } if cliente else None,
 
-
-
             "paginacao": {
-
-
-                "skip":
-
-                skip,
-
-
-                "limit":
-
-                limit,
-
-
-                "quantidade":
-
-                len(historico)
-
-
+                "skip": skip,
+                "limit": limit,
+                "quantidade": len(historico)
             },
 
-
-
-            "historico":
-
-            historico
-
+            "historico": historico
         }
