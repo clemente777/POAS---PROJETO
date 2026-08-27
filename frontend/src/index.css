@@ -1,17 +1,64 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap');
 
+:root {
+  /* Cores — extraídas da logo (PetOnline 24h) */
+  --color-brand: #0E7C93;
+  --color-brand-dark: #0A5A6B;
+  --color-brand-light: #E3F1F3;
 
-*{
+  --color-accent: #F2615D;
+  --color-accent-dark: #D6433F;
 
-margin:0;
-padding:0;
-box-sizing:border-box;
+  --color-ink: #10262B;
+  --color-text: #1C2E31;
+  --color-text-muted: #5B6E71;
 
+  --color-bg: #FAFAF8;
+  --color-bg-alt: #EFF6F6;
+  --color-surface: #FFFFFF;
+  --color-border: #E1E8E8;
+
+  /* Tipografia */
+  --font-display: "Fraunces", Georgia, serif;
+  --font-body: "Inter", system-ui, sans-serif;
+
+  /* Espaçamento */
+  --space-xs: 8px;
+  --space-sm: 16px;
+  --space-md: 24px;
+  --space-lg: 40px;
+  --space-xl: 64px;
+  --space-2xl: 96px;
+
+  /* Raios */
+  --radius-sm: 10px;
+  --radius-md: 18px;
+  --radius-lg: 28px;
+  --radius-pill: 999px;
+
+  /* Sombra */
+  --shadow-sm: 0 4px 16px -8px rgba(16, 38, 43, 0.18);
+  --shadow-md: 0 24px 48px -28px rgba(16, 38, 43, 0.28);
 }
 
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
-body{
+body {
+  font-family: var(--font-body);
+  color: var(--color-text);
+  background: var(--color-bg);
+}
 
-font-family:"Poppins",sans-serif;
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--color-ink);
+}
 
+a {
+  font-family: inherit;
 }

@@ -1,82 +1,85 @@
 .navbar {
-    height: 80px;
-
-    width: 100%;
-
-    display: flex;
-    flex-direction: row;
-
-    justify-content: space-between;
-    align-items: center;
-
-    padding: 0 70px;
-
-    background: white;
-
-    box-sizing: border-box;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  height: 84px;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 70px;
+  background: var(--color-surface);
+  box-sizing: border-box;
+  transition: box-shadow 0.2s ease;
 }
 
-
-.logo {
-    font-size: 30px;
-    font-weight: bold;
-    color: #18a999;
+.navbar.is-scrolled {
+  box-shadow: 0 8px 24px -16px rgba(16, 38, 43, 0.35);
 }
 
+.navbar-brand {
+  display: flex;
+  align-items: center;
+}
 
+.navbar .logo {
+  width: 150px;
+  height: 60px;
+  object-fit: contain;
+}
 
 .navbar nav {
-
-    display: flex !important;
-
-    flex-direction: row !important;
-
-    align-items: center;
-
-    justify-content: flex-end;
-
-    gap: 30px;
-
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 32px;
 }
 
-
-
-.navbar nav a {
-
-    display: inline-flex;
-
-    align-items: center;
-
-    white-space: nowrap;
-
-    text-decoration: none;
-
-    color: #555;
-
-    font-size: 16px;
-
+.navbar nav a.nav-link {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  text-decoration: none;
+  color: var(--color-text-muted);
+  font-size: 15px;
+  font-weight: 500;
+  transition: color 0.15s ease;
 }
 
-
+.navbar nav a.nav-link:hover {
+  color: var(--color-brand);
+}
 
 .btn-login {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-brand);
+  color: white !important;
+  padding: 12px 28px;
+  border-radius: var(--radius-pill);
+  text-decoration: none;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
 
-    display: inline-flex;
+.btn-login:hover {
+  background: var(--color-brand-dark);
+}
 
-    align-items: center;
+@media (max-width: 900px) {
+  .navbar {
+    padding: 0 24px;
+  }
 
-    justify-content: center;
+  .navbar nav {
+    gap: 16px;
+  }
 
-    background: #ff5b91;
-
-    color: white !important;
-
-    padding: 12px 30px;
-
-    border-radius: 30px;
-
-    text-decoration: none;
-
-    white-space: nowrap;
-
+  .navbar nav a.nav-link:not(.btn-login) {
+    display: none;
+  }
 }

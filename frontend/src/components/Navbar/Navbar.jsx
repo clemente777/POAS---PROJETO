@@ -1,76 +1,50 @@
-import "./Navbar.css";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-
+import "./Navbar.css";
+import Logo from "../Logo/Logo";
 
 function Navbar() {
+  const [scrolled, setScrolled] = useState(false);
 
-    return (
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 12);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
-        <header className="navbar">
+  return (
+    <header className={`navbar ${scrolled ? "is-scrolled" : ""}`}>
+      <Link to="/" className="navbar-brand">
+        <Logo />
+      </Link>
 
+      <nav>
+        <Link to="/" className="nav-link">
+          Início
+        </Link>
 
-            <div className="logo">
-                🐾 POAS
-            </div>
+        <a href="#servicos" className="nav-link">
+          Serviços
+        </a>
 
+        <a href="#cobertura" className="nav-link">
+          Cobertura
+        </a>
 
+        <a href="#sobre" className="nav-link">
+          Sobre
+        </a>
 
-            <nav>
+        <a href="#contato" className="nav-link">
+          Contato
+        </a>
 
-
-                <Link 
-                    to="/"
-                    className="nav-link"
-                >
-                    Início
-                </Link>
-
-
-
-                <a 
-                    href="#servicos"
-                    className="nav-link"
-                >
-                    Serviços
-                </a>
-
-
-
-                <a 
-                    href="#sobre"
-                    className="nav-link"
-                >
-                    Sobre
-                </a>
-
-
-
-                <a 
-                    href="#contato"
-                    className="nav-link"
-                >
-                    Contato
-                </a>
-
-
-
-
-                <Link
-                    to="/login"
-                    className="btn-login"
-                >
-                    Entrar
-                </Link>
-
-
-            </nav>
-
-
-        </header>
-
-    );
-
+        <Link to="/login" className="btn-login">
+          Entrar
+        </Link>
+      </nav>
+    </header>
+  );
 }
-
 
 export default Navbar;

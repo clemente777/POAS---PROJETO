@@ -37,6 +37,23 @@ function Dashboard() {
 
     const [erro, setErro] = useState("");
 
+    // const cards = {
+    //     'vet' : [
+
+    //     ],
+    //     'adm' : [
+    //     <DashboardCard
+    //                     titulo="Usuários"
+    //                     valor={dados.usuarios}
+    //                     icone="👤"
+    //                 />,
+
+    //                 <DashboardCard
+    //                     titulo="Administradores"
+    //                     valor={dados.administradores}
+    //                     icone="👑"
+    //                 />]
+    // }
 
 
     useEffect(() => {
