@@ -52,7 +52,7 @@ function VacinasVeterinarioChart({dados}) {
 
                 <Bar
                     dataKey="quantidade"
-                    fill="#ff5b91"
+                    fill="#F2615D"
                 />
 
 

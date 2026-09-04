@@ -196,3 +196,33 @@ class DashboardVeterinarioResponse(BaseModel):
     vacinas_aplicadas: int
 
     proximas_doses: int
+
+
+class ProximaConsultaDashboard(BaseModel):
+
+    data: str
+    descricao: str
+    animal: str
+
+
+class DashboardClienteResponse(BaseModel):
+
+    model_config = ConfigDict(
+        from_attributes=True
+    )
+
+    meus_animais: List[AnimalDashboard]
+
+    total_animais: int
+
+    consultas_agendadas: int
+
+    proxima_consulta: Optional[ProximaConsultaDashboard]
+
+    consultas_realizadas: int
+
+    compras: int
+
+    valor_total_compras: float
+
+    proximas_doses_vacina: int

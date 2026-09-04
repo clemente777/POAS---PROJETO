@@ -37,7 +37,7 @@ function ConsultasVeterinarioChart({dados}) {
 
                 <Bar
                     dataKey="quantidade"
-                    fill="#18a999"
+                    fill="#0E7C93"
                 />
 
 

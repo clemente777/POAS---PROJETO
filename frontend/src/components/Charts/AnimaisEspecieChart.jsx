@@ -7,14 +7,9 @@ import {
     ResponsiveContainer,
     Cell
 } from "recharts";
+import { CHART_COLORS } from "./chartColors";
 
 
-const CORES = [
-    "#18a999",
-    "#ff5b91",
-    "#4d96ff",
-    "#ffb703"
-];
 
 
 function AnimaisEspecieChart({dados}) {
@@ -78,7 +73,7 @@ function AnimaisEspecieChart({dados}) {
 
                                 <Cell
                                     key={index}
-                                    fill={CORES[index % CORES.length]}
+                                    fill={CHART_COLORS[index % CHART_COLORS.length]}
                                 />
 
                             )

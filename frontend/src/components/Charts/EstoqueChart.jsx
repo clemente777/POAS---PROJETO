@@ -7,12 +7,8 @@ import {
     ResponsiveContainer,
     Cell
 } from "recharts";
+import { CHART_COLORS } from "./chartColors";
 
-const CORES = [
-    "#18a999",
-    "#ffb703",
-    "#ff5b91"
-];
 
 function EstoqueChart({dados}) {
 
@@ -67,7 +63,7 @@ function EstoqueChart({dados}) {
 
                                 <Cell
                                     key={index}
-                                    fill={CORES[index]}
+                                    fill={CHART_COLORS[index]}
                                 />
 
                             )

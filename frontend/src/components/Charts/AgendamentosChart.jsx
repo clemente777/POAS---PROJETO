@@ -82,7 +82,7 @@ function AgendamentosSemanaChart({dados}) {
 
                     dataKey="quantidade"
 
-                    fill="#18a999"
+                    fill="#0E7C93"
 
                     radius={[0,8,8,0]}
 

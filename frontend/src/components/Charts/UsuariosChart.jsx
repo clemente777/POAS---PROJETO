@@ -5,12 +5,8 @@ import {
     Tooltip,
     Legend
 } from "recharts";
+import { CHART_COLORS } from "./chartColors";
 
-const CORES = [
-    "#18a999",
-    "#ff5b91",
-    "#4d96ff"
-];
 
 function UsuariosChart({dados}) {
 
@@ -57,7 +53,7 @@ function UsuariosChart({dados}) {
 
                             <Cell
                                 key={index}
-                                fill={CORES[index]}
+                                fill={CHART_COLORS[index]}
                             />
 
                         )

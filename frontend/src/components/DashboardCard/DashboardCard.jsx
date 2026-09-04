@@ -1,45 +1,23 @@
 import "./DashboardCard.css";
 
 function DashboardCard({
-
-    titulo,
-
-    valor,
-
-    icone,
-
-    cor = "#0d8297"
-
+  titulo,
+  valor,
+  icone: Icone,
+  cor = "var(--color-brand)",
 }) {
+  return (
+    <div className="dashboard-card">
+      <div className="card-icon" style={{ background: cor }}>
+        {Icone && <Icone size={26} strokeWidth={2} />}
+      </div>
 
-    return (
-
-        <div className="dashboard-card">
-
-            <div
-
-                className="card-icon"
-
-                style={{ background: cor }}
-
-            >
-
-                {icone}
-
-            </div>
-
-            <div className="card-info">
-
-                <h3>{titulo}</h3>
-
-                <strong>{valor}</strong>
-
-            </div>
-
-        </div>
-
-    );
-
+      <div className="card-info">
+        <h3>{titulo}</h3>
+        <strong>{valor ?? "-"}</strong>
+      </div>
+    </div>
+  );
 }
 
 export default DashboardCard;

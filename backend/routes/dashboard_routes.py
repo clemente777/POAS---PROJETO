@@ -18,7 +18,8 @@ from backend.services.implementations.dashboard_service_impl import (
 
 from backend.schemas.dashboard_schema import (
     DashboardResponse,
-    DashboardVeterinarioResponse
+    DashboardVeterinarioResponse,
+    DashboardClienteResponse
 )
 
 
@@ -114,3 +115,27 @@ def dashboard_veterinario(
 
 
     return service.dashboard_veterinario()
+
+# ==================================
+# DASHBOARD CLIENTE
+# ==================================
+
+
+@router.get("/cliente", response_model=DashboardClienteResponse)
+def dashboard_cliente(
+    session: Session = Depends(get_session),
+    usuario: Usuarios = Depends(get_current_user)
+):
+
+    if usuario.perfil != "Cliente":
+        raise HTTPException(
+            status_code=403,
+            detail="Apenas clientes podem acessar."
+        )
+
+    service = DashboardServiceImpl(
+        session=session,
+        usuario=usuario
+    )
+
+    return service.dashboard_cliente()

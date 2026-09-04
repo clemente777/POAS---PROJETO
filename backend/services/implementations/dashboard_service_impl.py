@@ -1,9 +1,3 @@
-from datetime import date, datetime
-
-from sqlalchemy import func, select, desc
-from sqlalchemy.orm import Session
-
-
 from backend.models.usuario_model import Usuarios
 from backend.models.cliente_model import Clientes
 from backend.models.animal_model import Animais
@@ -12,1188 +6,305 @@ from backend.models.atendimento_model import Atendimentos
 from backend.models.produto_model import Produtos
 from backend.models.carrinho_model import Carrinhos
 from backend.models.item_carrinho_model import ItensCarrinho
-
 from backend.models.aplicacao_vacina_model import AplicacoesVacina
 from backend.models.vacina_model import Vacinas
 
+from backend.repositories.dashboard_repository import DashboardRepository
 
 
 class DashboardServiceImpl:
 
-
     def __init__(
         self,
-        session: Session,
+        session,
         usuario: Usuarios | None = None
     ):
 
-        self.session = session
         self.usuario = usuario
-
-
-
-    # ============================================
-    # MÉTODO GENÉRICO
-    # ============================================
-
-    def _total(self, model):
-
-        return self.session.scalar(
-
-            select(func.count())
-
-            .select_from(model)
-
-        ) or 0
-
-
+        self.repository = DashboardRepository(session=session)
 
     # ============================================
-    # USUÁRIOS
+    # HELPERS DE FORMATAÇÃO
     # ============================================
 
-    def _usuarios_por_perfil(self, perfil):
-
-        return self.session.scalar(
-
-            select(func.count())
-
-            .select_from(Usuarios)
-
-            .where(
-
-                Usuarios.perfil == perfil
-
-            )
-
-        ) or 0
-
-
-    # ============================================
-    # ATENDIMENTOS
-    # ============================================
-
-    def _atendimentos_hoje(self):
-
-        return self.session.scalar(
-
-            select(func.count())
-
-            .select_from(Atendimentos)
-
-            .where(
-
-                func.date(
-                    Atendimentos.data_atendimento
-                ) == date.today()
-
-            )
-
-        ) or 0
-
-
-    def _atendimentos_finalizados(self):
-
-        return self.session.scalar(
-
-            select(func.count())
-
-            .select_from(Atendimentos)
-
-            .where(
-
-                Atendimentos.status == "Finalizado"
-
-            )
-
-        ) or 0
-    # ============================================
-    # ANIMAIS
-    # ============================================
-
-
-    def _animais_por_especie(self):
-
-        resultado = self.session.execute(
-
-            select(
-
-                Animais.especie,
-
-                func.count(
-                    Animais.id
-                ).label("quantidade")
-
-            )
-
-            .group_by(
-                Animais.especie
-            )
-
-        ).all()
-
-
-
-        return {
-
-            item.especie:
-            item.quantidade
-
-            for item in resultado
-
-        }
-
-
-
-
-    def _animal_mais_velho(self):
-
-        animal = self.session.scalar(
-
-            select(Animais)
-
-            .order_by(
-                desc(
-                    Animais.idade
-                )
-            )
-
-            .limit(1)
-
-        )
-
+    def _formatar_animal(self, animal):
 
         if not animal:
-
             return None
 
-
-
         return {
-
-            "nome":
-                animal.nome,
-
-            "idade":
-                animal.idade
-
+            "nome": animal.nome,
+            "idade": animal.idade
         }
 
-
-
-
-    def _media_idade_animais(self):
-
-
-        resultado = self.session.scalar(
-
-            select(
-                func.avg(
-                    Animais.idade
-                )
-            )
-
-        )
-
-
-        return round(
-            resultado,
-            2
-        ) if resultado else 0
-
-
-
-
-
-
-    # ============================================
-    # CLIENTES
-    # ============================================
-
-
-
-    def _cliente_com_mais_animais(self):
-
-
-        resultado = self.session.execute(
-
-            select(
-
-                Clientes.nome,
-
-                func.count(
-                    Animais.id
-                ).label(
-                    "quantidade"
-                )
-
-            )
-
-            .join(
-
-                Animais,
-
-                Animais.cliente_id == Clientes.id
-
-            )
-
-            .group_by(
-                Clientes.id
-            )
-
-            .order_by(
-                desc("quantidade")
-            )
-
-            .limit(1)
-
-
-        ).first()
-
-
+    def _formatar_cliente_com_mais_animais(self, resultado):
 
         if not resultado:
-
             return None
 
-
-
         return {
-
-            "nome":
-                resultado.nome,
-
-
-            "quantidade":
-                resultado.quantidade
-
+            "nome": resultado.nome,
+            "quantidade": resultado.quantidade
         }
-        # ============================================
-    # ESTOQUE
-    # ============================================
 
-
-    def _valor_estoque(self):
-
-        resultado = self.session.scalar(
-
-            select(
-
-                func.sum(
-
-                    Produtos.preco *
-                    Produtos.estoque
-
-                )
-
-            )
-
-        )
-
-
-        return resultado or 0
-
-
-
-
-    def _estoque_baixo(self):
-
-        return self.session.scalar(
-
-            select(func.count())
-
-            .select_from(Produtos)
-
-            .where(
-
-                Produtos.estoque <= 5
-
-            )
-
-        ) or 0
-
-
-
-
-
-    def _produtos_sem_estoque(self):
-
-        return self.session.scalar(
-
-            select(func.count())
-
-            .select_from(Produtos)
-
-            .where(
-
-                Produtos.estoque == 0
-
-            )
-
-        ) or 0
-
-
-
-
-
-    def _produto_mais_caro(self):
-
-        produto = self.session.scalar(
-
-            select(Produtos)
-
-            .order_by(
-
-                desc(
-                    Produtos.preco
-                )
-
-            )
-
-            .limit(1)
-
-        )
-
+    def _formatar_produto(self, produto):
 
         if not produto:
-
             return None
 
-
-
         return {
-
-            "nome":
-                produto.nome,
-
-
-            "preco":
-                produto.preco
-
+            "nome": produto.nome,
+            "preco": produto.preco
         }
 
+    def _formatar_vacina_mais_aplicada(self, resultado):
 
-
-
-
-    def _produto_mais_barato(self):
-
-        produto = self.session.scalar(
-
-            select(Produtos)
-
-            .order_by(
-
-                Produtos.preco
-
-            )
-
-            .limit(1)
-
-        )
-
-
-        if not produto:
-
+        if not resultado:
             return None
 
-
-
         return {
-
-            "nome":
-                produto.nome,
-
-
-            "preco":
-                produto.preco
-
+            "nome": resultado.nome,
+            "quantidade": resultado.quantidade
         }
 
+    def _formatar_animais_por_especie(self, resultado):
 
+        return {
+            item.especie: item.quantidade
+            for item in resultado
+        }
 
-
-
-
-    # ============================================
-    # AGENDA
-    # ============================================
-
-
-
-    def _agendamentos_hoje(self):
-
-        return self.session.scalar(
-
-            select(func.count())
-
-            .select_from(Agendamentos)
-
-            .where(
-
-                func.date(
-
-                    Agendamentos.data_agendamento
-
-                )
-
-                ==
-                date.today()
-
-            )
-
-        ) or 0
-
-
-
-
-
-    def _agendamentos_futuros(self):
-
-        return self.session.scalar(
-
-            select(func.count())
-
-            .select_from(Agendamentos)
-
-            .where(
-
-                Agendamentos.data_agendamento
-                >=
-                date.today()
-
-            )
-
-        ) or 0
-
-
-
-
-
-    def _agendamentos_cancelados(self):
-
-        return self.session.scalar(
-
-            select(func.count())
-
-            .select_from(Agendamentos)
-
-            .where(
-
-                Agendamentos.status
-                ==
-                "Cancelado"
-
-            )
-
-        ) or 0
-
-
-
-
-
-    def _agendamentos_semana(self):
-
-
-        resultado = self.session.execute(
-
-            select(
-
-                func.date(
-
-                    Agendamentos.data_agendamento
-
-                )
-                .label("dia"),
-
-
-                func.count(
-
-                    Agendamentos.id
-
-                )
-                .label("quantidade")
-
-            )
-
-            .where(
-
-                Agendamentos.data_agendamento
-                >=
-                date.today()
-
-            )
-
-
-            .group_by(
-
-                func.date(
-
-                    Agendamentos.data_agendamento
-
-                )
-
-            )
-
-
-            .order_by(
-
-                func.date(
-
-                    Agendamentos.data_agendamento
-
-                )
-
-            )
-
-
-        ).all()
-
-
+    def _formatar_agendamentos_semana(self, resultado):
 
         return [
-
             {
-
-                "dia":
-                    str(item.dia),
-
-
-                "quantidade":
-                    item.quantidade
-
+                "dia": str(item.dia),
+                "quantidade": item.quantidade
             }
-
-
             for item in resultado
-
         ]
 
+    def _formatar_media_idade(self, media):
 
+        return round(media, 2) if media else 0
 
-
-
-
-
-    # ============================================
-    # VACINAS
-    # ============================================
-
-
-
-    def _proximas_doses(self):
-
-        return self.session.scalar(
-
-            select(func.count())
-
-            .select_from(
-                AplicacoesVacina
-            )
-
-            .where(
-
-                AplicacoesVacina.proxima_dose
-                >=
-                date.today()
-
-            )
-
-        ) or 0
-
-
-
-
-
-    def _vacinas_aplicadas_veterinario(
-        self,
-        veterinario_id
-    ):
-
-
-        return self.session.scalar(
-
-            select(func.count())
-
-            .select_from(
-                AplicacoesVacina
-            )
-
-            .where(
-
-                AplicacoesVacina.veterinario_id
-                ==
-                veterinario_id
-
-            )
-
-        ) or 0
-
-
-
-
-
-    def _vacina_mais_aplicada(self):
-
-
-        resultado = self.session.execute(
-
-            select(
-
-                Vacinas.nome,
-
-                func.count(
-
-                    AplicacoesVacina.id
-
-                )
-                .label(
-                    "quantidade"
-                )
-
-            )
-
-
-            .join(
-
-                AplicacoesVacina,
-
-                AplicacoesVacina.vacina_id
-                ==
-                Vacinas.id
-
-            )
-
-
-            .group_by(
-
-                Vacinas.id
-
-            )
-
-
-            .order_by(
-
-                desc(
-                    "quantidade"
-                )
-
-            )
-
-
-            .limit(1)
-
-
-        ).first()
-
-
-
-        if not resultado:
-
-            return None
-
-
-
-        return {
-
-            "nome":
-                resultado.nome,
-
-
-            "quantidade":
-                resultado.quantidade
-
-        }
-        
     # ============================================
     # DADOS COMPARTILHADOS
     # ADMIN + VETERINÁRIO
     # ============================================
 
-
     def dados_compartilhados(self):
 
         return {
 
-
-            # ===============================
             # ANIMAIS
-            # ===============================
+            "animais": self.repository.total(Animais),
 
+            "animais_por_especie": self._formatar_animais_por_especie(
+                self.repository.animais_por_especie()
+            ),
 
-            "animais":
+            "animal_mais_velho": self._formatar_animal(
+                self.repository.animal_mais_velho()
+            ),
 
-                self._total(
-                    Animais
-                ),
+            "media_idade_animais": self._formatar_media_idade(
+                self.repository.media_idade_animais()
+            ),
 
-
-
-            "animais_por_especie":
-
-                self._animais_por_especie(),
-
-
-
-
-            "animal_mais_velho":
-
-                self._animal_mais_velho(),
-
-
-
-
-            "media_idade_animais":
-
-                self._media_idade_animais(),
-
-
-
-
-            # ===============================
             # CLIENTES
-            # ===============================
+            "clientes": self.repository.total(Clientes),
 
+            "cliente_com_mais_animais": self._formatar_cliente_com_mais_animais(
+                self.repository.cliente_com_mais_animais()
+            ),
 
-            "clientes":
-
-                self._total(
-                    Clientes
-                ),
-
-
-
-
-            "cliente_com_mais_animais":
-
-                self._cliente_com_mais_animais(),
-
-
-
-
-
-            # ===============================
             # AGENDA
-            # ===============================
+            "agendamentos": self.repository.total(Agendamentos),
 
+            "agendamentos_semana": self._formatar_agendamentos_semana(
+                self.repository.agendamentos_semana()
+            ),
 
-            "agendamentos":
-
-                self._total(
-                    Agendamentos
-                ),
-
-
-
-
-            "agendamentos_semana":
-
-                self._agendamentos_semana(),
-
-
-
-
-
-            # ===============================
             # VACINAS
-            # ===============================
+            "vacinas": self.repository.total(Vacinas),
 
+            "aplicacoes_vacina": self.repository.total(AplicacoesVacina),
 
-            "vacinas":
-
-                self._total(
-                    Vacinas
-                ),
-
-
-
-
-
-            "aplicacoes_vacina":
-
-                self._total(
-                    AplicacoesVacina
-                ),
-
-
-
-            "proximas_doses":
-
-                self._proximas_doses()
-
-
+            "proximas_doses": self.repository.proximas_doses()
 
         }
-
-
-
-
-
 
     # ============================================
     # DASHBOARD ADMINISTRADOR
     # ============================================
 
-
     def dashboard_admin(self):
-
 
         dados = self.dados_compartilhados()
 
-
-
         return {
-
 
             **dados,
 
-
-
-            # ===============================
             # USUÁRIOS
-            # ===============================
+            "usuarios": self.repository.total(Usuarios),
 
+            "administradores": self.repository.usuarios_por_perfil(
+                "Administrador"
+            ),
 
-            "usuarios":
+            "veterinarios": self.repository.usuarios_por_perfil(
+                "Veterinário"
+            ),
 
-                self._total(
-                    Usuarios
-                ),
+            "clientes_sistema": self.repository.usuarios_por_perfil(
+                "Cliente"
+            ),
 
-
-
-
-            "administradores":
-
-                self._usuarios_por_perfil(
-                    "Administrador"
-                ),
-
-
-
-
-            "veterinarios":
-
-                self._usuarios_por_perfil(
-                    "Veterinário"
-                ),
-
-
-
-
-            "clientes_sistema":
-
-                self._usuarios_por_perfil(
-                    "Cliente"
-                ),
-
-
-
-
-
-            # ===============================
             # CADASTROS
-            # ===============================
+            "produtos": self.repository.total(Produtos),
 
+            "carrinhos": self.repository.total(Carrinhos),
 
-            "produtos":
+            "itens_carrinho": self.repository.total(ItensCarrinho),
 
-                self._total(
-                    Produtos
-                ),
-
-
-
-
-            "carrinhos":
-
-                self._total(
-                    Carrinhos
-                ),
-
-
-
-
-            "itens_carrinho":
-
-                self._total(
-                    ItensCarrinho
-                ),
-
-
-
-
-
-
-            # ===============================
             # ESTOQUE
-            # ===============================
+            "valor_total_estoque": self.repository.valor_estoque(),
 
+            "estoque_baixo": self.repository.estoque_baixo(),
 
-            "valor_total_estoque":
+            "produtos_sem_estoque": self.repository.produtos_sem_estoque(),
 
-                self._valor_estoque(),
-
-
-
-
-            "estoque_baixo":
-
-                self._estoque_baixo(),
-
-
-
-
-            "produtos_sem_estoque":
-
-                self._produtos_sem_estoque(),
-
-
-
-
-
-            # ===============================
             # PRODUTOS
-            # ===============================
+            "produto_mais_caro": self._formatar_produto(
+                self.repository.produto_mais_caro()
+            ),
 
+            "produto_mais_barato": self._formatar_produto(
+                self.repository.produto_mais_barato()
+            ),
 
-            "produto_mais_caro":
-
-                self._produto_mais_caro(),
-
-
-
-
-            "produto_mais_barato":
-
-                self._produto_mais_barato(),
-
-
-
-
-
-            # ===============================
             # AGENDA
-            # ===============================
+            "agendamentos_hoje": self.repository.agendamentos_hoje(),
 
+            "agendamentos_futuros": self.repository.agendamentos_futuros(),
 
-            "agendamentos_hoje":
+            "agendamentos_cancelados": self.repository.agendamentos_cancelados(),
 
-                self._agendamentos_hoje(),
-
-
-
-
-            "agendamentos_futuros":
-
-                self._agendamentos_futuros(),
-
-
-
-
-
-            "agendamentos_cancelados":
-
-                self._agendamentos_cancelados(),
-
-
-
-
-
-
-            # ===============================
             # ATENDIMENTOS
-            # ===============================
+            "atendimentos": self.repository.total(Atendimentos),
 
+            "atendimentos_hoje": self.repository.atendimentos_hoje(),
 
-            "atendimentos":
+            "atendimentos_finalizados": self.repository.atendimentos_finalizados(),
 
-                self._total(
-                    Atendimentos
-                ),
-
-
-
-
-            "atendimentos_hoje":
-
-                self._atendimentos_hoje(),
-
-
-
-
-            "atendimentos_finalizados":
-
-                self._atendimentos_finalizados(),
-
-
-
-
-            "vacina_mais_aplicada":
-
-                self._vacina_mais_aplicada()
+            "vacina_mais_aplicada": self._formatar_vacina_mais_aplicada(
+                self.repository.vacina_mais_aplicada()
+            )
 
         }
-        
-    # ============================================
-    # CONSULTAS DO VETERINÁRIO
-    # ============================================
 
-    def _consultas_hoje_veterinario(self, veterinario_id):
-
-        return self.session.scalar(
-
-            select(func.count())
-
-            .select_from(Agendamentos)
-
-            .where(
-
-                Agendamentos.veterinario_id == veterinario_id,
-
-                func.date(
-                    Agendamentos.data_agendamento
-                ) == date.today()
-
-            )
-
-        ) or 0
-
-
-    def _proximas_consultas_veterinario(self, veterinario_id):
-
-        return self.session.scalar(
-
-            select(func.count())
-
-            .select_from(Agendamentos)
-
-            .where(
-
-                Agendamentos.veterinario_id == veterinario_id,
-
-                Agendamentos.data_agendamento >= datetime.now()
-
-            )
-
-        ) or 0
-
-
-    # ============================================
-    # ATENDIMENTOS DO VETERINÁRIO
-    # ============================================
-
-    def _atendimentos_realizados_veterinario(self, veterinario_id):
-
-        return self.session.scalar(
-
-            select(func.count())
-
-            .select_from(Atendimentos)
-
-            .where(
-
-                Atendimentos.usuario_id == veterinario_id
-
-            )
-
-        ) or 0
-
-
-    def _animais_atendidos_veterinario(self, veterinario_id):
-
-        return self.session.scalar(
-
-            select(
-
-                func.count(
-                    func.distinct(
-                        Atendimentos.animal_id
-                    )
-                )
-
-            )
-
-            .where(
-
-                Atendimentos.usuario_id == veterinario_id
-
-            )
-
-        ) or 0   
     # ============================================
     # DASHBOARD VETERINÁRIO
     # ============================================
 
-
     def dashboard_veterinario(self):
-
 
         veterinario_id = self.usuario.id
 
-
-
         # Dados que qualquer veterinário pode visualizar
-
         dados = self.dados_compartilhados()
-
-
 
         return {
 
-
             **dados,
 
-
-
-            # =================================
             # DADOS EXCLUSIVOS DO VETERINÁRIO
-            # =================================
+            "consultas_hoje": self.repository.consultas_hoje_veterinario(
+                veterinario_id
+            ),
 
-
-
-            "consultas_hoje":
-
-                self._consultas_hoje_veterinario(
-                    veterinario_id
-                ),
-
-
-
-
-            "proximas_consultas":
-
-                self._proximas_consultas_veterinario(
-                    veterinario_id
-                ),
-
-
-
+            "proximas_consultas": self.repository.proximas_consultas_veterinario(
+                veterinario_id
+            ),
 
             "atendimentos_realizados":
-
-                self._atendimentos_realizados_veterinario(
+                self.repository.atendimentos_realizados_veterinario(
                     veterinario_id
                 ),
 
+            "animais_atendidos": self.repository.animais_atendidos_veterinario(
+                veterinario_id
+            ),
 
+            "vacinas_aplicadas": self.repository.vacinas_aplicadas_veterinario(
+                veterinario_id
+            )
 
+        }
 
-            "animais_atendidos":
+    # ============================================
+    # DASHBOARD CLIENTE
+    # ============================================
 
-                self._animais_atendidos_veterinario(
-                    veterinario_id
-                ),
+    def _formatar_proxima_consulta(self, resultado):
 
+        if not resultado:
+            return None
 
+        return {
+            "data": resultado.data_agendamento.isoformat(),
+            "descricao": resultado.descricao,
+            "animal": resultado.animal_nome
+        }
 
+    def dashboard_cliente(self):
 
-            "vacinas_aplicadas":
+        cliente = self.repository.cliente_por_usuario_id(self.usuario.id)
 
-                self._vacinas_aplicadas_veterinario(
-                    veterinario_id
-                )
+        if not cliente:
 
+            return {
+                "meus_animais": [],
+                "total_animais": 0,
+                "consultas_agendadas": 0,
+                "proxima_consulta": None,
+                "consultas_realizadas": 0,
+                "compras": 0,
+                "valor_total_compras": 0,
+                "proximas_doses_vacina": 0
+            }
 
+        animais = [
+            self._formatar_animal(animal)
+            for animal in self.repository.animais_do_cliente(cliente.id)
+        ]
+
+        return {
+
+            "meus_animais": animais,
+
+            "total_animais": len(animais),
+
+            "consultas_agendadas": self.repository.consultas_agendadas_cliente(
+                cliente.id
+            ),
+
+            "proxima_consulta": self._formatar_proxima_consulta(
+                self.repository.proxima_consulta_cliente(cliente.id)
+            ),
+
+            "consultas_realizadas":
+                self.repository.atendimentos_realizados_cliente(cliente.id),
+
+            "compras": self.repository.total_carrinhos_cliente(cliente.id),
+
+            "valor_total_compras":
+                self.repository.valor_total_compras_cliente(cliente.id),
+
+            "proximas_doses_vacina": self.repository.proximas_doses_cliente(
+                cliente.id
+            )
 
         }

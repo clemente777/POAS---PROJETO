@@ -1,16 +1,19 @@
-.dashboard-section{
-
-    margin-top:40px;
-
+.dashboard-section {
+  margin-top: var(--space-lg);
 }
 
+.dashboard-section h2 {
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: var(--space-sm);
+}
 
-.section-content{
-
-    display:grid;
-
-    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
-
-    gap:20px;
-
+.section-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-sm);
 }
