@@ -2,13 +2,19 @@ from fastapi import HTTPException
 from pwdlib import PasswordHash
 
 from backend.models.usuario_model import Usuarios
+
 from backend.schemas.usuario_schema import (
     UsuarioCreate,
     UsuarioUpdate,
     UsuarioAdminCreate
 )
+
 from backend.repositories.usuario_repository import (
     UsuarioRepository
+)
+
+from backend.repositories.cliente_repository import (
+    ClienteRepository
 )
 
 
@@ -42,9 +48,11 @@ class UsuarioServiceImpl:
     def __init__(
         self,
         repository: UsuarioRepository,
+        cliente_repository: ClienteRepository,
         usuario_logado: Usuarios | None = None
     ):
         self.repository = repository
+        self.cliente_repository = cliente_repository
         self.usuario_logado = usuario_logado
 
     # ==========================================================
@@ -171,6 +179,19 @@ class UsuarioServiceImpl:
         )
 
     # ==========================================================
+    # BUSCAR CLIENTE PELO USUÁRIO
+    # ==========================================================
+
+    def buscar_cliente_por_usuario_id(
+        self,
+        usuario_id: int
+    ):
+
+        return self.cliente_repository.buscar_por_usuario_id(
+            usuario_id
+        )
+
+    # ==========================================================
     # CRIAR USUÁRIO PÚBLICO
     # ==========================================================
 
@@ -225,11 +246,13 @@ class UsuarioServiceImpl:
         )
 
         try:
+
             return self.repository.criar(
                 novo_usuario
             )
 
         except Exception:
+
             raise HTTPException(
                 status_code=500,
                 detail="Erro ao criar usuário."
@@ -257,6 +280,7 @@ class UsuarioServiceImpl:
         self.validar_usuario_logado()
 
         if self.usuario_logado.perfil != "Administrador":
+
             raise HTTPException(
                 status_code=403,
                 detail=(
@@ -278,12 +302,14 @@ class UsuarioServiceImpl:
         )
 
         if not nome:
+
             raise HTTPException(
                 status_code=400,
                 detail="Nome obrigatório."
             )
 
         if len(usuario.senha) < 6:
+
             raise HTTPException(
                 status_code=400,
                 detail=(
@@ -309,11 +335,13 @@ class UsuarioServiceImpl:
         )
 
         try:
+
             return self.repository.criar(
                 novo_usuario
             )
 
         except Exception:
+
             raise HTTPException(
                 status_code=500,
                 detail="Erro ao criar usuário."
@@ -337,6 +365,7 @@ class UsuarioServiceImpl:
         self.validar_usuario_logado()
 
         if self.usuario_logado.perfil != "Administrador":
+
             raise HTTPException(
                 status_code=403,
                 detail=(
@@ -357,6 +386,7 @@ class UsuarioServiceImpl:
         perfil_normalizado = None
 
         if perfil:
+
             perfil_normalizado = (
                 self.normalizar_perfil(perfil)
             )
@@ -394,6 +424,7 @@ class UsuarioServiceImpl:
         )
 
         if not usuario_db:
+
             raise HTTPException(
                 status_code=404,
                 detail="Usuário não encontrado."
@@ -416,6 +447,7 @@ class UsuarioServiceImpl:
             and self.usuario_logado.perfil
             != "Administrador"
         ):
+
             raise HTTPException(
                 status_code=403,
                 detail=(
@@ -435,6 +467,7 @@ class UsuarioServiceImpl:
             )
 
             if not nome:
+
                 raise HTTPException(
                     status_code=400,
                     detail="Nome obrigatório."
@@ -453,6 +486,7 @@ class UsuarioServiceImpl:
             )
 
             if not email:
+
                 raise HTTPException(
                     status_code=400,
                     detail="Email obrigatório."
@@ -468,6 +502,7 @@ class UsuarioServiceImpl:
                 existente
                 and existente.id != usuario_db.id
             ):
+
                 raise HTTPException(
                     status_code=409,
                     detail="Email já cadastrado."
@@ -482,6 +517,7 @@ class UsuarioServiceImpl:
         if "senha" in dados:
 
             if len(dados["senha"]) < 6:
+
                 raise HTTPException(
                     status_code=400,
                     detail=(
@@ -506,6 +542,7 @@ class UsuarioServiceImpl:
                 self.usuario_logado.perfil
                 != "Administrador"
             ):
+
                 raise HTTPException(
                     status_code=403,
                     detail=(
@@ -521,11 +558,13 @@ class UsuarioServiceImpl:
             )
 
         try:
+
             return self.repository.atualizar(
                 usuario_db
             )
 
         except Exception:
+
             raise HTTPException(
                 status_code=500,
                 detail="Erro ao atualizar usuário."
@@ -542,6 +581,7 @@ class UsuarioServiceImpl:
         )
 
         if not usuario_db:
+
             raise HTTPException(
                 status_code=404,
                 detail="Usuário não encontrado."
@@ -550,6 +590,7 @@ class UsuarioServiceImpl:
         self.validar_usuario_logado()
 
         if self.usuario_logado.perfil != "Administrador":
+
             raise HTTPException(
                 status_code=403,
                 detail=(
@@ -563,6 +604,7 @@ class UsuarioServiceImpl:
         # ------------------------------------------------------
 
         if usuario_db.id == self.usuario_logado.id:
+
             raise HTTPException(
                 status_code=400,
                 detail=(
@@ -572,13 +614,14 @@ class UsuarioServiceImpl:
             )
 
         try:
+
             self.repository.deletar(
                 usuario_db
             )
 
         except Exception:
+
             raise HTTPException(
                 status_code=500,
                 detail="Erro ao excluir usuário."
             )
-

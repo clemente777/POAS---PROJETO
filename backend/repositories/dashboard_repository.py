@@ -1,10 +1,10 @@
 from datetime import datetime, date, timedelta
 
 from sqlalchemy import (
-select,
-func,
-desc,
-asc
+    select,
+    func,
+    desc,
+    asc
 )
 from sqlalchemy.orm import Session
 
@@ -18,7 +18,6 @@ from backend.models.carrinho_model import Carrinhos
 from backend.models.item_carrinho_model import ItensCarrinho
 from backend.models.aplicacao_vacina_model import AplicacoesVacina
 from backend.models.vacina_model import Vacinas
-from sqlalchemy.orm import Session
 
 
 class DashboardRepository:
@@ -26,7 +25,6 @@ class DashboardRepository:
     Repository responsável exclusivamente pelas consultas
     utilizadas pelo Dashboard.
 
-    ```
     O Service não realiza consultas diretamente no banco.
 
     Responsabilidades deste Repository:
@@ -62,10 +60,7 @@ class DashboardRepository:
     # USUÁRIOS POR PERFIL
     # ==================================================
 
-    def usuarios_por_perfil(
-        self,
-        perfil: str
-    ):
+    def usuarios_por_perfil(self, perfil: str):
         """
         Retorna a quantidade de usuários de determinado perfil.
         """
@@ -86,7 +81,7 @@ class DashboardRepository:
         """
         Retorna a quantidade de animais agrupada por espécie.
 
-        O resultado possui:
+        Resultado:
         - especie
         - quantidade
         """
@@ -94,7 +89,9 @@ class DashboardRepository:
         return self.session.execute(
             select(
                 Animais.especie.label("especie"),
-                func.count(Animais.id).label("quantidade")
+                func.count(
+                    Animais.id
+                ).label("quantidade")
             )
             .group_by(
                 Animais.especie
@@ -153,7 +150,9 @@ class DashboardRepository:
         resultado = self.session.execute(
             select(
                 Clientes.nome.label("nome"),
-                func.count(Animais.id).label("quantidade")
+                func.count(
+                    Animais.id
+                ).label("quantidade")
             )
             .join(
                 Animais,
@@ -164,7 +163,9 @@ class DashboardRepository:
                 Clientes.nome
             )
             .order_by(
-                desc(func.count(Animais.id))
+                desc(
+                    func.count(Animais.id)
+                )
             )
             .limit(1)
         ).first()
@@ -281,7 +282,7 @@ class DashboardRepository:
         Retorna a quantidade de produtos considerados
         com estoque baixo.
 
-        Considera estoque menor ou igual a 5.
+        Considera estoque maior que 0 e menor ou igual a 5.
         """
 
         return self.session.scalar(
@@ -408,6 +409,9 @@ class DashboardRepository:
     def atendimentos_hoje(self):
         """
         Retorna a quantidade de atendimentos realizados hoje.
+
+        O modelo Atendimentos utiliza o campo:
+        data_atendimento
         """
 
         hoje = date.today()
@@ -417,7 +421,7 @@ class DashboardRepository:
             .select_from(Atendimentos)
             .where(
                 func.date(
-                    Atendimentos.data
+                    Atendimentos.data_atendimento
                 ) == hoje
             )
         ) or 0

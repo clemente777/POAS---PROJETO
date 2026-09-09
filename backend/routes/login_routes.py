@@ -7,58 +7,71 @@ from sqlalchemy.orm import Session
 
 from backend.database.database import get_session
 from backend.auth.token import create_access_token
-from backend.repositories.usuario_repository import UsuarioRepository
-from backend.services.implementations.usuario_service_impl import (
-UsuarioServiceImpl
+
+from backend.repositories.usuario_repository import (
+    UsuarioRepository
 )
 
-router = APIRouter(
-prefix="/login",
-tags=["Login"]
+from backend.repositories.cliente_repository import (
+    ClienteRepository
 )
+
+from backend.services.implementations.usuario_service_impl import (
+    UsuarioServiceImpl
+)
+
+
+router = APIRouter(
+    prefix="/login",
+    tags=["Login"]
+)
+
 
 senha_context = PasswordHash.recommended()
 
+
 SessionDep = Annotated[
-Session,
-Depends(get_session)
+    Session,
+    Depends(get_session)
 ]
 
-def get_usuario_service(
-session: SessionDep
-):
-    repository = UsuarioRepository(session)
 
+def get_usuario_service(
+    session: SessionDep
+):
+
+    usuario_repository = UsuarioRepository(
+        session
+    )
+
+    cliente_repository = ClienteRepository(
+        session
+    )
 
     return UsuarioServiceImpl(
-        repository=repository
+        repository=usuario_repository,
+        cliente_repository=cliente_repository
     )
 
 
 @router.post("/")
 def login(
-form_data: OAuth2PasswordRequestForm = Depends(),
-service: UsuarioServiceImpl = Depends(
-get_usuario_service
-)
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    service: UsuarioServiceImpl = Depends(
+        get_usuario_service
+    )
 ):
-    # ==========================================
-    # BUSCAR USUÁRIO
-    # ==========================================
 
     usuario = service.buscar_por_email(
         form_data.username
     )
 
     if not usuario:
+
         raise HTTPException(
             status_code=401,
             detail="Usuário não encontrado."
         )
-
-    # ==========================================
-    # VALIDAR SENHA
-    # ==========================================
 
     senha_valida = senha_context.verify(
         form_data.password,
@@ -66,21 +79,24 @@ get_usuario_service
     )
 
     if not senha_valida:
+
         raise HTTPException(
             status_code=401,
             detail="Senha inválida."
         )
 
-    # ==========================================
-    # VALIDAR CLIENTE
-    # ==========================================
+    # ----------------------------------------------------------
+    # VERIFICA SE CLIENTE POSSUI CADASTRO DE CLIENTE
+    # ----------------------------------------------------------
 
     if usuario.perfil == "Cliente":
+
         cliente = service.buscar_cliente_por_usuario_id(
             usuario.id
         )
 
         if not cliente:
+
             raise HTTPException(
                 status_code=404,
                 detail=(
@@ -89,9 +105,9 @@ get_usuario_service
                 )
             )
 
-    # ==========================================
-    # CRIAR TOKEN
-    # ==========================================
+    # ----------------------------------------------------------
+    # GERA TOKEN
+    # ----------------------------------------------------------
 
     token = create_access_token(
         {
@@ -100,10 +116,6 @@ get_usuario_service
             "usuario_id": usuario.id
         }
     )
-
-    # ==========================================
-    # RETORNAR DADOS
-    # ==========================================
 
     return {
         "access_token": token,
