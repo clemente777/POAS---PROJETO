@@ -1,0 +1,101 @@
+.historico-status {
+  color: var(--color-text-muted);
+  font-size: 14px;
+  text-align: center;
+  padding: var(--space-md) 0;
+}
+
+.historico-status.erro {
+  color: var(--color-accent-dark);
+}
+
+.historico-resumo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.historico-resumo-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--color-brand);
+}
+
+.historico-resumo-item div {
+  display: flex;
+  flex-direction: column;
+}
+
+.historico-resumo-item strong {
+  color: var(--color-ink);
+  font-size: 15px;
+}
+
+.historico-resumo-item span {
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.historico-titulo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: var(--space-sm);
+}
+
+.historico-vazio {
+  color: var(--color-text-muted);
+  font-size: 14px;
+  padding: var(--space-sm) 0;
+}
+
+.historico-lista {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.historico-item {
+  background: var(--color-bg-alt);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+}
+
+.historico-item-topo {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.historico-data {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.historico-vet {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.historico-diagnostico {
+  font-size: 14px;
+  color: var(--color-text);
+  margin-bottom: 4px;
+}
+
+.historico-observacoes {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}

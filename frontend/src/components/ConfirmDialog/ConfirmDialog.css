@@ -1,0 +1,58 @@
+.confirm-mensagem {
+  color: var(--color-text);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.confirm-erro {
+  margin-top: var(--space-sm);
+  background: #FDECEA;
+  color: var(--color-accent-dark);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+}
+
+.confirm-acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: var(--space-md);
+}
+
+.btn-secundario {
+  background: none;
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  padding: 10px 20px;
+  border-radius: var(--radius-pill);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn-secundario:hover {
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+}
+
+.btn-perigo {
+  background: var(--color-accent);
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  border-radius: var(--radius-pill);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn-perigo:hover {
+  background: var(--color-accent-dark);
+}
+
+.btn-perigo:disabled,
+.btn-secundario:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

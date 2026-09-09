@@ -75,6 +75,16 @@ nav a.is-active {
   color: white;
 }
 
+nav a.em-breve {
+  cursor: default;
+  opacity: 0.55;
+}
+
+nav a.em-breve:hover {
+  background: none;
+  color: #D7E2E4;
+}
+
 .logout {
   margin-top: auto;
   display: flex;

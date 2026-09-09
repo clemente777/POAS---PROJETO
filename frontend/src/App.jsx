@@ -4,6 +4,8 @@ import Home from "./pages/Home/Home";
 import Login from "./pages/Login/Login";
 import Cadastro from "./pages/Cadastro/Cadastro";
 import Dashboard from "./pages/Dashboard/Dashboard";
+import Animais from "./pages/Animais/Animais";
+import MeusAnimais from "./pages/MeusAnimais/MeusAnimais";
 
 
 function App(){
@@ -36,6 +38,18 @@ function App(){
         <Route 
           path="/dashboard" 
           element={<Dashboard />}
+        />
+
+
+        <Route
+          path="/animais"
+          element={<Animais />}
+        />
+
+
+        <Route
+          path="/meus-animais"
+          element={<MeusAnimais />}
         />
 
 

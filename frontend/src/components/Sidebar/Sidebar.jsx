@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { menusPorPerfil } from "../../permissions/permissoes";
 
-import { useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 
 import {
@@ -22,19 +22,20 @@ import {
 } from "lucide-react";
 
 const ITENS_MENU = [
-  { chave: "dashboard", label: "Dashboard", Icone: LayoutDashboard },
-  { chave: "animais", label: "Animais", Icone: PawPrint },
-  { chave: "meus_animais", label: "Meus Animais", Icone: Dog },
-  { chave: "clientes", label: "Clientes", Icone: Users },
-  { chave: "agendamentos", label: "Agendamentos", Icone: CalendarCheck },
-  { chave: "minhas_consultas", label: "Minhas Consultas", Icone: CalendarCheck },
-  { chave: "atendimentos", label: "Atendimentos", Icone: Stethoscope },
-  { chave: "produtos", label: "Produtos", Icone: ShoppingCart },
-  { chave: "compras", label: "Minhas Compras", Icone: ShoppingBag },
+  { chave: "dashboard", label: "Dashboard", Icone: LayoutDashboard, rota: "/dashboard" },
+  { chave: "animais", label: "Animais", Icone: PawPrint, rota: "/animais" },
+  { chave: "meus_animais", label: "Meus Animais", Icone: Dog, rota: "/meus-animais" },
+  { chave: "clientes", label: "Clientes", Icone: Users, rota: null },
+  { chave: "agendamentos", label: "Agendamentos", Icone: CalendarCheck, rota: null },
+  { chave: "minhas_consultas", label: "Minhas Consultas", Icone: CalendarCheck, rota: null },
+  { chave: "atendimentos", label: "Atendimentos", Icone: Stethoscope, rota: null },
+  { chave: "produtos", label: "Produtos", Icone: ShoppingCart, rota: null },
+  { chave: "compras", label: "Minhas Compras", Icone: ShoppingBag, rota: null },
 ];
 
 function Sidebar({ perfil, setSidebarAberto }) {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const { logout } = useAuth();
 
@@ -65,12 +66,26 @@ function Sidebar({ perfil, setSidebarAberto }) {
 
       <nav>
         {ITENS_MENU.filter((item) => permissoes.includes(item.chave)).map(
-          ({ chave, label, Icone }) => (
-            <a key={chave} className={chave === "dashboard" ? "is-active" : ""}>
-              <Icone size={20} />
-              {aberto && <span>{label}</span>}
-            </a>
-          )
+          ({ chave, label, Icone, rota }) => {
+            const ativo = rota && location.pathname === rota;
+
+            if (rota) {
+              return (
+                <Link key={chave} to={rota} className={ativo ? "is-active" : ""}>
+                  <Icone size={20} />
+                  {aberto && <span>{label}</span>}
+                </Link>
+              );
+            }
+
+            // Ainda sem página própria: mantém visível, sem navegar.
+            return (
+              <a key={chave} className="em-breve" title="Em breve">
+                <Icone size={20} />
+                {aberto && <span>{label}</span>}
+              </a>
+            );
+          }
         )}
 
         <a>
