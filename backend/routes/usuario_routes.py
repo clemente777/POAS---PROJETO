@@ -1,9 +1,15 @@
 from fastapi import APIRouter, Depends, Response
 from sqlalchemy.orm import Session
 
-
 from backend.database.database import get_session
+from backend.auth.dependencies import get_current_user
+from backend.auth.permissions import exigir_perfil
 
+from backend.models.usuario_model import Usuarios
+
+from backend.repositories.usuario_repository import (
+    UsuarioRepository
+)
 
 from backend.schemas.usuario_schema import (
     UsuarioCreate,
@@ -12,17 +18,9 @@ from backend.schemas.usuario_schema import (
     UsuarioAdminCreate
 )
 
-
 from backend.services.implementations.usuario_service_impl import (
     UsuarioServiceImpl
 )
-
-
-from backend.models.usuario_model import Usuarios
-
-
-from backend.auth.permissions import exigir_perfil
-
 
 
 router = APIRouter(
@@ -31,20 +29,42 @@ router = APIRouter(
 )
 
 
-
 # ==========================================================
-# SERVICE
+# DEPENDÊNCIA SERVICE PÚBLICO
 # ==========================================================
 
-
-def get_service(
+def get_service_publico(
     session: Session = Depends(get_session)
 ):
 
-    return UsuarioServiceImpl(
+    repository = UsuarioRepository(
         session
     )
 
+    return UsuarioServiceImpl(
+        repository
+    )
+
+
+# ==========================================================
+# DEPENDÊNCIA SERVICE AUTENTICADO
+# ==========================================================
+
+def get_service(
+    session: Session = Depends(get_session),
+    usuario_logado: Usuarios = Depends(
+        get_current_user
+    )
+):
+
+    repository = UsuarioRepository(
+        session
+    )
+
+    return UsuarioServiceImpl(
+        repository,
+        usuario_logado
+    )
 
 
 # ==========================================================
@@ -55,7 +75,6 @@ def get_service(
 # Sempre cria Cliente
 # ==========================================================
 
-
 @router.post(
     "/",
     response_model=UsuarioResponse,
@@ -65,9 +84,8 @@ def criar(
 
     usuario: UsuarioCreate,
 
-
     service: UsuarioServiceImpl = Depends(
-        get_service
+        get_service_publico
     )
 
 ):
@@ -77,31 +95,26 @@ def criar(
     )
 
 
-
-
-
 # ==========================================================
 # CRIAR USUÁRIO POR ADMIN
 #
 # Apenas Administrador
 # ==========================================================
 
-
 @router.post(
     "/admin",
-    response_model=UsuarioResponse
+    response_model=UsuarioResponse,
+    status_code=201
 )
 def criar_usuario_admin(
 
     usuario: UsuarioAdminCreate,
-
 
     usuario_logado: Usuarios = Depends(
         exigir_perfil(
             "Administrador"
         )
     ),
-
 
     service: UsuarioServiceImpl = Depends(
         get_service
@@ -114,15 +127,11 @@ def criar_usuario_admin(
     )
 
 
-
-
-
 # ==========================================================
 # LISTAR USUÁRIOS
 #
 # Apenas Administrador
 # ==========================================================
-
 
 @router.get(
     "/",
@@ -144,14 +153,11 @@ def listar(
 
     order: str = "asc",
 
-
-
     usuario_logado: Usuarios = Depends(
         exigir_perfil(
             "Administrador"
         )
     ),
-
 
     service: UsuarioServiceImpl = Depends(
         get_service
@@ -159,27 +165,15 @@ def listar(
 
 ):
 
-
     return service.listar(
-
         skip=skip,
-
         limit=limit,
-
         nome=nome,
-
         email=email,
-
         perfil=perfil,
-
         sort_by=sort_by,
-
         order=order
-
     )
-
-
-
 
 
 # ==========================================================
@@ -187,7 +181,6 @@ def listar(
 #
 # Apenas Administrador
 # ==========================================================
-
 
 @router.get(
     "/{id}",
@@ -197,13 +190,11 @@ def buscar(
 
     id: int,
 
-
     usuario_logado: Usuarios = Depends(
         exigir_perfil(
             "Administrador"
         )
     ),
-
 
     service: UsuarioServiceImpl = Depends(
         get_service
@@ -211,23 +202,17 @@ def buscar(
 
 ):
 
-
     return service.buscar_por_id(
         id
     )
 
 
-
-
-
 # ==========================================================
 # ATUALIZAR USUÁRIO
 #
-# Apenas Administrador
-#
-# Controle também no Service
+# Apenas Administrador pela rota.
+# O Service também valida as regras.
 # ==========================================================
-
 
 @router.put(
     "/{id}",
@@ -237,9 +222,7 @@ def atualizar(
 
     id: int,
 
-
     usuario: UsuarioUpdate,
-
 
     usuario_logado: Usuarios = Depends(
         exigir_perfil(
@@ -247,36 +230,23 @@ def atualizar(
         )
     ),
 
-
     service: UsuarioServiceImpl = Depends(
         get_service
     )
 
 ):
 
-
     return service.atualizar(
-
         id,
-
-        usuario,
-
-        usuario_logado
-
+        usuario
     )
-
-
-
 
 
 # ==========================================================
 # DELETAR USUÁRIO
 #
 # Apenas Administrador
-#
-# Controle também no Service
 # ==========================================================
-
 
 @router.delete(
     "/{id}",
@@ -286,30 +256,21 @@ def deletar(
 
     id: int,
 
-
     usuario_logado: Usuarios = Depends(
         exigir_perfil(
             "Administrador"
         )
     ),
 
-
     service: UsuarioServiceImpl = Depends(
         get_service
     )
 
-    ):
+):
 
+    service.deletar(id)
 
-        service.deletar(
+    return Response(
+        status_code=204
+    )
 
-            id,
-
-            usuario_logado
-
-        )
-
-
-        return Response(
-            status_code=204
-        )

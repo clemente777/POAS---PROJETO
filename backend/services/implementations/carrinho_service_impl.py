@@ -1,252 +1,167 @@
-from fastapi import HTTPException
-from sqlalchemy import select, asc, desc
-from sqlalchemy.orm import Session
 from datetime import datetime
 
+from fastapi import HTTPException
+
 from backend.models.carrinho_model import Carrinhos
-from backend.models.cliente_model import Clientes
+from backend.models.usuario_model import Usuarios
 
 from backend.schemas.carrinho_schema import (
     CarrinhoCreate,
     CarrinhoUpdate
 )
 
+from backend.repositories.carrinho_repository import (
+    CarrinhoRepository
+)
+
 
 class CarrinhoServiceImpl:
-
-
     """
-    Service responsável pelas regras
-    de negócio do carrinho.
-
+    Service responsável pelas regras de negócio
+    relacionadas aos carrinhos.
 
     Regras:
 
     - Cliente possui apenas um carrinho.
     - Cliente só acessa seu próprio carrinho.
     - Administrador possui acesso total.
-    - Carrinho vazio não finaliza compra.
+    - Carrinho vazio não pode finalizar compra.
     - Produto sem estoque bloqueia compra.
+    - Estoque é reduzido ao finalizar compra.
     - Carrinho com itens não pode ser excluído.
     """
 
-
-
     def __init__(
         self,
-        session: Session,
-        usuario_logado
+        repository: CarrinhoRepository,
+        usuario_logado: Usuarios
     ):
-
-        self.session = session
+        self.repository = repository
         self.usuario_logado = usuario_logado
-
-
-
-
 
     # ==================================================
     # PERFIL
     # ==================================================
 
-
     def obter_perfil(self):
-
 
         perfil = self.usuario_logado.perfil
 
-
-        if hasattr(
-            perfil,
-            "nome"
-        ):
-
+        if hasattr(perfil, "nome"):
             return perfil.nome
-
 
         return perfil
 
-
-
-
+    # ==================================================
+    # VERIFICAR ADMINISTRADOR
+    # ==================================================
 
     def is_admin(self):
 
         return (
             self.obter_perfil()
-            ==
-            "Administrador"
+            == "Administrador"
         )
-
-
-
-
-
 
     # ==================================================
     # BUSCAR CARRINHO
     # ==================================================
-
 
     def buscar_por_id(
         self,
         id: int
     ):
 
-
-        carrinho = self.session.scalar(
-
-            select(Carrinhos)
-            .where(
-                Carrinhos.id == id
-            )
-
+        carrinho = self.repository.buscar_por_id(
+            id
         )
-
 
         if not carrinho:
 
-
             raise HTTPException(
-
                 status_code=404,
-
-                detail="Carrinho não encontrado"
-
+                detail="Carrinho não encontrado."
             )
 
-
-
         self.validar_proprietario(
-
             carrinho
-
         )
-
-
 
         return carrinho
 
-
-
-
-
+    # ==================================================
+    # BUSCAR POR CLIENTE
+    # ==================================================
 
     def buscar_por_cliente(
         self,
         cliente_id: int
     ):
 
-
-        return self.session.scalar(
-
-            select(Carrinhos)
-
-            .where(
-
-                Carrinhos.cliente_id
-                ==
-                cliente_id
-
-            )
-
+        return self.repository.buscar_por_cliente(
+            cliente_id
         )
 
-
-
-
-
-
+    # ==================================================
+    # VALIDAR CLIENTE
+    # ==================================================
 
     def validar_cliente(
         self,
         cliente_id: int
     ):
 
-
-        cliente = self.session.scalar(
-
-            select(Clientes)
-
-            .where(
-
-                Clientes.id
-                ==
-                cliente_id
-
-            )
-
+        cliente = self.repository.buscar_cliente(
+            cliente_id
         )
-
 
         if not cliente:
 
-
             raise HTTPException(
-
                 status_code=404,
-
                 detail="Cliente não encontrado."
-
             )
-
 
         return cliente
 
-
-
-
-
-
-
     # ==================================================
-    # REGRA DE PROPRIEDADE
+    # VALIDAR PROPRIETÁRIO
     # ==================================================
-
 
     def validar_proprietario(
         self,
         carrinho: Carrinhos
     ):
+        """
+        Administradores podem acessar qualquer carrinho.
 
-
+        Clientes somente podem acessar carrinhos
+        vinculados ao próprio usuário.
+        """
 
         if self.is_admin():
-
             return
-
-
-
-
 
         if not carrinho.cliente:
 
-
             raise HTTPException(
-
                 status_code=404,
-
                 detail="Cliente do carrinho não encontrado."
-
             )
 
-
-
-
-
-        if carrinho.cliente.usuario_id != self.usuario_logado.id:
-
+        if (
+            carrinho.cliente.usuario_id
+            != self.usuario_logado.id
+        ):
 
             raise HTTPException(
-
                 status_code=403,
-
-                detail=
-                "Você não possui acesso a este carrinho."
-
+                detail=(
+                    "Você não possui acesso "
+                    "a este carrinho."
+                )
             )
-    
-    
+
     # ==================================================
     # CRIAR CARRINHO
     # ==================================================
@@ -256,104 +171,70 @@ class CarrinhoServiceImpl:
         carrinho: CarrinhoCreate
     ):
 
+        # --------------------------------------------------
+        # VALIDAR CLIENTE
+        # --------------------------------------------------
 
         cliente = self.validar_cliente(
-
             carrinho.cliente_id
-
         )
 
-
+        # --------------------------------------------------
+        # CLIENTE SÓ PODE CRIAR O PRÓPRIO CARRINHO
+        # --------------------------------------------------
 
         if not self.is_admin():
 
-
-            if cliente.usuario_id != self.usuario_logado.id:
-
+            if (
+                cliente.usuario_id
+                != self.usuario_logado.id
+            ):
 
                 raise HTTPException(
-
                     status_code=403,
-
-                    detail=
-                    "Você só pode criar seu próprio carrinho."
-
+                    detail=(
+                        "Você só pode criar "
+                        "seu próprio carrinho."
+                    )
                 )
 
-
-
+        # --------------------------------------------------
+        # VERIFICAR SE JÁ POSSUI CARRINHO
+        # --------------------------------------------------
 
         existente = self.buscar_por_cliente(
-
             carrinho.cliente_id
-
         )
-
-
 
         if existente:
 
-
             raise HTTPException(
-
                 status_code=409,
-
-                detail=
-                "Cliente já possui um carrinho."
-
+                detail=(
+                    "Cliente já possui um carrinho."
+                )
             )
 
-
-
+        # --------------------------------------------------
+        # CRIAR OBJETO
+        # --------------------------------------------------
 
         novo = Carrinhos(
-
             **carrinho.model_dump()
-
         )
-
-
 
         try:
 
-
-            self.session.add(
+            return self.repository.criar(
                 novo
             )
-
-
-            self.session.commit()
-
-
-            self.session.refresh(
-                novo
-            )
-
-
-            return novo
-
-
 
         except Exception:
 
-
-            self.session.rollback()
-
-
             raise HTTPException(
-
                 status_code=500,
-
-                detail=
-                "Erro ao criar carrinho."
-
+                detail="Erro ao criar carrinho."
             )
-
-
-
-
-
-
 
     # ==================================================
     # LISTAR CARRINHOS
@@ -369,173 +250,56 @@ class CarrinhoServiceImpl:
         order: str = "desc"
     ):
 
+        # --------------------------------------------------
+        # CORRIGIR PAGINAÇÃO
+        # --------------------------------------------------
 
-        query = select(
-            Carrinhos
-        )
+        if skip < 0:
+            skip = 0
 
+        if limit <= 0:
+            limit = 10
 
+        if limit > 100:
+            limit = 100
+
+        # --------------------------------------------------
+        # CLIENTE
+        # --------------------------------------------------
 
         if not self.is_admin():
 
+            # Cliente não pode escolher outro cliente.
+            cliente_id = None
 
-            query = (
-
-                query
-
-                .join(
-                    Clientes,
-                    Carrinhos.cliente_id ==
-                    Clientes.id
-                )
-
-                .where(
-
-                    Clientes.usuario_id ==
-                    self.usuario_logado.id
-
-                )
-
+            return self.repository.listar(
+                skip=skip,
+                limit=limit,
+                cliente_id=None,
+                data_criacao=data_criacao,
+                usuario_id=self.usuario_logado.id,
+                somente_proprio_cliente=True,
+                sort_by=sort_by,
+                order=order
             )
 
+        # --------------------------------------------------
+        # ADMINISTRADOR
+        # --------------------------------------------------
 
-        else:
-
-
-            if cliente_id is not None:
-
-
-                query = query.where(
-
-                    Carrinhos.cliente_id ==
-                    cliente_id
-
-                )
-
-
-
-
-
-
-        if data_criacao:
-
-
-            query = query.where(
-
-                Carrinhos.data_criacao ==
-                data_criacao
-
-            )
-
-
-
-
-
-
-        campos = {
-
-
-            "id":
-            Carrinhos.id,
-
-
-            "cliente_id":
-            Carrinhos.cliente_id,
-
-
-            "data_criacao":
-            Carrinhos.data_criacao
-
-
-        }
-
-
-
-
-
-        coluna = campos.get(
-
-            sort_by,
-
-            Carrinhos.data_criacao
-
+        return self.repository.listar(
+            skip=skip,
+            limit=limit,
+            cliente_id=cliente_id,
+            data_criacao=data_criacao,
+            usuario_id=None,
+            somente_proprio_cliente=False,
+            sort_by=sort_by,
+            order=order
         )
-
-
-
-
-
-        if order.lower() == "desc":
-
-
-            query = query.order_by(
-
-                desc(coluna)
-
-            )
-
-
-        else:
-
-
-            query = query.order_by(
-
-                asc(coluna)
-
-            )
-
-
-
-
-
-        if skip < 0:
-
-            skip = 0
-
-
-
-        if limit <= 0:
-
-            limit = 10
-
-
-
-        if limit > 100:
-
-            limit = 100
-
-
-
-
-
-        query = (
-
-            query
-
-            .offset(skip)
-
-            .limit(limit)
-
-        )
-
-
-
-
-        return self.session.scalars(
-
-            query
-
-        ).all()
-
-
-
-
-
-
-
 
     # ==================================================
-    # ATUALIZAR CARRINHO
+    # ATUALIZAR
     # ==================================================
 
     def atualizar(
@@ -544,143 +308,100 @@ class CarrinhoServiceImpl:
         carrinho: CarrinhoUpdate
     ):
 
-
         db = self.buscar_por_id(
-
             id
-
         )
-
-
 
         dados = carrinho.model_dump(
-
             exclude_unset=True
-
         )
 
+        # --------------------------------------------------
+        # NENHUM DADO
+        # --------------------------------------------------
 
+        if not dados:
 
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Nenhum dado foi informado "
+                    "para atualização."
+                )
+            )
+
+        # --------------------------------------------------
+        # ALTERAÇÃO DE CLIENTE
+        # --------------------------------------------------
 
         if "cliente_id" in dados:
 
-
-
             cliente = self.validar_cliente(
-
                 dados["cliente_id"]
-
             )
 
-
-
+            # Cliente não pode transferir
+            # carrinho para outro cliente.
 
             if not self.is_admin():
 
-
-
-                if cliente.usuario_id != self.usuario_logado.id:
-
-
+                if (
+                    cliente.usuario_id
+                    != self.usuario_logado.id
+                ):
 
                     raise HTTPException(
-
                         status_code=403,
-
-                        detail=
-                        "Você não pode transferir este carrinho."
-
+                        detail=(
+                            "Você não pode "
+                            "transferir este carrinho."
+                        )
                     )
 
-
-
-
-
-
             outro = self.buscar_por_cliente(
-
                 dados["cliente_id"]
-
             )
 
-
-
-
-            if outro and outro.id != id:
-
-
+            if (
+                outro
+                and outro.id != id
+            ):
 
                 raise HTTPException(
-
                     status_code=409,
-
-                    detail=
-                    "Cliente já possui outro carrinho."
-
+                    detail=(
+                        "Cliente já possui "
+                        "outro carrinho."
+                    )
                 )
 
-
-
-
-
-
+        # --------------------------------------------------
+        # APLICAR ALTERAÇÕES
+        # --------------------------------------------------
 
         try:
 
-
             for campo, valor in dados.items():
 
-
                 setattr(
-
                     db,
-
                     campo,
-
                     valor
-
                 )
 
-
-
-
-
-            self.session.commit()
-
-
-
-            self.session.refresh(
-
+            return self.repository.atualizar(
                 db
-
             )
-
-
-
-            return db
-
-
-
-
 
         except Exception:
 
-
-            self.session.rollback()
-
-
-
             raise HTTPException(
-
                 status_code=500,
-
-                detail=
-                "Erro ao atualizar carrinho."
-
+                detail="Erro ao atualizar carrinho."
             )
-    
+
     # ==================================================
-    # DELETAR CARRINHO
+    # DELETAR
     # ==================================================
 
     def deletar(
@@ -688,71 +409,38 @@ class CarrinhoServiceImpl:
         id: int
     ):
 
-
         carrinho = self.buscar_por_id(
-
             id
-
         )
 
-
+        # --------------------------------------------------
+        # NÃO PERMITIR EXCLUSÃO COM ITENS
+        # --------------------------------------------------
 
         if carrinho.itens:
 
-
             raise HTTPException(
-
                 status_code=409,
-
-                detail=
-                "Carrinho possui itens. Remova os produtos antes."
-
+                detail=(
+                    "Carrinho possui itens. "
+                    "Remova os produtos antes."
+                )
             )
-
-
-
 
         try:
 
-
-            self.session.delete(
-
+            self.repository.deletar(
                 carrinho
-
             )
-
-
-            self.session.commit()
-
-
 
             return True
 
-
-
-
-
         except Exception:
 
-
-            self.session.rollback()
-
-
-
             raise HTTPException(
-
                 status_code=500,
-
-                detail=
-                "Erro ao excluir carrinho."
-
+                detail="Erro ao excluir carrinho."
             )
-
-
-
-
-
-
 
     # ==================================================
     # FINALIZAR COMPRA
@@ -762,221 +450,83 @@ class CarrinhoServiceImpl:
         self,
         carrinho_id: int
     ):
-
-
         """
         Finaliza a compra do carrinho.
 
-
-        Regras:
+        Regras de negócio:
 
         - Usuário deve ser dono do carrinho.
         - Administrador pode finalizar qualquer carrinho.
         - Carrinho não pode estar vazio.
-        - Produto precisa ter estoque.
+        - Produto precisa ter estoque suficiente.
         - Estoque é reduzido.
-        - Itens são removidos após compra.
+        - Itens são removidos após a compra.
         """
 
-
+        # --------------------------------------------------
+        # BUSCAR E VALIDAR ACESSO
+        # --------------------------------------------------
 
         carrinho = self.buscar_por_id(
-
             carrinho_id
-
         )
 
-
-
+        # --------------------------------------------------
+        # VALIDAR CARRINHO VAZIO
+        # --------------------------------------------------
 
         if not carrinho.itens:
 
-
             raise HTTPException(
-
                 status_code=400,
-
-                detail=
-                "Carrinho vazio."
-
+                detail="Carrinho vazio."
             )
 
+        # --------------------------------------------------
+        # VALIDAR ESTOQUE
+        # --------------------------------------------------
 
+        for item in carrinho.itens:
 
+            produto = item.produto
 
+            if not produto:
 
-        valor_total = 0
+                raise HTTPException(
+                    status_code=404,
+                    detail=(
+                        "Produto do item "
+                        "não encontrado."
+                    )
+                )
 
-        quantidade_itens = 0
+            if produto.estoque < item.quantidade:
 
+                raise HTTPException(
+                    status_code=409,
+                    detail=(
+                        f"Estoque insuficiente "
+                        f"para {produto.nome}."
+                    )
+                )
 
-
-
+        # --------------------------------------------------
+        # FINALIZAR COMPRA
+        # --------------------------------------------------
 
         try:
 
-
-
-
-            # ==========================================
-            # VALIDAR ESTOQUE
-            # ==========================================
-
-
-            for item in carrinho.itens:
-
-
-                produto = item.produto
-
-
-
-
-                if produto.estoque < item.quantidade:
-
-
-
-                    raise HTTPException(
-
-                        status_code=409,
-
-                        detail=(
-
-                            f"Estoque insuficiente "
-                            f"para {produto.nome}."
-
-                        )
-
-                    )
-
-
-
-
-
-
-
-
-            # ==========================================
-            # ATUALIZAR ESTOQUE
-            # ==========================================
-
-
-            for item in carrinho.itens:
-
-
-
-                produto = item.produto
-
-
-
-                produto.estoque -= item.quantidade
-
-
-
-
-                valor_total += (
-
-                    produto.preco *
-
-                    item.quantidade
-
-                )
-
-
-
-
-                quantidade_itens += (
-
-                    item.quantidade
-
-                )
-
-
-
-
-
-
-
-            # ==========================================
-            # REMOVER ITENS
-            # ==========================================
-
-
-            for item in list(carrinho.itens):
-
-
-                self.session.delete(
-
-                    item
-
-                )
-
-
-
-
-
-
-
-            self.session.commit()
-
-
-
-
-
+            return self.repository.finalizar_compra(
+                carrinho
+            )
 
         except HTTPException:
 
-
-            self.session.rollback()
-
-
             raise
-
-
-
-
-
 
         except Exception:
 
-
-
-            self.session.rollback()
-
-
-
             raise HTTPException(
-
                 status_code=500,
-
-                detail=
-                "Erro ao finalizar compra."
-
+                detail="Erro ao finalizar compra."
             )
-
-
-
-
-
-
-
-        return {
-
-
-            "mensagem":
-
-            "Compra finalizada com sucesso.",
-
-
-
-            "valor_total":
-
-            valor_total,
-
-
-
-            "quantidade_itens":
-
-            quantidade_itens
-
-
-        }

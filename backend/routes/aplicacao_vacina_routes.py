@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+
 from sqlalchemy.orm import Session
 
 from backend.database.database import get_session
@@ -19,35 +20,44 @@ from backend.schemas.aplicacao_vacina_schema import (
     AplicacaoVacinaResponse
 )
 
+from backend.repositories.aplicacao_vacina_repository import (
+    AplicacaoVacinaRepository
+)
+
 from backend.services.implementations.aplicacao_vacina_service_impl import (
     AplicacaoVacinaServiceImpl
 )
 
 
-
 router = APIRouter(
-
     prefix="/aplicacoes-vacina",
-
     tags=["Aplicações de Vacina"]
-
 )
 
 
+# ==========================================================
+# DEPENDENCY DO SERVICE
+# ==========================================================
 
 def get_service(
-    session: Session = Depends(get_session)
+    session: Session = Depends(get_session),
+    usuario_logado: Usuarios = Depends(get_current_user)
 ):
 
-    return AplicacaoVacinaServiceImpl(session)
+    repository = AplicacaoVacinaRepository(
+        session
+    )
+
+    return AplicacaoVacinaServiceImpl(
+        repository,
+        usuario_logado
+    )
 
 
-
-
-# ======================================
+# ==========================================================
 # LISTAR TODAS AS APLICAÇÕES
 # Administrador e Veterinário
-# ======================================
+# ==========================================================
 
 @router.get(
     "/",
@@ -62,18 +72,18 @@ def get_service(
     ]
 )
 def listar(
-    service: AplicacaoVacinaServiceImpl = Depends(get_service)
+    service: AplicacaoVacinaServiceImpl = Depends(
+        get_service
+    )
 ):
 
     return service.listar()
 
 
-
-
-# ======================================
+# ==========================================================
 # BUSCAR POR ID
 # Administrador e Veterinário
-# ======================================
+# ==========================================================
 
 @router.get(
     "/{aplicacao_id}",
@@ -89,7 +99,9 @@ def listar(
 )
 def buscar_por_id(
     aplicacao_id: int,
-    service: AplicacaoVacinaServiceImpl = Depends(get_service)
+    service: AplicacaoVacinaServiceImpl = Depends(
+        get_service
+    )
 ):
 
     return service.buscar_por_id(
@@ -97,12 +109,10 @@ def buscar_por_id(
     )
 
 
-
-
-# ======================================
+# ==========================================================
 # LISTAR VACINAS DE UM ANIMAL
 # Administrador e Veterinário
-# ======================================
+# ==========================================================
 
 @router.get(
     "/animal/{animal_id}",
@@ -118,7 +128,9 @@ def buscar_por_id(
 )
 def listar_por_animal(
     animal_id: int,
-    service: AplicacaoVacinaServiceImpl = Depends(get_service)
+    service: AplicacaoVacinaServiceImpl = Depends(
+        get_service
+    )
 ):
 
     return service.listar_por_animal(
@@ -126,16 +138,15 @@ def listar_por_animal(
     )
 
 
-
-
-# ======================================
+# ==========================================================
 # APLICAR VACINA
 # Somente Veterinário
-# ======================================
+# ==========================================================
 
 @router.post(
     "/",
     response_model=AplicacaoVacinaResponse,
+    status_code=201,
     dependencies=[
         Depends(
             exigir_perfil(
@@ -154,24 +165,18 @@ def aplicar_vacina(
     service: AplicacaoVacinaServiceImpl = Depends(
         get_service
     )
-
 ):
 
     return service.aplicar_vacina(
-
         dados,
-
         usuario.id
-
     )
 
 
-
-
-# ======================================
+# ==========================================================
 # ATUALIZAR APLICAÇÃO
 # Veterinário e Administrador
-# ======================================
+# ==========================================================
 
 @router.put(
     "/{aplicacao_id}",
@@ -193,24 +198,18 @@ def atualizar(
     service: AplicacaoVacinaServiceImpl = Depends(
         get_service
     )
-
 ):
 
     return service.atualizar(
-
         aplicacao_id,
-
         dados
-
     )
 
 
-
-
-# ======================================
+# ==========================================================
 # DELETAR APLICAÇÃO
 # Somente Administrador
-# ======================================
+# ==========================================================
 
 @router.delete(
     "/{aplicacao_id}",
@@ -228,11 +227,9 @@ def deletar(
     service: AplicacaoVacinaServiceImpl = Depends(
         get_service
     )
-
 ):
 
     return service.deletar(
-
         aplicacao_id
-
     )
+

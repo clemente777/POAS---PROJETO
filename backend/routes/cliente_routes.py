@@ -1,22 +1,19 @@
 from fastapi import APIRouter, Depends, Response
 from sqlalchemy.orm import Session
 
+from backend.auth.dependencies import get_current_user
+from backend.auth.permissions import exigir_perfil
 from backend.database.database import get_session
-
+from backend.models.usuario_model import Usuarios
+from backend.repositories.cliente_repository import ClienteRepository
 from backend.schemas.cliente_schema import (
     ClienteCreate,
     ClienteUpdate,
     ClienteResponse
 )
-
 from backend.services.implementations.cliente_service_impl import (
     ClienteServiceImpl
 )
-
-from backend.models.usuario_model import Usuarios
-
-from backend.auth.dependencies import get_current_user
-from backend.auth.permissions import exigir_perfil
 
 
 router = APIRouter(
@@ -34,14 +31,18 @@ def get_service(
     usuario_logado: Usuarios = Depends(get_current_user)
 ):
 
+    repository = ClienteRepository(
+        session
+    )
+
     return ClienteServiceImpl(
-        session,
+        repository,
         usuario_logado
     )
 
 
 # ==========================================================
-# CRIAR CLIENTE
+# CRIAR
 # ==========================================================
 
 @router.post(
@@ -72,7 +73,7 @@ def criar(
 
 
 # ==========================================================
-# LISTAR CLIENTES
+# LISTAR
 # ==========================================================
 
 @router.get(
@@ -121,7 +122,7 @@ def listar(
 
 
 # ==========================================================
-# BUSCAR CLIENTE POR ID
+# BUSCAR POR ID
 # ==========================================================
 
 @router.get(
@@ -148,7 +149,7 @@ def buscar(
 
 
 # ==========================================================
-# ATUALIZAR CLIENTE
+# ATUALIZAR
 # ==========================================================
 
 @router.put(
@@ -181,7 +182,7 @@ def atualizar(
 
 
 # ==========================================================
-# DELETAR CLIENTE
+# DELETAR
 # ==========================================================
 
 @router.delete(
@@ -204,9 +205,7 @@ def deletar(
 
 ):
 
-    service.deletar(
-        id
-    )
+    service.deletar(id)
 
     return Response(
         status_code=204

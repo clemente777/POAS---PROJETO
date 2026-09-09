@@ -1,28 +1,23 @@
 from fastapi import HTTPException
-from sqlalchemy import asc, desc, select
-from sqlalchemy.orm import Session
 from pwdlib import PasswordHash
 
 from backend.models.usuario_model import Usuarios
-
 from backend.schemas.usuario_schema import (
     UsuarioCreate,
     UsuarioUpdate,
     UsuarioAdminCreate
+)
+from backend.repositories.usuario_repository import (
+    UsuarioRepository
 )
 
 
 senha_context = PasswordHash.recommended()
 
 
-
 class UsuarioServiceImpl:
     """
-    ==========================================================
-                    SERVICE DE USUÁRIOS
-    ==========================================================
-
-    Responsável pelas regras de negócio dos usuários.
+    Regras de negócio dos usuários.
 
     Perfis:
 
@@ -35,7 +30,6 @@ class UsuarioServiceImpl:
     Cliente:
         - Gerencia apenas sua própria conta.
 
-
     Regras:
 
     • Cadastro público cria Cliente.
@@ -45,64 +39,41 @@ class UsuarioServiceImpl:
     • Perfil protegido.
     """
 
-
-
     def __init__(
         self,
-        session: Session
+        repository: UsuarioRepository,
+        usuario_logado: Usuarios | None = None
     ):
-
-        self.session = session
-
-
+        self.repository = repository
+        self.usuario_logado = usuario_logado
 
     # ==========================================================
     # NORMALIZAÇÃO
     # ==========================================================
 
-
-    def normalizar_email(
-        self,
-        email: str
-    ):
+    def normalizar_email(self, email: str):
 
         if not email:
-
             return ""
-
 
         return email.strip().lower()
 
-
-
-    def normalizar_nome(
-        self,
-        nome: str
-    ):
+    def normalizar_nome(self, nome: str):
 
         if not nome:
-
             return ""
-
 
         return " ".join(
             nome.strip().split()
         ).title()
 
-
-
-    def normalizar_perfil(
-        self,
-        perfil: str
-    ):
+    def normalizar_perfil(self, perfil: str):
 
         if not perfil:
-
             raise HTTPException(
                 status_code=400,
                 detail="Perfil obrigatório."
             )
-
 
         perfil = (
             perfil
@@ -110,149 +81,98 @@ class UsuarioServiceImpl:
             .lower()
         )
 
-
         perfis = {
-
-            "administrador":
-            "Administrador",
-
-            "admin":
-            "Administrador",
-
-            "veterinario":
-            "Veterinário",
-
-            "veterinário":
-            "Veterinário",
-
-            "vet":
-            "Veterinário",
-
-            "cliente":
-            "Cliente"
-
+            "administrador": "Administrador",
+            "admin": "Administrador",
+            "veterinario": "Veterinário",
+            "veterinário": "Veterinário",
+            "vet": "Veterinário",
+            "cliente": "Cliente"
         }
 
-
         if perfil not in perfis:
-
             raise HTTPException(
                 status_code=400,
                 detail="Perfil inválido."
             )
 
-
         return perfis[perfil]
-    
-        # ==========================================================
-    # BUSCAS
+
+    # ==========================================================
+    # CONTROLE DE ACESSO
     # ==========================================================
 
+    def validar_usuario_logado(self):
 
-    def buscar_por_id(
-        self,
-        id: int
-    ):
-
-        return self.session.scalar(
-
-            select(Usuarios)
-            .where(
-                Usuarios.id == id
+        if not self.usuario_logado:
+            raise HTTPException(
+                status_code=401,
+                detail="Usuário não autenticado."
             )
-
-        )
-
-
-
-    def buscar_por_email(
-        self,
-        email: str
-    ):
-
-        email = self.normalizar_email(
-            email
-        )
-
-
-        return self.session.scalar(
-
-            select(Usuarios)
-            .where(
-                Usuarios.email == email
-            )
-
-        )
-
-
-
-    # ==========================================================
-    # CONTROLE DE PERMISSÃO
-    # ==========================================================
-
 
     def validar_acesso_usuario(
         self,
-        usuario_db: Usuarios,
-        usuario_logado: Usuarios
+        usuario_db: Usuarios
     ):
 
-        """
-        Regras:
+        self.validar_usuario_logado()
 
-        Administrador:
-            acesso total.
+        perfil = self.usuario_logado.perfil
 
-        Cliente:
-            somente própria conta.
+        if perfil == "Administrador":
+            return
 
-        Veterinário:
-            sem acesso.
-        """
+        if perfil == "Cliente":
 
-
-        if usuario_logado.perfil == "Administrador":
-
-            return True
-
-
-
-        if usuario_logado.perfil == "Cliente":
-
-
-            if usuario_db.id != usuario_logado.id:
-
-
+            if usuario_db.id != self.usuario_logado.id:
                 raise HTTPException(
-
                     status_code=403,
-
                     detail=(
-                        "Você não possui "
-                        "acesso a este usuário."
+                        "Você não possui acesso "
+                        "a este usuário."
                     )
-
                 )
 
-
-            return True
-
-
+            return
 
         raise HTTPException(
-
             status_code=403,
-
             detail="Perfil sem permissão."
-
         )
 
+    # ==========================================================
+    # BUSCAR POR ID
+    # ==========================================================
 
+    def buscar_por_id(self, id: int):
+
+        usuario = self.repository.buscar_por_id(id)
+
+        if not usuario:
+            raise HTTPException(
+                status_code=404,
+                detail="Usuário não encontrado."
+            )
+
+        self.validar_acesso_usuario(usuario)
+
+        return usuario
+
+    # ==========================================================
+    # BUSCAR POR EMAIL
+    # ==========================================================
+
+    def buscar_por_email(self, email: str):
+
+        email = self.normalizar_email(email)
+
+        return self.repository.buscar_por_email(
+            email
+        )
 
     # ==========================================================
     # CRIAR USUÁRIO PÚBLICO
     # ==========================================================
-
 
     def criar(
         self,
@@ -262,97 +182,62 @@ class UsuarioServiceImpl:
         """
         Cadastro público.
 
-        Sempre cria:
-
-        Cliente
+        Sempre cria um usuário com perfil Cliente.
         """
-
 
         nome = self.normalizar_nome(
             usuario.nome
         )
 
-
         email = self.normalizar_email(
             usuario.email
         )
 
-
-
         if not nome:
-
             raise HTTPException(
-
                 status_code=400,
-
                 detail="Nome obrigatório."
-
             )
 
-
-
         if len(usuario.senha) < 6:
-
             raise HTTPException(
-
                 status_code=400,
-
                 detail=(
                     "A senha deve possuir "
                     "mínimo 6 caracteres."
                 )
-
             )
 
-
-
-        if self.buscar_por_email(email):
+        if self.repository.buscar_por_email(email):
 
             raise HTTPException(
-
                 status_code=409,
-
                 detail="Email já cadastrado."
-
             )
 
-
-
         novo_usuario = Usuarios(
-
             nome=nome,
-
             email=email,
-
             senha_hash=senha_context.hash(
                 usuario.senha
             ),
-
             perfil="Cliente"
-
         )
 
+        try:
+            return self.repository.criar(
+                novo_usuario
+            )
 
+        except Exception:
+            raise HTTPException(
+                status_code=500,
+                detail="Erro ao criar usuário."
+            )
 
-        self.session.add(
-            novo_usuario
-        )
-
-
-        self.session.commit()
-
-
-        self.session.refresh(
-            novo_usuario
-        )
-
-
-        return novo_usuario
-    
-        # ==========================================================
+    # ==========================================================
     # CRIAR USUÁRIO POR ADMINISTRADOR
     # ==========================================================
-
 
     def criar_por_admin(
         self,
@@ -369,101 +254,74 @@ class UsuarioServiceImpl:
         • Cliente
         """
 
+        self.validar_usuario_logado()
+
+        if self.usuario_logado.perfil != "Administrador":
+            raise HTTPException(
+                status_code=403,
+                detail=(
+                    "Somente Administrador "
+                    "pode criar usuários."
+                )
+            )
 
         nome = self.normalizar_nome(
             usuario.nome
         )
 
-
         email = self.normalizar_email(
             usuario.email
         )
-
 
         perfil = self.normalizar_perfil(
             usuario.perfil
         )
 
-
-
         if not nome:
-
             raise HTTPException(
-
                 status_code=400,
-
                 detail="Nome obrigatório."
-
             )
 
-
-
         if len(usuario.senha) < 6:
-
             raise HTTPException(
-
                 status_code=400,
-
                 detail=(
                     "A senha deve possuir "
                     "mínimo 6 caracteres."
                 )
-
             )
 
-
-
-        if self.buscar_por_email(email):
+        if self.repository.buscar_por_email(email):
 
             raise HTTPException(
-
                 status_code=409,
-
                 detail="Email já cadastrado."
-
             )
 
-
-
         novo_usuario = Usuarios(
-
             nome=nome,
-
             email=email,
-
             senha_hash=senha_context.hash(
                 usuario.senha
             ),
-
             perfil=perfil
-
         )
 
+        try:
+            return self.repository.criar(
+                novo_usuario
+            )
 
-
-        self.session.add(
-            novo_usuario
-        )
-
-
-        self.session.commit()
-
-
-        self.session.refresh(
-            novo_usuario
-        )
-
-
-        return novo_usuario
-
-
-
-
+        except Exception:
+            raise HTTPException(
+                status_code=500,
+                detail="Erro ao criar usuário."
+            )
 
     # ==========================================================
     # LISTAR USUÁRIOS
     # ==========================================================
-
 
     def listar(
         self,
@@ -476,225 +334,99 @@ class UsuarioServiceImpl:
         order: str = "asc"
     ):
 
-        """
-        Lista usuários.
+        self.validar_usuario_logado()
 
-        Apenas Administrador.
-
-        Recursos:
-
-        • Paginação
-        • Filtros
-        • Ordenação
-        """
-
-
-        limit = min(
-            limit,
-            100
-        )
-
-
-        query = select(
-            Usuarios
-        )
-
-
-
-        if nome:
-
-            query = query.where(
-
-                Usuarios.nome.ilike(
-
-                    f"%{nome}%"
-
+        if self.usuario_logado.perfil != "Administrador":
+            raise HTTPException(
+                status_code=403,
+                detail=(
+                    "Somente Administrador "
+                    "pode listar usuários."
                 )
-
             )
 
+        if skip < 0:
+            skip = 0
 
+        if limit <= 0:
+            limit = 10
 
-        if email:
+        if limit > 100:
+            limit = 100
 
-            query = query.where(
-
-                Usuarios.email.ilike(
-
-                    f"%{email}%"
-
-                )
-
-            )
-
-
+        perfil_normalizado = None
 
         if perfil:
-
-            perfil = self.normalizar_perfil(
-                perfil
+            perfil_normalizado = (
+                self.normalizar_perfil(perfil)
             )
 
-
-            query = query.where(
-
-                Usuarios.perfil == perfil
-
-            )
-
-
-
-        campos = {
-
-
-            "id":
-
-            Usuarios.id,
-
-
-            "nome":
-
-            Usuarios.nome,
-
-
-            "email":
-
-            Usuarios.email,
-
-
-            "perfil":
-
-            Usuarios.perfil,
-
-
-            "criado_em":
-
-            Usuarios.criado_em
-
-        }
-
-
-
-        coluna = campos.get(
-
-            sort_by,
-
-            Usuarios.id
-
+        return self.repository.listar(
+            skip=skip,
+            limit=limit,
+            nome=(
+                nome.strip()
+                if nome
+                else None
+            ),
+            email=(
+                self.normalizar_email(email)
+                if email
+                else None
+            ),
+            perfil=perfil_normalizado,
+            sort_by=sort_by,
+            order=order
         )
 
-
-
-        if order.lower() == "desc":
-
-
-            query = query.order_by(
-
-                desc(coluna)
-
-            )
-
-        else:
-
-
-            query = query.order_by(
-
-                asc(coluna)
-
-            )
-
-
-
-        query = (
-
-            query
-
-            .offset(skip)
-
-            .limit(limit)
-
-        )
-
-
-
-        return self.session.scalars(
-            query
-        ).all()
-        
-        # ==========================================================
+    # ==========================================================
     # ATUALIZAR USUÁRIO
     # ==========================================================
 
     def atualizar(
         self,
         id: int,
-        usuario: UsuarioUpdate,
-        usuario_logado: Usuarios
+        usuario: UsuarioUpdate
     ):
-        """
-        Atualiza usuário.
 
-        Regras:
-
-        • Administrador pode alterar qualquer usuário.
-        • Usuário comum não altera perfil.
-        • Cliente não altera outro usuário.
-        • Email continua único.
-        • Senha é sempre criptografada.
-        """
-
-
-        usuario_db = self.buscar_por_id(id)
-
+        usuario_db = self.repository.buscar_por_id(
+            id
+        )
 
         if not usuario_db:
-
             raise HTTPException(
                 status_code=404,
                 detail="Usuário não encontrado."
             )
 
+        self.validar_acesso_usuario(
+            usuario_db
+        )
 
+        dados = usuario.model_dump(
+            exclude_unset=True
+        )
 
-        # ======================================================
-        # CONTROLE DE PERMISSÃO
-        # ======================================================
+        # ------------------------------------------------------
+        # CLIENTE NÃO PODE ALTERAR PERFIL
+        # ------------------------------------------------------
 
-        if usuario_logado.perfil != "Administrador":
-
-
-            if usuario_db.id != usuario_logado.id:
-
-                raise HTTPException(
-                    status_code=403,
-                    detail="Você não pode alterar outro usuário."
+        if (
+            "perfil" in dados
+            and self.usuario_logado.perfil
+            != "Administrador"
+        ):
+            raise HTTPException(
+                status_code=403,
+                detail=(
+                    "Somente Administrador "
+                    "pode alterar perfil."
                 )
-
-
-
-            dados = usuario.model_dump(
-                exclude_unset=True
             )
 
-
-            if "perfil" in dados:
-
-                raise HTTPException(
-                    status_code=403,
-                    detail="Você não pode alterar seu perfil."
-                )
-
-        else:
-
-            dados = usuario.model_dump(
-                exclude_unset=True
-            )
-
-
-
-        # ======================================================
+        # ------------------------------------------------------
         # NOME
-        # ======================================================
+        # ------------------------------------------------------
 
         if "nome" in dados:
 
@@ -702,22 +434,17 @@ class UsuarioServiceImpl:
                 dados["nome"]
             )
 
-
             if not nome:
-
                 raise HTTPException(
                     status_code=400,
                     detail="Nome obrigatório."
                 )
 
-
             usuario_db.nome = nome
 
-
-
-        # ======================================================
+        # ------------------------------------------------------
         # EMAIL
-        # ======================================================
+        # ------------------------------------------------------
 
         if "email" in dados:
 
@@ -725,33 +452,36 @@ class UsuarioServiceImpl:
                 dados["email"]
             )
 
+            if not email:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Email obrigatório."
+                )
 
-            existente = self.buscar_por_email(
-                email
+            existente = (
+                self.repository.buscar_por_email(
+                    email
+                )
             )
 
-
-            if existente and existente.id != id:
-
+            if (
+                existente
+                and existente.id != usuario_db.id
+            ):
                 raise HTTPException(
                     status_code=409,
                     detail="Email já cadastrado."
                 )
 
-
             usuario_db.email = email
 
-
-
-        # ======================================================
+        # ------------------------------------------------------
         # SENHA
-        # ======================================================
+        # ------------------------------------------------------
 
         if "senha" in dados:
 
-
             if len(dados["senha"]) < 6:
-
                 raise HTTPException(
                     status_code=400,
                     detail=(
@@ -760,24 +490,22 @@ class UsuarioServiceImpl:
                     )
                 )
 
-
             usuario_db.senha_hash = (
                 senha_context.hash(
                     dados["senha"]
                 )
             )
 
-
-
-        # ======================================================
+        # ------------------------------------------------------
         # PERFIL
-        # ======================================================
+        # ------------------------------------------------------
 
         if "perfil" in dados:
 
-
-            if usuario_logado.perfil != "Administrador":
-
+            if (
+                self.usuario_logado.perfil
+                != "Administrador"
+            ):
                 raise HTTPException(
                     status_code=403,
                     detail=(
@@ -786,70 +514,55 @@ class UsuarioServiceImpl:
                     )
                 )
 
-
             usuario_db.perfil = (
                 self.normalizar_perfil(
                     dados["perfil"]
                 )
             )
 
+        try:
+            return self.repository.atualizar(
+                usuario_db
+            )
 
-
-        self.session.commit()
-
-
-        self.session.refresh(
-            usuario_db
-        )
-
-
-        return usuario_db
-
-
-
-
-
+        except Exception:
+            raise HTTPException(
+                status_code=500,
+                detail="Erro ao atualizar usuário."
+            )
 
     # ==========================================================
     # DELETAR USUÁRIO
     # ==========================================================
 
-    def deletar(
-        self,
-        id: int,
-        usuario_logado: Usuarios
-    ):
-        """
-        Remove usuário.
+    def deletar(self, id: int):
 
-        Regras:
-
-        • Apenas Administrador exclui usuários.
-        • Não permite excluir a si mesmo.
-        • Usuário precisa existir.
-        """
-
-
-        usuario_db = self.buscar_por_id(
+        usuario_db = self.repository.buscar_por_id(
             id
         )
 
-
         if not usuario_db:
-
             raise HTTPException(
                 status_code=404,
                 detail="Usuário não encontrado."
             )
 
+        self.validar_usuario_logado()
 
+        if self.usuario_logado.perfil != "Administrador":
+            raise HTTPException(
+                status_code=403,
+                detail=(
+                    "Somente Administrador "
+                    "pode excluir usuários."
+                )
+            )
 
-        # ======================================================
+        # ------------------------------------------------------
         # IMPEDIR AUTOEXCLUSÃO
-        # ======================================================
+        # ------------------------------------------------------
 
-        if usuario_db.id == usuario_logado.id:
-
+        if usuario_db.id == self.usuario_logado.id:
             raise HTTPException(
                 status_code=400,
                 detail=(
@@ -858,18 +571,14 @@ class UsuarioServiceImpl:
                 )
             )
 
+        try:
+            self.repository.deletar(
+                usuario_db
+            )
 
+        except Exception:
+            raise HTTPException(
+                status_code=500,
+                detail="Erro ao excluir usuário."
+            )
 
-        self.session.delete(
-            usuario_db
-        )
-
-
-        self.session.commit()
-
-
-
-        return {
-            "message":
-            "Usuário removido com sucesso."
-        }

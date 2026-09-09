@@ -1,7 +1,7 @@
 from datetime import datetime
 
-from sqlalchemy import select, asc, desc
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import asc, desc, select
+from sqlalchemy.orm import Session
 
 from backend.models.atendimento_model import Atendimentos
 from backend.models.animal_model import Animais
@@ -10,15 +10,16 @@ from backend.models.usuario_model import Usuarios
 
 
 class AtendimentoRepository:
+    """
+    Repository responsável exclusivamente pelo acesso
+    ao banco de dados dos atendimentos.
+    """
 
-    def __init__(
-        self,
-        session: Session
-    ):
+    def __init__(self, session: Session):
         self.session = session
 
     # ==========================================================
-    # ATENDIMENTO
+    # BUSCAR ATENDIMENTO POR ID
     # ==========================================================
 
     def buscar_por_id(
@@ -26,42 +27,13 @@ class AtendimentoRepository:
         atendimento_id: int
     ) -> Atendimentos | None:
 
-        return self.session.scalar(
-            select(Atendimentos)
-            .where(
-                Atendimentos.id == atendimento_id
-            )
-            .options(
-                joinedload(Atendimentos.animal),
-                joinedload(Atendimentos.usuario)
-            )
+        return self.session.get(
+            Atendimentos,
+            atendimento_id
         )
-
-    def buscar_duplicado(
-        self,
-        animal_id: int,
-        data: datetime,
-        excluir_id: int | None = None
-    ) -> Atendimentos | None:
-
-        query = (
-            select(Atendimentos)
-            .where(
-                Atendimentos.animal_id == animal_id,
-                Atendimentos.data_atendimento == data
-            )
-        )
-
-        if excluir_id is not None:
-
-            query = query.where(
-                Atendimentos.id != excluir_id
-            )
-
-        return self.session.scalar(query)
 
     # ==========================================================
-    # USUÁRIO
+    # BUSCAR USUÁRIO
     # ==========================================================
 
     def buscar_usuario(
@@ -69,15 +41,13 @@ class AtendimentoRepository:
         usuario_id: int
     ) -> Usuarios | None:
 
-        return self.session.scalar(
-            select(Usuarios)
-            .where(
-                Usuarios.id == usuario_id
-            )
+        return self.session.get(
+            Usuarios,
+            usuario_id
         )
 
     # ==========================================================
-    # ANIMAL
+    # BUSCAR ANIMAL
     # ==========================================================
 
     def buscar_animal(
@@ -85,18 +55,13 @@ class AtendimentoRepository:
         animal_id: int
     ) -> Animais | None:
 
-        return self.session.scalar(
-            select(Animais)
-            .where(
-                Animais.id == animal_id
-            )
-            .options(
-                joinedload(Animais.cliente)
-            )
+        return self.session.get(
+            Animais,
+            animal_id
         )
 
     # ==========================================================
-    # CLIENTE
+    # BUSCAR CLIENTE PELO USUÁRIO
     # ==========================================================
 
     def buscar_cliente_por_usuario(
@@ -112,7 +77,36 @@ class AtendimentoRepository:
         )
 
     # ==========================================================
-    # LISTAR
+    # VERIFICAR ATENDIMENTO DUPLICADO
+    # ==========================================================
+
+    def buscar_duplicado(
+        self,
+        animal_id: int,
+        data: datetime,
+        excluir_id: int | None = None
+    ) -> Atendimentos | None:
+
+        query = (
+            select(Atendimentos)
+            .where(
+                Atendimentos.animal_id == animal_id
+            )
+            .where(
+                Atendimentos.data_atendimento == data
+            )
+        )
+
+        if excluir_id is not None:
+
+            query = query.where(
+                Atendimentos.id != excluir_id
+            )
+
+        return self.session.scalar(query)
+
+    # ==========================================================
+    # LISTAR ATENDIMENTOS
     # ==========================================================
 
     def listar(
@@ -128,9 +122,7 @@ class AtendimentoRepository:
         order: str = "asc"
     ) -> list[Atendimentos]:
 
-        query = select(
-            Atendimentos
-        )
+        query = select(Atendimentos)
 
         # ------------------------------------------------------
         # FILTRO POR CLIENTE
@@ -141,7 +133,8 @@ class AtendimentoRepository:
             query = (
                 query
                 .join(
-                    Atendimentos.animal
+                    Animais,
+                    Animais.id == Atendimentos.animal_id
                 )
                 .where(
                     Animais.cliente_id == cliente_id
@@ -149,7 +142,7 @@ class AtendimentoRepository:
             )
 
         # ------------------------------------------------------
-        # FILTROS
+        # FILTRO POR ANIMAL
         # ------------------------------------------------------
 
         if animal_id is not None:
@@ -158,19 +151,31 @@ class AtendimentoRepository:
                 Atendimentos.animal_id == animal_id
             )
 
+        # ------------------------------------------------------
+        # FILTRO POR USUÁRIO / VETERINÁRIO
+        # ------------------------------------------------------
+
         if usuario_id is not None:
 
             query = query.where(
                 Atendimentos.usuario_id == usuario_id
             )
 
+        # ------------------------------------------------------
+        # FILTRO POR DIAGNÓSTICO
+        # ------------------------------------------------------
+
         if diagnostico:
 
             query = query.where(
                 Atendimentos.diagnostico.ilike(
-                    f"%{diagnostico.strip()}%"
+                    f"%{diagnostico}%"
                 )
             )
+
+        # ------------------------------------------------------
+        # FILTRO POR DATA
+        # ------------------------------------------------------
 
         if data is not None:
 
@@ -182,15 +187,18 @@ class AtendimentoRepository:
         # ORDENAÇÃO
         # ------------------------------------------------------
 
-        campos = {
+        campos_ordenacao = {
             "id": Atendimentos.id,
-            "data_atendimento": Atendimentos.data_atendimento,
-            "diagnostico": Atendimentos.diagnostico,
+            "data_atendimento": (
+                Atendimentos.data_atendimento
+            ),
+            "usuario_id": Atendimentos.usuario_id,
             "animal_id": Atendimentos.animal_id,
-            "usuario_id": Atendimentos.usuario_id
+            "diagnostico": Atendimentos.diagnostico,
+            "status": Atendimentos.status
         }
 
-        coluna = campos.get(
+        campo = campos_ordenacao.get(
             sort_by,
             Atendimentos.data_atendimento
         )
@@ -198,13 +206,13 @@ class AtendimentoRepository:
         if order.lower() == "desc":
 
             query = query.order_by(
-                desc(coluna)
+                desc(campo)
             )
 
         else:
 
             query = query.order_by(
-                asc(coluna)
+                asc(campo)
             )
 
         # ------------------------------------------------------
@@ -222,7 +230,7 @@ class AtendimentoRepository:
         ).all()
 
     # ==========================================================
-    # HISTÓRICO
+    # LISTAR HISTÓRICO DO ANIMAL
     # ==========================================================
 
     def listar_historico(
@@ -237,13 +245,8 @@ class AtendimentoRepository:
             .where(
                 Atendimentos.animal_id == animal_id
             )
-            .options(
-                joinedload(Atendimentos.usuario)
-            )
             .order_by(
-                desc(
-                    Atendimentos.data_atendimento
-                )
+                Atendimentos.data_atendimento.desc()
             )
             .offset(skip)
             .limit(limit)
@@ -254,7 +257,7 @@ class AtendimentoRepository:
         ).all()
 
     # ==========================================================
-    # PERSISTÊNCIA
+    # CRIAR
     # ==========================================================
 
     def criar(
@@ -282,6 +285,10 @@ class AtendimentoRepository:
 
             raise
 
+    # ==========================================================
+    # ATUALIZAR
+    # ==========================================================
+
     def atualizar(
         self,
         atendimento: Atendimentos
@@ -302,3 +309,30 @@ class AtendimentoRepository:
             self.session.rollback()
 
             raise
+
+    # ==========================================================
+    # DELETAR
+    #
+    # O Service bloqueia essa operação porque o histórico
+    # dos atendimentos deve ser preservado.
+    # ==========================================================
+
+    def deletar(
+        self,
+        atendimento: Atendimentos
+    ) -> None:
+
+        try:
+
+            self.session.delete(
+                atendimento
+            )
+
+            self.session.commit()
+
+        except Exception:
+
+            self.session.rollback()
+
+            raise
+

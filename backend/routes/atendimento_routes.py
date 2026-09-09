@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Depends
+
 from sqlalchemy.orm import Session
 
 from backend.database.database import get_session
@@ -11,12 +12,12 @@ from backend.schemas.atendimento_schema import (
     AtendimentoResponse
 )
 
-from backend.services.implementations.atendimento_service_impl import (
-    AtendimentoServiceImpl
-)
-
 from backend.repositories.atendimento_repository import (
     AtendimentoRepository
+)
+
+from backend.services.implementations.atendimento_service_impl import (
+    AtendimentoServiceImpl
 )
 
 from backend.models.usuario_model import Usuarios
@@ -32,7 +33,7 @@ router = APIRouter(
 
 
 # ==========================================================
-# DEPENDÊNCIA SERVICE
+# DEPENDÊNCIA DO SERVICE
 # ==========================================================
 
 def get_service(
@@ -123,6 +124,7 @@ def listar(
         order=order
     )
 
+
 # ==========================================================
 # HISTÓRICO DO ANIMAL
 # CLIENTE / VETERINÁRIO / ADMINISTRADOR
@@ -153,7 +155,9 @@ def historico(
         animal_id,
         skip,
         limit
-    )   
+    )
+
+
 # ==========================================================
 # BUSCAR ATENDIMENTO
 # CLIENTE / VETERINÁRIO / ADMINISTRADOR
@@ -247,6 +251,9 @@ def cancelar(
 # ==========================================================
 # DELETAR
 # SOMENTE ADMINISTRADOR
+#
+# A operação é bloqueada pelo Service porque o histórico
+# dos atendimentos deve ser preservado.
 # ==========================================================
 
 @router.delete(
@@ -269,5 +276,4 @@ def deletar(
     return service.deletar(
         id
     )
-
 

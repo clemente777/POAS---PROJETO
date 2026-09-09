@@ -1,9 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-
 from backend.database.database import get_session
-
 
 from backend.schemas.produto_schema import (
     ProdutoCreate,
@@ -11,17 +9,17 @@ from backend.schemas.produto_schema import (
     ProdutoResponse
 )
 
+from backend.repositories.produto_repository import (
+    ProdutoRepository
+)
 
 from backend.services.implementations.produto_service_impl import (
     ProdutoServiceImpl
 )
 
-
 from backend.models.usuario_model import Usuarios
 
-
 from backend.auth.dependencies import get_current_user
-
 
 
 router = APIRouter(
@@ -30,22 +28,22 @@ router = APIRouter(
 )
 
 
-
 # ==================================================
-# DEPENDÊNCIA SERVICE
+# DEPENDÊNCIA DO SERVICE
 # ==================================================
-
 
 def get_service(
     session: Session = Depends(get_session),
     usuario_logado: Usuarios = Depends(get_current_user)
 ):
-
-    return ProdutoServiceImpl(
-        session,
-        usuario_logado
+    repository = ProdutoRepository(
+        session
     )
 
+    return ProdutoServiceImpl(
+        repository=repository,
+        usuario_logado=usuario_logado
+    )
 
 
 # ==================================================
@@ -53,28 +51,20 @@ def get_service(
 # Apenas Administrador
 # ==================================================
 
-
 @router.post(
     "/",
     response_model=ProdutoResponse,
     status_code=201
 )
 def criar(
-
     produto: ProdutoCreate,
-
-
     service: ProdutoServiceImpl = Depends(
         get_service
     )
-
 ):
-
-
     return service.criar(
         produto
     )
-
 
 
 # ==================================================
@@ -82,74 +72,39 @@ def criar(
 # Usuários autenticados
 # ==================================================
 
-
 @router.get(
     "/",
     response_model=list[ProdutoResponse]
 )
 def listar(
-
     skip: int = 0,
-
     limit: int = 10,
-
     nome: str | None = None,
-
     descricao: str | None = None,
-
     preco_min: float | None = None,
-
     preco_max: float | None = None,
-
     estoque_min: int | None = None,
-
     estoque_max: int | None = None,
-
     em_estoque: bool | None = None,
-
     sort_by: str = "nome",
-
     order: str = "asc",
-
-
-    usuario_logado: Usuarios = Depends(
-        get_current_user
-    ),
-
-
     service: ProdutoServiceImpl = Depends(
         get_service
     )
-
 ):
-
-
     return service.listar(
-
         skip=skip,
-
         limit=limit,
-
         nome=nome,
-
         descricao=descricao,
-
         preco_min=preco_min,
-
         preco_max=preco_max,
-
         estoque_min=estoque_min,
-
         estoque_max=estoque_max,
-
         em_estoque=em_estoque,
-
         sort_by=sort_by,
-
         order=order
-
     )
-
 
 
 # ==================================================
@@ -157,27 +112,19 @@ def listar(
 # Usuários autenticados
 # ==================================================
 
-
 @router.get(
     "/{id}",
     response_model=ProdutoResponse
 )
 def buscar(
-
     id: int,
-
-
     service: ProdutoServiceImpl = Depends(
         get_service
     )
-
 ):
-
-
     return service.buscar_por_id(
         id
     )
-
 
 
 # ==================================================
@@ -185,34 +132,21 @@ def buscar(
 # Apenas Administrador
 # ==================================================
 
-
 @router.put(
     "/{id}",
     response_model=ProdutoResponse
 )
 def atualizar(
-
     id: int,
-
-
     produto: ProdutoUpdate,
-
-
     service: ProdutoServiceImpl = Depends(
         get_service
     )
-
 ):
-
-
     return service.atualizar(
-
         id,
-
         produto
-
     )
-
 
 
 # ==================================================
@@ -220,25 +154,16 @@ def atualizar(
 # Apenas Administrador
 # ==================================================
 
-
 @router.delete(
     "/{id}"
 )
 def deletar(
-
     id: int,
-
-
     service: ProdutoServiceImpl = Depends(
         get_service
     )
-
 ):
-
-
     return {
-
-        "success":
-        service.deletar(id)
-
+        "success": service.deletar(id)
     }
+
