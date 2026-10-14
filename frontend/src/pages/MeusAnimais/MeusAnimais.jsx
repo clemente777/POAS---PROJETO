@@ -1,3 +1,4 @@
+
 import { useCallback, useEffect, useState } from "react";
 import {
   Plus,
@@ -40,31 +41,52 @@ function MeusAnimais() {
   const [ordem, setOrdem] = useState("asc");
   const [pagina, setPagina] = useState(1);
 
-  const [modalForm, setModalForm] = useState(null); // null | "novo" | animal (edição)
+  const [modalForm, setModalForm] = useState(null);
   const [modalHistoricoId, setModalHistoricoId] = useState(null);
   const [animalParaExcluir, setAnimalParaExcluir] = useState(null);
   const [excluindo, setExcluindo] = useState(false);
   const [erroExclusao, setErroExclusao] = useState("");
 
-  // Resolve o registro de Cliente do usuário logado (necessário só pra
-  // enviar cliente_id ao cadastrar um novo animal — a listagem em si
-  // já vem filtrada pelo backend automaticamente pra esse perfil).
   useEffect(() => {
-    if (!usuario?.email) return;
+    if (!usuario?.email) {
+      setMeuCliente(null);
+      setErroCliente("Não foi possível identificar o usuário conectado.");
+      setCarregandoCliente(false);
+      return;
+    }
+
+    setCarregandoCliente(true);
+    setErroCliente("");
 
     api
-      .get("/clientes/", { params: { email: usuario.email, limit: 1 } })
+      .get("/clientes/", {
+        params: { email: usuario.email, limit: 1 },
+      })
       .then((res) => {
-        const encontrado = (res.data || [])[0];
+        const clientes = Array.isArray(res.data)
+          ? res.data
+          : res.data?.items || res.data?.clientes || [];
+
+        const encontrado = clientes.find(
+          (cliente) => cliente.email === usuario.email
+        ) || clientes[0];
+
         if (encontrado) {
           setMeuCliente(encontrado);
+          setErroCliente("");
         } else {
+          setMeuCliente(null);
           setErroCliente("Não encontramos seu cadastro de cliente.");
         }
       })
-      .catch(() => setErroCliente("Não foi possível carregar seus dados."))
-      .finally(() => setCarregandoCliente(false));
-  }, [usuario]);
+      .catch(() => {
+        setMeuCliente(null);
+        setErroCliente("Não foi possível carregar seus dados.");
+      })
+      .finally(() => {
+        setCarregandoCliente(false);
+      });
+  }, [usuario?.email]);
 
   const carregarAnimais = useCallback(async () => {
     setCarregando(true);
@@ -80,10 +102,20 @@ function MeusAnimais() {
         },
       });
 
-      setAnimais(res.data || []);
+      const dados = Array.isArray(res.data)
+        ? res.data
+        : Array.isArray(res.data?.items)
+          ? res.data.items
+          : Array.isArray(res.data?.animais)
+            ? res.data.animais
+            : [];
+
+      setAnimais(dados);
     } catch (err) {
+      setAnimais([]);
       setErro(
-        err?.response?.data?.detail || "Não foi possível carregar seus animais."
+        err?.response?.data?.detail ||
+          "Não foi possível carregar seus animais."
       );
     } finally {
       setCarregando(false);
@@ -97,7 +129,7 @@ function MeusAnimais() {
   function handleBuscar(e) {
     e.preventDefault();
     setPagina(1);
-    setBuscaAplicada(busca);
+    setBuscaAplicada(busca.trim());
   }
 
   function alternarOrdem() {
@@ -115,30 +147,47 @@ function MeusAnimais() {
   }
 
   async function confirmarExclusao() {
+    if (!animalParaExcluir) return;
+
     setExcluindo(true);
     setErroExclusao("");
 
     try {
       await api.delete(`/animais/${animalParaExcluir.id}`);
       setAnimalParaExcluir(null);
-      carregarAnimais();
+      await carregarAnimais();
     } catch (err) {
       setErroExclusao(
-        err?.response?.data?.detail || "Não foi possível excluir este animal."
+        err?.response?.data?.detail ||
+          "Não foi possível excluir este animal."
       );
     } finally {
       setExcluindo(false);
     }
   }
 
+  const nomeUsuario =
+    usuario?.nome ||
+    usuario?.nome_completo ||
+    usuario?.nomeCompleto ||
+    usuario?.name ||
+    "usuário";
+
   return (
     <div className="animais-page">
-      <Sidebar perfil={usuario?.perfil} setSidebarAberto={setSidebarAberto} />
+      <Sidebar
+        perfil={usuario?.perfil}
+        setSidebarAberto={setSidebarAberto}
+      />
 
-      <main className={`animais-content ${sidebarAberto ? "aberto" : "fechado"}`}>
+      <main
+        className={`animais-content ${
+          sidebarAberto ? "aberto" : "fechado"
+        }`}
+      >
         <header className="animais-header">
           <div>
-            <h1>Meus Animais</h1>
+            <h1>Olá, {nomeUsuario}!</h1>
             <p>Seus pets cadastrados no Petonline24h</p>
           </div>
 
@@ -148,13 +197,19 @@ function MeusAnimais() {
             disabled={carregandoCliente || !meuCliente}
             title={erroCliente || ""}
           >
-            <Plus size={18} /> Novo animal
+            <Plus size={18} />
+            Novo animal
           </button>
         </header>
+
+        {erroCliente && (
+          <p className="animais-erro">{erroCliente}</p>
+        )}
 
         <div className="animais-toolbar">
           <form className="busca-form" onSubmit={handleBuscar}>
             <Search size={16} />
+
             <input
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
@@ -162,14 +217,17 @@ function MeusAnimais() {
             />
           </form>
 
-          <button className="btn-ordem" onClick={alternarOrdem} type="button">
+          <button
+            className="btn-ordem"
+            onClick={alternarOrdem}
+            type="button"
+          >
             <ArrowUpDown size={16} />
             Nome ({ordem === "asc" ? "A-Z" : "Z-A"})
           </button>
         </div>
 
         {erro && <p className="animais-erro">{erro}</p>}
-        {erroCliente && <p className="animais-erro">{erroCliente}</p>}
 
         <div className="animais-tabela-wrapper">
           <table className="animais-tabela">
@@ -192,21 +250,27 @@ function MeusAnimais() {
                 </tr>
               )}
 
-              {!carregando && animais.length === 0 && (
+              {!carregando && !erro && animais.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="tabela-status">
-                    Você ainda não tem nenhum animal cadastrado.
+                  <td
+                    colSpan={5}
+                    className="tabela-status"
+                    style={{ textAlign: "center", padding: "24px" }}
+                  >
+                    Animal não encontrado.
                   </td>
                 </tr>
               )}
 
               {!carregando &&
+                !erro &&
                 animais.map((animal) => (
                   <tr key={animal.id}>
                     <td className="col-nome">{animal.nome}</td>
                     <td>{animal.especie}</td>
                     <td>{animal.raca}</td>
                     <td>{animal.idade} anos</td>
+
                     <td className="col-acoes">
                       <button
                         className="btn-icone"
@@ -246,7 +310,8 @@ function MeusAnimais() {
             onClick={() => setPagina((p) => Math.max(1, p - 1))}
             disabled={pagina === 1 || carregando}
           >
-            <ChevronLeft size={16} /> Anterior
+            <ChevronLeft size={16} />
+            Anterior
           </button>
 
           <span>Página {pagina}</span>
@@ -255,7 +320,8 @@ function MeusAnimais() {
             onClick={() => setPagina((p) => p + 1)}
             disabled={carregando || animais.length < LIMITE_POR_PAGINA}
           >
-            Próxima <ChevronRight size={16} />
+            Próxima
+            <ChevronRight size={16} />
           </button>
         </div>
       </main>

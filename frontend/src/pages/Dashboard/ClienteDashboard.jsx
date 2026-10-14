@@ -8,6 +8,7 @@ import {
   Syringe,
 } from "lucide-react";
 
+import { useNavigate } from "react-router-dom";
 import DashboardCard from "../../components/DashboardCard/DashboardCard";
 import DashboardSection from "../../components/DashboardSection/DashboardSection";
 
@@ -25,28 +26,47 @@ function formatarData(isoString) {
 }
 
 function ClienteDashboard({ dados }) {
+  const navigate = useNavigate();
   const proxima = dados.proxima_consulta;
 
   return (
     <>
       <DashboardSection titulo="Minha área">
-        <DashboardCard titulo="Meus animais" valor={dados.total_animais} icone={PawPrint} />
+        <div
+          onClick={() => navigate("/meus-animais")}
+          style={{ cursor: "pointer" }}
+        >
+          <DashboardCard
+            titulo="Meus animais"
+            valor={dados.total_animais}
+            icone={PawPrint}
+          />
+        </div>
+
         <DashboardCard
           titulo="Consultas agendadas"
           valor={dados.consultas_agendadas}
           icone={CalendarCheck}
         />
+
         <DashboardCard
           titulo="Consultas realizadas"
           valor={dados.consultas_realizadas}
           icone={ClipboardCheck}
         />
+
         <DashboardCard
           titulo="Próximas doses de vacina"
           valor={dados.proximas_doses_vacina}
           icone={Syringe}
         />
-        <DashboardCard titulo="Minhas compras" valor={dados.compras} icone={ShoppingBag} />
+
+        <DashboardCard
+          titulo="Minhas compras"
+          valor={dados.compras}
+          icone={ShoppingBag}
+        />
+
         <DashboardCard
           titulo="Total gasto"
           valor={`R$ ${Number(dados.valor_total_compras || 0).toFixed(2)}`}
@@ -74,13 +94,18 @@ function ClienteDashboard({ dados }) {
       {dados.meus_animais?.length > 0 && (
         <DashboardSection titulo="Meus animais">
           {dados.meus_animais.map((animal, index) => (
-            <DashboardCard
+            <div
               key={`${animal.nome}-${index}`}
-              titulo={animal.nome}
-              valor={`${animal.idade} anos`}
-              icone={PawPrint}
-              cor="var(--color-brand-dark)"
-            />
+              onClick={() => navigate("/meus-animais")}
+              style={{ cursor: "pointer" }}
+            >
+              <DashboardCard
+                titulo={animal.nome}
+                valor={`${animal.idade} anos`}
+                icone={PawPrint}
+                cor="var(--color-brand-dark)"
+              />
+            </div>
           ))}
         </DashboardSection>
       )}

@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { Search } from "lucide-react";
+
+import { useState } from "react";
 
 import Modal from "../Modal/Modal";
 import api from "../../services/api";
@@ -7,7 +7,7 @@ import "./AnimalFormModal.css";
 
 const ESPECIE_LIMITE = 100;
 
-function validarCampos({ nome, especie, raca, idade, clienteId, ehEdicao, clienteFixo }) {
+function validarCampos({ nome, especie, raca, idade }) {
   const erros = {};
 
   if (!nome || nome.trim().length < 2) {
@@ -28,15 +28,9 @@ function validarCampos({ nome, especie, raca, idade, clienteId, ehEdicao, client
     erros.idade = "Idade deve ser entre 0 e 100.";
   }
 
-  if (!ehEdicao && !clienteFixo && !clienteId) {
-    erros.cliente = "Selecione um tutor.";
-  }
-
   return erros;
 }
 
-// clienteFixo: { id, nome } — quando informado (tela "Meus Animais" do
-// Cliente), pula a busca de tutor e usa sempre o próprio cliente logado.
 function AnimalFormModal({ animal, clienteFixo = null, onClose, onSalvo }) {
   const ehEdicao = Boolean(animal);
 
@@ -45,65 +39,9 @@ function AnimalFormModal({ animal, clienteFixo = null, onClose, onSalvo }) {
   const [raca, setRaca] = useState(animal?.raca || "");
   const [idade, setIdade] = useState(animal?.idade ?? "");
 
-  const [clienteId, setClienteId] = useState(animal?.cliente_id || null);
-  const [clienteNome, setClienteNome] = useState("");
-  const [buscaCliente, setBuscaCliente] = useState("");
-  const [resultadosCliente, setResultadosCliente] = useState([]);
-  const [buscandoCliente, setBuscandoCliente] = useState(false);
-  const [listaClienteAberta, setListaClienteAberta] = useState(false);
-
   const [erros, setErros] = useState({});
   const [erroServidor, setErroServidor] = useState("");
   const [salvando, setSalvando] = useState(false);
-
-  const debounceRef = useRef(null);
-
-  // Em edição, busca o nome do tutor atual só pra exibir (não é editável)
-  useEffect(() => {
-    if (ehEdicao && animal?.cliente_id) {
-      api
-        .get(`/clientes/${animal.cliente_id}`)
-        .then((res) => setClienteNome(res.data?.nome || ""))
-        .catch(() => setClienteNome(""));
-    }
-  }, [ehEdicao, animal]);
-
-  // Busca com debounce enquanto o usuário digita o tutor (só na criação)
-  useEffect(() => {
-    if (ehEdicao) return;
-
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-
-    if (!buscaCliente || buscaCliente.trim().length < 2) {
-      setResultadosCliente([]);
-      return;
-    }
-
-    debounceRef.current = setTimeout(async () => {
-      setBuscandoCliente(true);
-      try {
-        const res = await api.get("/clientes/", {
-          params: { nome: buscaCliente, limit: 8 },
-        });
-        setResultadosCliente(res.data || []);
-      } catch {
-        setResultadosCliente([]);
-      } finally {
-        setBuscandoCliente(false);
-      }
-    }, 400);
-
-    return () => clearTimeout(debounceRef.current);
-  }, [buscaCliente, ehEdicao]);
-
-  function selecionarCliente(cliente) {
-    setClienteId(cliente.id);
-    setClienteNome(cliente.nome);
-    setBuscaCliente("");
-    setResultadosCliente([]);
-    setListaClienteAberta(false);
-    setErros((prev) => ({ ...prev, cliente: undefined }));
-  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -114,14 +52,18 @@ function AnimalFormModal({ animal, clienteFixo = null, onClose, onSalvo }) {
       especie,
       raca,
       idade,
-      clienteId,
-      ehEdicao,
-      clienteFixo,
     });
 
     setErros(errosValidacao);
 
     if (Object.keys(errosValidacao).length > 0) {
+      return;
+    }
+
+    if (!ehEdicao && !clienteFixo?.id) {
+      setErroServidor(
+        "Não foi possível identificar o tutor. Entre novamente na sua conta e tente de novo."
+      );
       return;
     }
 
@@ -141,7 +83,7 @@ function AnimalFormModal({ animal, clienteFixo = null, onClose, onSalvo }) {
           especie,
           raca,
           idade: Number(idade),
-          cliente_id: clienteFixo ? clienteFixo.id : clienteId,
+          cliente_id: clienteFixo.id,
         });
       }
 
@@ -206,82 +148,15 @@ function AnimalFormModal({ animal, clienteFixo = null, onClose, onSalvo }) {
           {erros.idade && <span className="erro-campo">{erros.idade}</span>}
         </div>
 
-        {ehEdicao ? (
-          <div className="campo">
-            <label>Tutor</label>
-            <div className="tutor-readonly">{clienteNome || "Carregando..."}</div>
-          </div>
-        ) : clienteFixo ? (
-          <div className="campo">
-            <label>Tutor</label>
-            <div className="tutor-readonly">{clienteFixo.nome} (você)</div>
-          </div>
-        ) : (
-          <div className="campo campo-cliente">
-            <label>Tutor</label>
-
-            {clienteId ? (
-              <div className="cliente-selecionado">
-                <span>{clienteNome}</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setClienteId(null);
-                    setClienteNome("");
-                  }}
-                >
-                  Trocar
-                </button>
-              </div>
-            ) : (
-              <div className="cliente-busca-wrapper">
-                <Search size={16} className="icone-busca" />
-                <input
-                  value={buscaCliente}
-                  onChange={(e) => {
-                    setBuscaCliente(e.target.value);
-                    setListaClienteAberta(true);
-                  }}
-                  onFocus={() => setListaClienteAberta(true)}
-                  placeholder="Buscar tutor pelo nome..."
-                />
-
-                {listaClienteAberta && buscaCliente.trim().length >= 2 && (
-                  <div className="cliente-resultados">
-                    {buscandoCliente && (
-                      <div className="cliente-resultado-vazio">Buscando...</div>
-                    )}
-
-                    {!buscandoCliente && resultadosCliente.length === 0 && (
-                      <div className="cliente-resultado-vazio">
-                        Nenhum tutor encontrado.
-                      </div>
-                    )}
-
-                    {resultadosCliente.map((cliente) => (
-                      <button
-                        type="button"
-                        key={cliente.id}
-                        className="cliente-resultado-item"
-                        onClick={() => selecionarCliente(cliente)}
-                      >
-                        <strong>{cliente.nome}</strong>
-                        <span>{cliente.email}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {erros.cliente && <span className="erro-campo">{erros.cliente}</span>}
-          </div>
-        )}
-
         {erroServidor && <p className="erro-servidor">{erroServidor}</p>}
 
         <div className="form-acoes">
-          <button type="button" className="btn-secundario" onClick={onClose} disabled={salvando}>
+          <button
+            type="button"
+            className="btn-secundario"
+            onClick={onClose}
+            disabled={salvando}
+          >
             Cancelar
           </button>
 
