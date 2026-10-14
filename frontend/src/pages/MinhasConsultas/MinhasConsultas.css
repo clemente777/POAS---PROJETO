@@ -1,0 +1,101 @@
+/* O layout (sidebar, cabeçalho, tabela, paginação) vem de Animais.css.
+   Aqui ficam só as peças específicas de "Minhas Consultas". */
+
+.consultas-page .btn-novo:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.consultas-page .btn-novo:disabled:hover {
+  background: var(--color-brand);
+}
+
+/* Filtro de status, com o mesmo visual do botão de ordenação */
+.filtro-status {
+  height: 44px;
+  padding: 0 18px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  font-size: 14px;
+  font-family: var(--font-body);
+  color: var(--color-text);
+  cursor: pointer;
+  outline: none;
+}
+
+.filtro-status:hover,
+.filtro-status:focus {
+  border-color: var(--color-brand);
+}
+
+/* Avisos (sucesso / informação) */
+.consultas-aviso {
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-md);
+  font-size: 14px;
+}
+
+.consultas-aviso-sucesso {
+  background: #e3f4e8;
+  color: #1e6b3a;
+}
+
+.consultas-aviso-info {
+  background: var(--color-brand-light);
+  color: var(--color-brand-dark);
+}
+
+.consultas-aviso a {
+  color: inherit;
+  font-weight: 600;
+}
+
+/* Colunas */
+.col-data {
+  white-space: nowrap;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.col-descricao {
+  max-width: 360px;
+  overflow-wrap: anywhere;
+}
+
+/* Status */
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status-pendente {
+  background: #fff4db;
+  color: #8a5a00;
+}
+
+.status-confirmado {
+  background: var(--color-brand-light);
+  color: var(--color-brand-dark);
+}
+
+.status-finalizado {
+  background: #e3f4e8;
+  color: #1e6b3a;
+}
+
+.status-cancelado {
+  background: #fdecea;
+  color: var(--color-accent-dark);
+}
+
+@media (max-width: 900px) {
+  .filtro-status {
+    flex: 1;
+  }
+}

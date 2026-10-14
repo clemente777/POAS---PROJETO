@@ -6,6 +6,7 @@ import Cadastro from "./pages/Cadastro/Cadastro";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import Animais from "./pages/Animais/Animais";
 import MeusAnimais from "./pages/MeusAnimais/MeusAnimais";
+import MinhasConsultas from "./pages/MinhasConsultas/MinhasConsultas";
 
 
 function App(){
@@ -50,6 +51,11 @@ function App(){
         <Route
           path="/meus-animais"
           element={<MeusAnimais />}
+        />
+
+        <Route
+          path="/minhas-consultas"
+          element={<MinhasConsultas />}
         />
 
 

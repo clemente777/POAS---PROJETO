@@ -1,0 +1,52 @@
+/* O .campo input já é estilizado em AnimalFormModal.css.
+   Aqui só complementamos select e textarea (escopado no formulário). */
+
+.consulta-form .campo select,
+.consulta-form .campo textarea {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-family: var(--font-body);
+  color: var(--color-text);
+  background: var(--color-surface);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.consulta-form .campo select {
+  height: 44px;
+  padding: 0 14px;
+  cursor: pointer;
+}
+
+.consulta-form .campo textarea {
+  padding: 12px 14px;
+  min-height: 96px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.consulta-form .campo select:focus,
+.consulta-form .campo textarea:focus {
+  border-color: var(--color-brand);
+}
+
+.contador-campo {
+  align-self: flex-end;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.consulta-sem-animal {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.consulta-sem-animal .btn-primario {
+  text-decoration: none;
+  display: inline-block;
+}

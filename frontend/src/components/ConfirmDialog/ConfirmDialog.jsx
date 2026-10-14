@@ -7,6 +7,8 @@ function ConfirmDialog({
   confirmando = false,
   erro = "",
   textoConfirmar = "Confirmar",
+  textoConfirmando = "Excluindo...",
+  textoCancelar = "Cancelar",
   onConfirmar,
   onCancelar,
 }) {
@@ -18,11 +20,11 @@ function ConfirmDialog({
 
       <div className="confirm-acoes">
         <button className="btn-secundario" onClick={onCancelar} disabled={confirmando}>
-          Cancelar
+          {textoCancelar}
         </button>
 
         <button className="btn-perigo" onClick={onConfirmar} disabled={confirmando}>
-          {confirmando ? "Excluindo..." : textoConfirmar}
+          {confirmando ? textoConfirmando : textoConfirmar}
         </button>
       </div>
     </Modal>

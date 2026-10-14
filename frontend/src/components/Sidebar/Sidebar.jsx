@@ -27,7 +27,7 @@ const ITENS_MENU = [
   { chave: "meus_animais", label: "Meus Animais", Icone: Dog, rota: "/meus-animais" },
   { chave: "clientes", label: "Clientes", Icone: Users, rota: null },
   { chave: "agendamentos", label: "Agendamentos", Icone: CalendarCheck, rota: null },
-  { chave: "minhas_consultas", label: "Minhas Consultas", Icone: CalendarCheck, rota: null },
+  { chave: "minhas_consultas", label: "Minhas Consultas", Icone: CalendarCheck, rota: "/minhas-consultas" },
   { chave: "atendimentos", label: "Atendimentos", Icone: Stethoscope, rota: null },
   { chave: "produtos", label: "Produtos", Icone: ShoppingCart, rota: null },
   { chave: "compras", label: "Minhas Compras", Icone: ShoppingBag, rota: null },
