@@ -9,3 +9,4 @@ from .item_carrinho_model import ItensCarrinho
 from .token_revogado_model import TokenRevogado
 from .aplicacao_vacina_model import AplicacoesVacina
 from .vacina_model import Vacinas
+from .pedido_model import Pedidos, ItensPedido

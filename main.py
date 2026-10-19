@@ -9,6 +9,7 @@ from backend.database.seed import criar_admin
 
 from backend.routes import (
     cadastro_routes,
+    pedido_routes,
     usuario_routes,
     login_routes,
     logout_routes,
@@ -21,7 +22,8 @@ from backend.routes import (
     item_carrinho_routes,
     dashboard_routes,
     aplicacao_vacina_routes,
-    vacina_routes
+    vacina_routes, 
+    
     
 )
 
@@ -68,7 +70,7 @@ app.include_router(item_carrinho_routes.router)
 app.include_router(dashboard_routes.router)
 app.include_router(aplicacao_vacina_routes.router)
 app.include_router(vacina_routes.router)
-
+app.include_router(pedido_routes.router)
 
 if __name__ == "__main__":
     import uvicorn

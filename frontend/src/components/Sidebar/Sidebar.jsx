@@ -30,7 +30,7 @@ const ITENS_MENU = [
   { chave: "minhas_consultas", label: "Minhas Consultas", Icone: CalendarCheck, rota: "/minhas-consultas" },
   { chave: "atendimentos", label: "Atendimentos", Icone: Stethoscope, rota: null },
   { chave: "produtos", label: "Produtos", Icone: ShoppingCart, rota: null },
-  { chave: "compras", label: "Minhas Compras", Icone: ShoppingBag, rota: null },
+  { chave: "compras", label: "Minhas Compras", Icone: ShoppingBag, rota: "/compras" },
 ];
 
 function Sidebar({ perfil, setSidebarAberto }) {

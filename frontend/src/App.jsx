@@ -7,6 +7,7 @@ import Dashboard from "./pages/Dashboard/Dashboard";
 import Animais from "./pages/Animais/Animais";
 import MeusAnimais from "./pages/MeusAnimais/MeusAnimais";
 import MinhasConsultas from "./pages/MinhasConsultas/MinhasConsultas";
+import Compras from "./pages/Compras/Compras";
 
 
 function App(){
@@ -57,7 +58,10 @@ function App(){
           path="/minhas-consultas"
           element={<MinhasConsultas />}
         />
-
+        <Route 
+          path="/compras" 
+          element={<Compras />} 
+        />
 
       </Routes>
 
