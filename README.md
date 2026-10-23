@@ -72,7 +72,7 @@ POAS---PROJETO/
 ## 2. Navegue até a pasta do backend
 
 ```bash
-cd C:\Users\COMPUTER\Documents\POAS---PROJETO\backend
+cd C:\Users\COMPUTER\Documents\POAS---PROJETO
 ```
 
 ---
