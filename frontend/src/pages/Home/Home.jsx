@@ -137,7 +137,6 @@ function Home() {
           center={[-5.6, -36.6]}
           zoom={7}
           autoFit={false}
-          coverageArea={coverageArea}
           points={coveragePoints}
         />
       </section>

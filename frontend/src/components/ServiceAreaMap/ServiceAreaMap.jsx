@@ -81,12 +81,8 @@ export default function ServiceAreaMap({
 
         <div className="sam-legend">
           <div className="sam-legend-item">
-            <span className="sam-dot sam-dot--area" />
-            Região atendida
-          </div>
-          <div className="sam-legend-item">
             <span className="sam-dot sam-dot--point" />
-            Unidades parceiras
+            localização da cliníca
           </div>
         </div>
 
