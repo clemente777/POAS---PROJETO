@@ -21,8 +21,8 @@ packaging==26.2
 pluggy==1.6.0
 pwdlib==0.2.1
 pycparser==3.0
-pydantic==2.11.7
-pydantic_core==2.33.2
+pydantic==2.14.1
+pydantic_core==2.50.1
 Pygments==2.20.0
 PyJWT==2.10.1
 PyMySQL==1.1.2
@@ -32,8 +32,6 @@ python-multipart==0.0.20
 PyYAML==6.0.3
 SQLAlchemy==2.0.43
 starlette==0.47.3
-typing-inspection==0.4.2
-typing_extensions==4.16.0
 uvicorn==0.35.0
 watchfiles==1.2.0
 websockets==16.0
