@@ -29,8 +29,9 @@ const ITENS_MENU = [
   { chave: "agendamentos", label: "Agendamentos", Icone: CalendarCheck, rota: null },
   { chave: "minhas_consultas", label: "Minhas Consultas", Icone: CalendarCheck, rota: "/minhas-consultas" },
   { chave: "atendimentos", label: "Atendimentos", Icone: Stethoscope, rota: null },
-  { chave: "produtos", label: "Produtos", Icone: ShoppingCart, rota: null },
+  { chave: "produtos", label: "Produtos", Icone: ShoppingCart, rota: "/produtos" },
   { chave: "compras", label: "Minhas Compras", Icone: ShoppingBag, rota: "/compras" },
+  
 ];
 
 function Sidebar({ perfil, setSidebarAberto }) {

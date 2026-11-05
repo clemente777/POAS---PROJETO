@@ -8,6 +8,7 @@ import Animais from "./pages/Animais/Animais";
 import MeusAnimais from "./pages/MeusAnimais/MeusAnimais";
 import MinhasConsultas from "./pages/MinhasConsultas/MinhasConsultas";
 import Compras from "./pages/Compras/Compras";
+import Produtos from "./pages/Produtos/Produtos";
 
 
 function App(){
@@ -61,6 +62,11 @@ function App(){
         <Route 
           path="/compras" 
           element={<Compras />} 
+        />
+
+        <Route
+          path="/produtos"
+          element={<Produtos />}
         />
 
       </Routes>

@@ -5,7 +5,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from backend.exceptions.handlers import tratar_validacao
 
-from backend.database.seed import criar_admin
+from backend.database.seed import (
+    criar_admin,
+    criar_produtos_teste,
+)
 
 from backend.routes import (
     cadastro_routes,
@@ -34,9 +37,9 @@ from backend.database.database import create_db_and_tables
 async def lifespan(app: FastAPI):
     create_db_and_tables()
     criar_admin()
+    criar_produtos_teste()
 
     yield
-
 
 
 app = FastAPI(lifespan=lifespan)
