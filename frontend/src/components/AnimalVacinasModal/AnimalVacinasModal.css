@@ -1,0 +1,95 @@
+.vacinas-modal-status {
+  padding: var(--space-md) 0;
+  text-align: center;
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.vacinas-modal-status.erro {
+  color: var(--color-accent-dark);
+}
+
+.vacinas-modal-resumo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-sm);
+}
+
+.vacinas-modal-resumo span {
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.resumo-atrasada {
+  background: #fdecea;
+  color: var(--color-accent-dark);
+}
+
+.resumo-vencer {
+  background: #fff4db;
+  color: #8a5a00;
+}
+
+.vacinas-modal-lista {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  max-height: 55vh;
+  overflow-y: auto;
+}
+
+.vacinas-modal-item {
+  padding: 14px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.vacinas-modal-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-sm);
+}
+
+.vacinas-modal-titulo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-brand);
+}
+
+.vacinas-modal-titulo strong {
+  font-size: 15px;
+  color: var(--color-ink);
+}
+
+.vacinas-modal-dose {
+  text-align: right;
+}
+
+.vacinas-modal-info {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.vacinas-modal-obs {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 520px) {
+  .vacinas-modal-topo {
+    flex-direction: column;
+  }
+
+  .vacinas-modal-dose {
+    text-align: left;
+  }
+}

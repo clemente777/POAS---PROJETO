@@ -17,7 +17,8 @@ from backend.models.usuario_model import Usuarios
 from backend.schemas.aplicacao_vacina_schema import (
     AplicacaoVacinaCreate,
     AplicacaoVacinaUpdate,
-    AplicacaoVacinaResponse
+    AplicacaoVacinaResponse,
+    AplicacaoVacinaClienteResponse
 )
 
 from backend.repositories.aplicacao_vacina_repository import (
@@ -134,6 +135,34 @@ def listar_por_animal(
 ):
 
     return service.listar_por_animal(
+        animal_id
+    )
+
+
+# ==========================================================
+# CARTEIRA DE VACINAÇÃO DE UM ANIMAL
+# Somente Cliente (e só dos próprios animais)
+# ==========================================================
+
+@router.get(
+    "/carteira/{animal_id}",
+    response_model=list[AplicacaoVacinaClienteResponse],
+    dependencies=[
+        Depends(
+            exigir_perfil(
+                "Cliente"
+            )
+        )
+    ]
+)
+def carteira_do_animal(
+    animal_id: int,
+    service: AplicacaoVacinaServiceImpl = Depends(
+        get_service
+    )
+):
+
+    return service.listar_carteira_do_animal(
         animal_id
     )
 

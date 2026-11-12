@@ -6,6 +6,8 @@ from sqlalchemy.orm import Session
 from backend.models.aplicacao_vacina_model import AplicacoesVacina
 from backend.models.animal_model import Animais
 from backend.models.vacina_model import Vacinas
+from backend.models.cliente_model import Clientes
+from backend.models.usuario_model import Usuarios
 
 
 class AplicacaoVacinaRepository:
@@ -110,6 +112,56 @@ class AplicacaoVacinaRepository:
 
         return self.session.scalars(
             select(AplicacoesVacina)
+            .where(
+                AplicacoesVacina.animal_id == animal_id
+            )
+            .order_by(
+                AplicacoesVacina.data_aplicacao.desc()
+            )
+        ).all()
+
+    # ==========================================================
+    # BUSCAR CLIENTE PELO USUÁRIO LOGADO
+    # ==========================================================
+
+    def buscar_cliente_por_usuario_id(
+        self,
+        usuario_id: int
+    ) -> Clientes | None:
+
+        return self.session.scalar(
+            select(Clientes)
+            .where(
+                Clientes.usuario_id == usuario_id
+            )
+        )
+
+    # ==========================================================
+    # LISTAR APLICAÇÕES DE UM ANIMAL COM VACINA E VETERINÁRIO
+    # Retorna linhas: (aplicacao, nome_vacina, fabricante,
+    # nome_veterinario)
+    # ==========================================================
+
+    def listar_por_animal_com_detalhes(
+        self,
+        animal_id: int
+    ):
+
+        return self.session.execute(
+            select(
+                AplicacoesVacina,
+                Vacinas.nome,
+                Vacinas.fabricante,
+                Usuarios.nome
+            )
+            .join(
+                Vacinas,
+                AplicacoesVacina.vacina_id == Vacinas.id
+            )
+            .join(
+                Usuarios,
+                AplicacoesVacina.veterinario_id == Usuarios.id
+            )
             .where(
                 AplicacoesVacina.animal_id == animal_id
             )

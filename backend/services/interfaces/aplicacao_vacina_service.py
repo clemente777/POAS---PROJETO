@@ -15,6 +15,11 @@ class AplicacaoVacinaService(ABC):
 
 
     @abstractmethod
+    def listar_carteira_do_animal(self, animal_id: int):
+        pass
+
+
+    @abstractmethod
     def aplicar_vacina(self, dados, veterinario_id: int):
         pass
 

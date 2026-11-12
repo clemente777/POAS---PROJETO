@@ -104,7 +104,7 @@ function AdminDashboard({ dados }) {
           </ChartCard>
 
           <ChartCard titulo="Animais por espécie">
-            <AnimaisEspecieChart dados={dados} />
+            <AnimaisEspecieChart dados={dados.animais_por_especie} />
           </ChartCard>
         </div>
       </DashboardSection>

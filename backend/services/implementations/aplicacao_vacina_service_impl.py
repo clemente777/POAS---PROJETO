@@ -88,6 +88,70 @@ class AplicacaoVacinaServiceImpl(
         )
 
     # ==========================================================
+    # CARTEIRA DE VACINAÇÃO DO ANIMAL (PERFIL CLIENTE)
+    # ==========================================================
+
+    def listar_carteira_do_animal(
+        self,
+        animal_id: int
+    ):
+
+        # ------------------------------------------------------
+        # O usuário logado precisa ter um cliente vinculado
+        # ------------------------------------------------------
+
+        cliente = self.repository.buscar_cliente_por_usuario_id(
+            self.usuario_logado.id
+        )
+
+        if not cliente:
+            raise HTTPException(
+                status_code=403,
+                detail="Usuário sem cliente vinculado."
+            )
+
+        # ------------------------------------------------------
+        # O animal precisa ser do cliente. Para animal inexistente
+        # ou de outro cliente a resposta é a mesma (404), para não
+        # revelar quais ids existem.
+        # ------------------------------------------------------
+
+        animal = self.repository.buscar_animal(
+            animal_id
+        )
+
+        if not animal or animal.cliente_id != cliente.id:
+            raise HTTPException(
+                status_code=404,
+                detail="Animal não encontrado."
+            )
+
+        linhas = self.repository.listar_por_animal_com_detalhes(
+            animal_id
+        )
+
+        return [
+            {
+                "id": aplicacao.id,
+                "animal_id": aplicacao.animal_id,
+                "vacina_id": aplicacao.vacina_id,
+                "vacina_nome": vacina_nome,
+                "fabricante": fabricante,
+                "veterinario_nome": veterinario_nome,
+                "data_aplicacao": aplicacao.data_aplicacao,
+                "proxima_dose": aplicacao.proxima_dose,
+                "lote": aplicacao.lote,
+                "observacoes": aplicacao.observacoes,
+            }
+            for (
+                aplicacao,
+                vacina_nome,
+                fabricante,
+                veterinario_nome
+            ) in linhas
+        ]
+
+    # ==========================================================
     # APLICAR VACINA
     # ==========================================================
 

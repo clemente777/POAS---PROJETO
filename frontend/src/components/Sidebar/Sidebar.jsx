@@ -15,6 +15,7 @@ import {
   Users,
   CalendarCheck,
   Stethoscope,
+  Syringe,
   ShoppingCart,
   ShoppingBag,
   Settings,
@@ -29,6 +30,7 @@ const ITENS_MENU = [
   { chave: "agendamentos", label: "Agendamentos", Icone: CalendarCheck, rota: null },
   { chave: "minhas_consultas", label: "Minhas Consultas", Icone: CalendarCheck, rota: "/minhas-consultas" },
   { chave: "atendimentos", label: "Atendimentos", Icone: Stethoscope, rota: null },
+  { chave: "vacinas", label: "Vacinas", Icone: Syringe, rota: "/vacinas" },
   { chave: "produtos", label: "Produtos", Icone: ShoppingCart, rota: "/produtos" },
   { chave: "compras", label: "Minhas Compras", Icone: ShoppingBag, rota: "/compras" },
   

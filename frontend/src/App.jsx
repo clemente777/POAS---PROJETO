@@ -9,6 +9,7 @@ import MeusAnimais from "./pages/MeusAnimais/MeusAnimais";
 import MinhasConsultas from "./pages/MinhasConsultas/MinhasConsultas";
 import Compras from "./pages/Compras/Compras";
 import Produtos from "./pages/Produtos/Produtos";
+import Vacinas from "./pages/Vacinas/Vacinas";
 
 
 function App(){
@@ -67,6 +68,11 @@ function App(){
         <Route
           path="/produtos"
           element={<Produtos />}
+        />
+
+        <Route
+          path="/vacinas"
+          element={<Vacinas />}
         />
 
       </Routes>

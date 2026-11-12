@@ -6,6 +6,7 @@ import {
   Pencil,
   Trash2,
   History,
+  Syringe,
   ChevronLeft,
   ChevronRight,
   ArrowUpDown,
@@ -17,6 +18,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import Sidebar from "../../components/Sidebar/Sidebar";
 import AnimalFormModal from "../../components/AnimalFormModal/AnimalFormModal";
 import AnimalHistoricoModal from "../../components/AnimalHistoricoModal/AnimalHistoricoModal";
+import AnimalVacinasModal from "../../components/AnimalVacinasModal/AnimalVacinasModal";
 import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 
 import "../Animais/Animais.css";
@@ -43,6 +45,7 @@ function MeusAnimais() {
 
   const [modalForm, setModalForm] = useState(null);
   const [modalHistoricoId, setModalHistoricoId] = useState(null);
+  const [animalVacinas, setAnimalVacinas] = useState(null);
   const [animalParaExcluir, setAnimalParaExcluir] = useState(null);
   const [excluindo, setExcluindo] = useState(false);
   const [erroExclusao, setErroExclusao] = useState("");
@@ -274,6 +277,15 @@ function MeusAnimais() {
                     <td className="col-acoes">
                       <button
                         className="btn-icone"
+                        title="Vacinas"
+                        aria-label="Carteira de vacinação"
+                        onClick={() => setAnimalVacinas(animal)}
+                      >
+                        <Syringe size={16} />
+                      </button>
+
+                      <button
+                        className="btn-icone"
                         title="Histórico"
                         onClick={() => setModalHistoricoId(animal.id)}
                       >
@@ -339,6 +351,13 @@ function MeusAnimais() {
         <AnimalHistoricoModal
           animalId={modalHistoricoId}
           onClose={() => setModalHistoricoId(null)}
+        />
+      )}
+
+      {animalVacinas && (
+        <AnimalVacinasModal
+          animal={animalVacinas}
+          onClose={() => setAnimalVacinas(null)}
         />
       )}
 

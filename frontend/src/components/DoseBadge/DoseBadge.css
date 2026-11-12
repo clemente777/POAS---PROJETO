@@ -1,0 +1,38 @@
+/* Situação da próxima dose */
+.dose-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.dose-detalhe {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.dose-atrasada {
+  background: #fdecea;
+  color: var(--color-accent-dark);
+}
+
+.dose-vence-em-breve {
+  background: #fff4db;
+  color: #8a5a00;
+}
+
+.dose-em-dia {
+  background: #e3f4e8;
+  color: #1e6b3a;
+}
+
+.dose-sem-reforco,
+.dose-reaplicada {
+  background: var(--color-bg-alt);
+  color: var(--color-text-muted);
+}

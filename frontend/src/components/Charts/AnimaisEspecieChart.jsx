@@ -12,16 +12,16 @@ import { CHART_COLORS } from "./chartColors";
 
 
 
-function AnimaisEspecieChart({dados}) {
+function AnimaisEspecieChart({animais_por_especie}) {
 
 
-    const data = Array.isArray(dados?.animais_por_especie)
+    const data = Array.isArray(animais_por_especie)
 
         ? dados.animais_por_especie
 
         :
 
-        Object.entries(dados?.animais_por_especie || {})
+        Object.entries(animais_por_especie || {})
         .map(([especie, quantidade]) => ({
 
             especie,

@@ -11,6 +11,10 @@ from backend.repositories.usuario_repository import (
     UsuarioRepository
 )
 
+from backend.repositories.cliente_repository import (
+    ClienteRepository
+)
+
 from backend.schemas.usuario_schema import (
     UsuarioCreate,
     UsuarioUpdate,
@@ -41,8 +45,13 @@ def get_service_publico(
         session
     )
 
+    cliente_repository = ClienteRepository(
+        session
+    )
+
     return UsuarioServiceImpl(
-        repository
+        repository=repository,
+        cliente_repository=cliente_repository
     )
 
 
@@ -61,9 +70,14 @@ def get_service(
         session
     )
 
+    cliente_repository = ClienteRepository(
+        session
+    )
+
     return UsuarioServiceImpl(
-        repository,
-        usuario_logado
+        repository=repository,
+        cliente_repository=cliente_repository,
+        usuario_logado=usuario_logado
     )
 
 
