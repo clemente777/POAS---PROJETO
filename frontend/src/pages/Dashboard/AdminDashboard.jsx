@@ -108,6 +108,16 @@ function AdminDashboard({ dados }) {
           </ChartCard>
         </div>
       </DashboardSection>
+      <DashboardSection titulo="Vacinas">
+        <DashboardCard titulo="Vacinas no catálogo" valor={dados.vacinas} icone={Syringe} />
+        <DashboardCard titulo="Aplicações" valor={dados.aplicacoes_vacina} icone={Syringe} />
+        <DashboardCard titulo="Próximas doses" valor={dados.proximas_doses} icone={Pill} />
+        <DashboardCard
+          titulo="Mais aplicada"
+          valor={dados.vacina_mais_aplicada?.nome || "-"}
+          icone={Syringe}
+        />
+      </DashboardSection>
     </>
   );
 }

@@ -5,6 +5,7 @@ import {
   Pencil,
   Trash2,
   History,
+  Syringe,
   ChevronLeft,
   ChevronRight,
   ArrowUpDown,
@@ -16,6 +17,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import Sidebar from "../../components/Sidebar/Sidebar";
 import AnimalFormModal from "../../components/AnimalFormModal/AnimalFormModal";
 import AnimalHistoricoModal from "../../components/AnimalHistoricoModal/AnimalHistoricoModal";
+import AnimalVacinasModal from "../../components/AnimalVacinasModal/AnimalVacinasModal";
 import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 
 import "./Animais.css";
@@ -40,6 +42,7 @@ function Animais() {
 
   const [modalForm, setModalForm] = useState(null); // null | "novo" | animal (edição)
   const [modalHistoricoId, setModalHistoricoId] = useState(null);
+  const [animalVacinas, setAnimalVacinas] = useState(null);
   const [animalParaExcluir, setAnimalParaExcluir] = useState(null);
   const [excluindo, setExcluindo] = useState(false);
   const [erroExclusao, setErroExclusao] = useState("");
@@ -215,6 +218,15 @@ function Animais() {
 
                       <button
                         className="btn-icone"
+                        title="Vacinas"
+                        aria-label="Vacinas do animal"
+                        onClick={() => setAnimalVacinas(animal)}
+                      >
+                        <Syringe size={16} />
+                      </button>
+
+                      <button
+                        className="btn-icone"
                         title="Editar"
                         onClick={() => abrirEdicao(animal)}
                       >
@@ -269,6 +281,14 @@ function Animais() {
         <AnimalHistoricoModal
           animalId={modalHistoricoId}
           onClose={() => setModalHistoricoId(null)}
+        />
+      )}
+
+      {animalVacinas && (
+        <AnimalVacinasModal
+          animal={animalVacinas}
+          equipe
+          onClose={() => setAnimalVacinas(null)}
         />
       )}
 

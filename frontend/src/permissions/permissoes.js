@@ -32,6 +32,9 @@ export const menusPorPerfil = {
         "produtos",
         "compras"
 
-    ]
+    ],
+    Administrador: ["dashboard","animais","clientes","agendamentos","atendimentos","produtos","vacinas","usuarios","relatorios"],
+
+    Veterinário:   ["dashboard","animais","agendamentos","atendimentos","vacinas"],
 
 };
