@@ -210,19 +210,19 @@ function Animais() {
                     <td className="col-acoes">
                       <button
                         className="btn-icone"
-                        title="Histórico"
-                        onClick={() => setModalHistoricoId(animal.id)}
+                        title="Vacinas"
+                        aria-label="Carteira de vacinação"
+                        onClick={() => setAnimalVacinas(animal)}
                       >
-                        <History size={16} />
+                        <Syringe size={16} />
                       </button>
 
                       <button
                         className="btn-icone"
-                        title="Vacinas"
-                        aria-label="Vacinas do animal"
-                        onClick={() => setAnimalVacinas(animal)}
+                        title="Histórico"
+                        onClick={() => setModalHistoricoId(animal.id)}
                       >
-                        <Syringe size={16} />
+                        <History size={16} />
                       </button>
 
                       <button
@@ -287,7 +287,7 @@ function Animais() {
       {animalVacinas && (
         <AnimalVacinasModal
           animal={animalVacinas}
-          equipe
+          perfil={usuario?.perfil}
           onClose={() => setAnimalVacinas(null)}
         />
       )}

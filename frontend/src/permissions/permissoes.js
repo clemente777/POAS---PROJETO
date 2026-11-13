@@ -7,6 +7,7 @@ export const menusPorPerfil = {
         "clientes",
         "agendamentos",
         "atendimentos",
+        "vacinas",
         "produtos",
         "usuarios",
         "relatorios"
@@ -19,7 +20,8 @@ export const menusPorPerfil = {
         "dashboard",
         "animais",
         "agendamentos",
-        "atendimentos"
+        "atendimentos",
+        "vacinas"
 
     ],
 
@@ -32,9 +34,6 @@ export const menusPorPerfil = {
         "produtos",
         "compras"
 
-    ],
-    Administrador: ["dashboard","animais","clientes","agendamentos","atendimentos","produtos","vacinas","usuarios","relatorios"],
-
-    Veterinário:   ["dashboard","animais","agendamentos","atendimentos","vacinas"],
+    ]
 
 };

@@ -55,11 +55,16 @@ function ClienteDashboard({ dados }) {
           icone={ClipboardCheck}
         />
 
-        <DashboardCard
-          titulo="Próximas doses de vacina"
-          valor={dados.proximas_doses_vacina}
-          icone={Syringe}
-        />
+        <div
+          onClick={() => navigate("/meus-animais")}
+          style={{ cursor: "pointer" }}
+        >
+          <DashboardCard
+            titulo="Próximas doses de vacina"
+            valor={dados.proximas_doses_vacina}
+            icone={Syringe}
+          />
+        </div>
 
         <DashboardCard
           titulo="Minhas compras"

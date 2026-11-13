@@ -7,6 +7,8 @@ import {
   Pill,
 } from "lucide-react";
 
+import { useNavigate } from "react-router-dom";
+
 import DashboardCard from "../../components/DashboardCard/DashboardCard";
 import DashboardSection from "../../components/DashboardSection/DashboardSection";
 import ChartCard from "../../components/ChartCard/ChartCard";
@@ -17,6 +19,8 @@ import AgendamentosChart from "../../components/Charts/AgendamentosChart";
 import AnimaisEspecieChart from "../../components/Charts/AnimaisEspecieChart";
 
 function VeterinarioDashboard({ dados }) {
+  const navigate = useNavigate();
+
   return (
     <>
       <DashboardSection titulo="Área do veterinário">
@@ -28,8 +32,12 @@ function VeterinarioDashboard({ dados }) {
           icone={ClipboardCheck}
         />
         <DashboardCard titulo="Animais atendidos" valor={dados.animais_atendidos} icone={PawPrint} />
-        <DashboardCard titulo="Vacinas aplicadas" valor={dados.vacinas_aplicadas} icone={Syringe} />
-        <DashboardCard titulo="Próximas doses" valor={dados.proximas_doses} icone={Pill} />
+        <div onClick={() => navigate("/vacinas")} style={{ cursor: "pointer" }}>
+          <DashboardCard titulo="Vacinas aplicadas" valor={dados.vacinas_aplicadas} icone={Syringe} />
+        </div>
+        <div onClick={() => navigate("/vacinas")} style={{ cursor: "pointer" }}>
+          <DashboardCard titulo="Próximas doses" valor={dados.proximas_doses} icone={Pill} />
+        </div>
       </DashboardSection>
 
       <DashboardSection titulo="Análise">

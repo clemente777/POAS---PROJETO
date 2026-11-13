@@ -15,7 +15,13 @@ import {
   Cake,
   TrendingUp,
   UserRound,
+  Syringe,
+  Pill,
+  BookOpen,
+  Trophy,
 } from "lucide-react";
+
+import { useNavigate } from "react-router-dom";
 
 import DashboardCard from "../../components/DashboardCard/DashboardCard";
 import DashboardSection from "../../components/DashboardSection/DashboardSection";
@@ -27,6 +33,8 @@ import AgendamentosChart from "../../components/Charts/AgendamentosChart";
 import AnimaisEspecieChart from "../../components/Charts/AnimaisEspecieChart";
 
 function AdminDashboard({ dados }) {
+  const navigate = useNavigate();
+
   return (
     <>
       <DashboardSection titulo="Estatísticas gerais">
@@ -64,6 +72,29 @@ function AdminDashboard({ dados }) {
       <DashboardSection titulo="Agenda">
         <DashboardCard titulo="Hoje" valor={dados.agendamentos_hoje} icone={CalendarDays} />
         <DashboardCard titulo="Futuros" valor={dados.agendamentos_futuros} icone={CalendarClock} />
+      </DashboardSection>
+
+      <DashboardSection titulo="Vacinas">
+        <div onClick={() => navigate("/vacinas")} style={{ cursor: "pointer" }}>
+          <DashboardCard titulo="Vacinas no catálogo" valor={dados.vacinas} icone={BookOpen} />
+        </div>
+
+        <div onClick={() => navigate("/vacinas")} style={{ cursor: "pointer" }}>
+          <DashboardCard titulo="Aplicações registradas" valor={dados.aplicacoes_vacina} icone={Syringe} />
+        </div>
+
+        <div onClick={() => navigate("/vacinas")} style={{ cursor: "pointer" }}>
+          <DashboardCard titulo="Próximas doses" valor={dados.proximas_doses} icone={Pill} />
+        </div>
+
+        <div onClick={() => navigate("/vacinas")} style={{ cursor: "pointer" }}>
+          <DashboardCard
+            titulo="Vacina mais aplicada"
+            valor={dados.vacina_mais_aplicada?.nome || "-"}
+            icone={Trophy}
+            cor="var(--color-accent)"
+          />
+        </div>
       </DashboardSection>
 
       <DashboardSection titulo="Animais">
@@ -104,19 +135,9 @@ function AdminDashboard({ dados }) {
           </ChartCard>
 
           <ChartCard titulo="Animais por espécie">
-            <AnimaisEspecieChart dados={dados.animais_por_especie} />
+            <AnimaisEspecieChart dados={dados} />
           </ChartCard>
         </div>
-      </DashboardSection>
-      <DashboardSection titulo="Vacinas">
-        <DashboardCard titulo="Vacinas no catálogo" valor={dados.vacinas} icone={Syringe} />
-        <DashboardCard titulo="Aplicações" valor={dados.aplicacoes_vacina} icone={Syringe} />
-        <DashboardCard titulo="Próximas doses" valor={dados.proximas_doses} icone={Pill} />
-        <DashboardCard
-          titulo="Mais aplicada"
-          valor={dados.vacina_mais_aplicada?.nome || "-"}
-          icone={Syringe}
-        />
       </DashboardSection>
     </>
   );
