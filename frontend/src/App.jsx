@@ -1,99 +1,117 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+/*
+|--------------------------------------------------------------------------
+| Arquivo: App.jsx
+| Projeto: Petonline24h
+|--------------------------------------------------------------------------
+|
+| Finalidade:
+| Componente principal responsável por organizar a navegação do sistema.
+|
+| Responsabilidades:
+| - Configurar o roteamento da aplicação.
+| - Associar cada endereço à sua respectiva página.
+| - Utilizar carregamento sob demanda (Lazy Loading).
+| - Apresentar um conteúdo temporário durante o carregamento das páginas.
+|
+| Tecnologias:
+| - React: construção da interface.
+| - React Router DOM: gerenciamento das rotas.
+| - React.lazy: carregamento sob demanda dos componentes.
+| - Suspense: gerenciamento do estado de carregamento.
+|
+|--------------------------------------------------------------------------
+*/
 
-import Home from "./pages/Home/Home";
-import Login from "./pages/Login/Login";
-import Cadastro from "./pages/Cadastro/Cadastro";
-import Dashboard from "./pages/Dashboard/Dashboard";
-import Animais from "./pages/Animais/Animais";
-import MeusAnimais from "./pages/MeusAnimais/MeusAnimais";
-import MinhasConsultas from "./pages/MinhasConsultas/MinhasConsultas";
-import Compras from "./pages/Compras/Compras";
-import Produtos from "./pages/Produtos/Produtos";
-import Vacinas from "./pages/Vacinas/Vacinas";
-import Agendamentos from "./pages/Agendamentos/Agendamentos";
-import Atendimentos from "./pages/Atendimentos/Atendimentos";
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { lazy, Suspense } from 'react'
 
+/*
+|--------------------------------------------------------------------------
+| CARREGAMENTO SOB DEMANDA (LAZY LOADING)
+|--------------------------------------------------------------------------
+|
+| O React.lazy permite importar componentes somente quando necessário.
+|
+| Dessa forma, as páginas não precisam ser carregadas todas de uma vez
+| quando o usuário acessa o sistema.
+|
+| Benefícios:
+| - Redução do JavaScript carregado inicialmente.
+| - Divisão do código em arquivos menores.
+| - Melhoria no carregamento inicial da aplicação.
+|
+*/
 
-function App(){
+// Página inicial
+const Home = lazy(() => import('./pages/Home/Home'))
 
+// Autenticação e cadastro
+const Login = lazy(() => import('./pages/Login/Login'))
+const Cadastro = lazy(() => import('./pages/Cadastro/Cadastro'))
+
+// Painel administrativo e gerenciamento
+const Dashboard = lazy(() => import('./pages/Dashboard/Dashboard'))
+const Animais = lazy(() => import('./pages/Animais/Animais'))
+
+// Funcionalidades destinadas aos clientes
+const MeusAnimais = lazy(() => import('./pages/MeusAnimais/MeusAnimais'))
+const MinhasConsultas = lazy(() => import('./pages/MinhasConsultas/MinhasConsultas'))
+const Compras = lazy(() => import('./pages/Compras/Compras'))
+
+// Produtos e serviços veterinários
+const Produtos = lazy(() => import('./pages/Produtos/Produtos'))
+const Vacinas = lazy(() => import('./pages/Vacinas/Vacinas'))
+const Agendamentos = lazy(() => import('./pages/Agendamentos/Agendamentos'))
+const Atendimentos = lazy(() => import('./pages/Atendimentos/Atendimentos'))
+
+/*
+|--------------------------------------------------------------------------
+| COMPONENTE PRINCIPAL
+|--------------------------------------------------------------------------
+|
+| O BrowserRouter disponibiliza o sistema de navegação baseado no
+| histórico do navegador.
+|
+| O componente Routes agrupa as rotas disponíveis.
+|
+| Cada Route associa um caminho (path) a um componente (element).
+|
+| O Suspense apresenta uma mensagem enquanto uma página importada
+| com React.lazy ainda está sendo carregada.
+|
+*/
+
+function App() {
   return (
-
     <BrowserRouter>
+      <Suspense fallback={<div>Carregando página...</div>}>
+        <Routes>
+          {/* Página inicial */}
+          <Route path="/" element={<Home />} />
 
-      <Routes>
+          {/* Autenticação e cadastro */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/cadastro" element={<Cadastro />} />
 
+          {/* Painel e gerenciamento de animais */}
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/animais" element={<Animais />} />
 
-        <Route 
-          path="/" 
-          element={<Home />}
-        />
+          {/* Área do cliente */}
+          <Route path="/meus-animais" element={<MeusAnimais />} />
+          <Route path="/minhas-consultas" element={<MinhasConsultas />} />
+          <Route path="/compras" element={<Compras />} />
 
-
-        <Route 
-          path="/login" 
-          element={<Login />}
-        />
-
-
-        <Route 
-          path="/cadastro" 
-          element={<Cadastro />}
-        />
-
-
-        <Route 
-          path="/dashboard" 
-          element={<Dashboard />}
-        />
-
-
-        <Route
-          path="/animais"
-          element={<Animais />}
-        />
-
-
-        <Route
-          path="/meus-animais"
-          element={<MeusAnimais />}
-        />
-
-        <Route
-          path="/minhas-consultas"
-          element={<MinhasConsultas />}
-        />
-        <Route 
-          path="/compras" 
-          element={<Compras />} 
-        />
-
-        <Route
-          path="/produtos"
-          element={<Produtos />}
-        />
-
-        <Route
-          path="/vacinas"
-          element={<Vacinas />}
-        />
-
-        <Route
-          path="/agendamentos"
-          element={<Agendamentos />}
-        />
-
-        <Route
-          path="/atendimentos"
-          element={<Atendimentos />}
-        />
-
-      </Routes>
-
+          {/* Produtos e funcionalidades veterinárias */}
+          <Route path="/produtos" element={<Produtos />} />
+          <Route path="/vacinas" element={<Vacinas />} />
+          <Route path="/agendamentos" element={<Agendamentos />} />
+          <Route path="/atendimentos" element={<Atendimentos />} />
+        </Routes>
+      </Suspense>
     </BrowserRouter>
-
-  );
-
+  )
 }
 
-
-export default App;
+// Disponibiliza o componente principal para inicialização da aplicação.
+export default App
