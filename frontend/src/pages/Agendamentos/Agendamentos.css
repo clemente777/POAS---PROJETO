@@ -1,0 +1,16 @@
+/* O layout vem de Animais.css e os selos de status/avisos de
+   MinhasConsultas.css. Aqui ficam só as peças da área do veterinário. */
+
+.btn-icone-sucesso:hover {
+  color: #1e6b3a;
+}
+
+.btn-icone:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.agenda-aviso-erro {
+  background: #fdecea;
+  color: var(--color-accent-dark);
+}

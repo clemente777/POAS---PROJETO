@@ -11,7 +11,8 @@ from backend.schemas.carrinho_schema import (
 )
 
 from backend.repositories.carrinho_repository import (
-    CarrinhoRepository
+    CarrinhoRepository,
+    EstoqueInsuficienteError
 )
 
 
@@ -460,6 +461,7 @@ class CarrinhoServiceImpl:
         - Carrinho não pode estar vazio.
         - Produto precisa ter estoque suficiente.
         - Estoque é reduzido.
+        - A compra é registrada no histórico (pedido).
         - Itens são removidos após a compra.
         """
 
@@ -518,6 +520,16 @@ class CarrinhoServiceImpl:
 
             return self.repository.finalizar_compra(
                 carrinho
+            )
+
+        except EstoqueInsuficienteError as erro:
+
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    f"Estoque insuficiente "
+                    f"para {erro.nome_produto}."
+                )
             )
 
         except HTTPException:

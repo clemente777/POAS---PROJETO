@@ -16,6 +16,7 @@ from backend.models.atendimento_model import Atendimentos
 from backend.models.produto_model import Produtos
 from backend.models.carrinho_model import Carrinhos
 from backend.models.item_carrinho_model import ItensCarrinho
+from backend.models.pedido_model import Pedidos
 from backend.models.aplicacao_vacina_model import AplicacoesVacina
 from backend.models.vacina_model import Vacinas
 
@@ -732,15 +733,18 @@ class DashboardRepository:
         cliente_id: int
     ):
         """
-        Retorna a quantidade de carrinhos/compras
-        do cliente.
+        Retorna a quantidade de compras finalizadas
+        (pedidos) do cliente.
+
+        O carrinho é esvaziado ao finalizar a compra,
+        por isso ele não serve para contar compras.
         """
 
         return self.session.scalar(
             select(func.count())
-            .select_from(Carrinhos)
+            .select_from(Pedidos)
             .where(
-                Carrinhos.cliente_id == cliente_id
+                Pedidos.cliente_id == cliente_id
             )
         ) or 0
 
@@ -751,30 +755,18 @@ class DashboardRepository:
         cliente_id: int
     ):
         """
-        Calcula o valor total das compras do cliente.
-
-        Soma:
-        preço do produto × quantidade.
+        Calcula o valor total das compras finalizadas
+        do cliente (soma do valor dos pedidos).
         """
 
         resultado = self.session.scalar(
             select(
                 func.sum(
-                    Produtos.preco *
-                    ItensCarrinho.quantidade
+                    Pedidos.valor_total
                 )
             )
-            .select_from(ItensCarrinho)
-            .join(
-                Produtos,
-                ItensCarrinho.produto_id == Produtos.id
-            )
-            .join(
-                Carrinhos,
-                ItensCarrinho.carrinho_id == Carrinhos.id
-            )
             .where(
-                Carrinhos.cliente_id == cliente_id
+                Pedidos.cliente_id == cliente_id
             )
         )
 
@@ -806,4 +798,3 @@ class DashboardRepository:
                 AplicacoesVacina.proxima_dose >= agora
             )
         ) or 0
-

@@ -10,6 +10,8 @@ import MinhasConsultas from "./pages/MinhasConsultas/MinhasConsultas";
 import Compras from "./pages/Compras/Compras";
 import Produtos from "./pages/Produtos/Produtos";
 import Vacinas from "./pages/Vacinas/Vacinas";
+import Agendamentos from "./pages/Agendamentos/Agendamentos";
+import Atendimentos from "./pages/Atendimentos/Atendimentos";
 
 
 function App(){
@@ -73,6 +75,16 @@ function App(){
         <Route
           path="/vacinas"
           element={<Vacinas />}
+        />
+
+        <Route
+          path="/agendamentos"
+          element={<Agendamentos />}
+        />
+
+        <Route
+          path="/atendimentos"
+          element={<Atendimentos />}
         />
 
       </Routes>

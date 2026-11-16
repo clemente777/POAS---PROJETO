@@ -40,14 +40,25 @@ function validarCampos({ animalId, dataHora, descricao }) {
   return erros;
 }
 
-// animais: lista dos animais do cliente logado (vem da página).
-function ConsultaFormModal({ animais, onClose, onSalvo }) {
-  // Se o cliente só tem um animal, já deixa selecionado.
+// animais: lista dos animais disponíveis (vem da página).
+// consulta: opcional. Quando informada, o formulário reagenda essa consulta
+// (muda data/horário e motivo) em vez de criar uma nova.
+function ConsultaFormModal({ animais, consulta = null, onClose, onSalvo }) {
+  const editando = Boolean(consulta);
+
+  // Se só há um animal, já deixa selecionado.
   const [animalId, setAnimalId] = useState(
-    animais.length === 1 ? String(animais[0].id) : ""
+    consulta
+      ? String(consulta.animal_id)
+      : animais.length === 1
+        ? String(animais[0].id)
+        : ""
   );
-  const [dataHora, setDataHora] = useState("");
-  const [descricao, setDescricao] = useState("");
+  // A API devolve "2026-10-20T14:30:00"; o input quer "2026-10-20T14:30".
+  const [dataHora, setDataHora] = useState(
+    consulta ? String(consulta.data_agendamento).slice(0, 16) : ""
+  );
+  const [descricao, setDescricao] = useState(consulta ? consulta.descricao : "");
 
   const [minimo] = useState(agoraParaInput);
 
@@ -69,12 +80,19 @@ function ConsultaFormModal({ animais, onClose, onSalvo }) {
     setSalvando(true);
 
     try {
-      await api.post("/agendamentos/", {
-        animal_id: Number(animalId),
-        // "2026-10-20T14:30" (sem fuso), igual ao que a API guarda e devolve
-        data_agendamento: dataHora,
-        descricao: descricao.trim(),
-      });
+      if (editando) {
+        await api.put(`/agendamentos/${consulta.id}`, {
+          data_agendamento: dataHora,
+          descricao: descricao.trim(),
+        });
+      } else {
+        await api.post("/agendamentos/", {
+          animal_id: Number(animalId),
+          // "2026-10-20T14:30" (sem fuso), igual ao que a API guarda e devolve
+          data_agendamento: dataHora,
+          descricao: descricao.trim(),
+        });
+      }
 
       onSalvo();
     } catch (err) {
@@ -85,7 +103,7 @@ function ConsultaFormModal({ animais, onClose, onSalvo }) {
   }
 
   return (
-    <Modal titulo="Agendar consulta" onClose={onClose}>
+    <Modal titulo={editando ? "Reagendar consulta" : "Agendar consulta"} onClose={onClose}>
       {animais.length === 0 ? (
         <div className="consulta-sem-animal">
           <p>Você precisa cadastrar um animal antes de agendar uma consulta.</p>
@@ -100,6 +118,7 @@ function ConsultaFormModal({ animais, onClose, onSalvo }) {
             <select
               id="consulta-animal"
               value={animalId}
+              disabled={editando}
               onChange={(e) => setAnimalId(e.target.value)}
             >
               <option value="">Selecione...</option>
@@ -153,7 +172,13 @@ function ConsultaFormModal({ animais, onClose, onSalvo }) {
             </button>
 
             <button type="submit" className="btn-primario" disabled={salvando}>
-              {salvando ? "Agendando..." : "Agendar"}
+              {salvando
+                ? editando
+                  ? "Salvando..."
+                  : "Agendando..."
+                : editando
+                  ? "Salvar"
+                  : "Agendar"}
             </button>
           </div>
         </form>

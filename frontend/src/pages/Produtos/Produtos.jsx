@@ -89,18 +89,57 @@ function Produtos() {
       .includes(busca.trim().toLowerCase())
   );
 
+  // O cliente tem um único carrinho. Se ainda não existir
+  // (ele não é criado no cadastro), criamos na primeira compra.
+  async function obterCarrinhoId() {
+    const { data: carrinhos } = await api.get("/carrinhos/", {
+      params: { limit: 1 },
+    });
+
+    if (carrinhos[0]) {
+      return carrinhos[0].id;
+    }
+
+    // Para o perfil Cliente, esta rota devolve só o próprio cadastro.
+    const { data: clientes } = await api.get("/clientes/", {
+      params: { limit: 1 },
+    });
+
+    const cliente = clientes[0];
+
+    if (!cliente) {
+      throw new Error("Cadastro de cliente não encontrado.");
+    }
+
+    const { data: novoCarrinho } = await api.post("/carrinhos/", {
+      cliente_id: cliente.id,
+    });
+
+    return novoCarrinho.id;
+  }
+
   async function adicionarAoCarrinho(produto) {
+    const quantidade = quantidades[produto.id] || 1;
+
     setAdicionando(produto.id);
     setErro("");
     setAviso("");
 
     try {
-      /*
-       * Na próxima etapa vamos conectar esta ação
-       * ao carrinho do cliente no backend.
-       */
+      const carrinhoId = await obterCarrinhoId();
+
+      await api.post("/itens-carrinho/", {
+        carrinho_id: carrinhoId,
+        produto_id: produto.id,
+        quantidade,
+      });
+
+      setQuantidades((atual) => ({ ...atual, [produto.id]: 1 }));
+
       setAviso(
-        `Produto "${produto.nome}" selecionado.`
+        `${quantidade} × "${produto.nome}" ${
+          quantidade === 1 ? "adicionado" : "adicionados"
+        } ao carrinho.`
       );
     } catch (error) {
       setErro(tratarErro(error).mensagem);

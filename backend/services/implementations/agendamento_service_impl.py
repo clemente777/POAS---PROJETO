@@ -343,6 +343,62 @@ class AgendamentoServiceImpl:
             )
 
     # ==========================================================
+    # VALIDAR VETERINÁRIO RESPONSÁVEL
+    # ==========================================================
+
+    def validar_veterinario_responsavel(
+        self,
+        veterinario_id: int | None
+    ):
+        """
+        Regras para definir quem atende o agendamento:
+
+        - None remove o veterinário responsável.
+        - Veterinário só pode assumir o agendamento para si.
+        - Administrador pode indicar qualquer veterinário.
+        """
+
+        if veterinario_id is None:
+            return
+
+        if (
+            self.obter_perfil() == "Veterinário"
+            and veterinario_id != self.usuario_logado.id
+        ):
+
+            raise HTTPException(
+                status_code=403,
+                detail=(
+                    "Você só pode assumir "
+                    "o agendamento para você mesmo."
+                )
+            )
+
+        veterinario = (
+            self.repository
+            .buscar_veterinario_por_id(
+                veterinario_id
+            )
+        )
+
+        if not veterinario:
+
+            raise HTTPException(
+                status_code=404,
+                detail="Veterinário não encontrado."
+            )
+
+        if veterinario.perfil != "Veterinário":
+
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Usuário informado "
+                    "não é veterinário."
+                )
+            )
+
+    # ==========================================================
     # ATRIBUIR VETERINÁRIO
     # ==========================================================
 
@@ -549,13 +605,24 @@ class AgendamentoServiceImpl:
             )
 
         # ------------------------------------------------------
+        # VETERINÁRIO RESPONSÁVEL
+        # ------------------------------------------------------
+
+        if "veterinario_id" in valores:
+
+            self.validar_veterinario_responsavel(
+                valores["veterinario_id"]
+            )
+
+        # ------------------------------------------------------
         # CAMPOS PERMITIDOS
         # ------------------------------------------------------
 
         campos_permitidos = [
             "data_agendamento",
             "descricao",
-            "status"
+            "status",
+            "veterinario_id"
         ]
 
         for campo, valor in valores.items():

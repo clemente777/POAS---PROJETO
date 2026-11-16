@@ -1,10 +1,24 @@
 from datetime import datetime
 
-from sqlalchemy import select, asc, desc
+from sqlalchemy import select, asc, desc, update
 from sqlalchemy.orm import Session
 
 from backend.models.carrinho_model import Carrinhos
 from backend.models.cliente_model import Clientes
+from backend.models.pedido_model import Pedidos, ItensPedido
+from backend.models.produto_model import Produtos
+from backend.repositories.pedido_repository import PedidoRepository
+
+
+class EstoqueInsuficienteError(Exception):
+    """
+    Estoque acabou (ou diminuiu) entre a validação do Service
+    e a baixa feita na finalização da compra.
+    """
+
+    def __init__(self, nome_produto: str):
+        self.nome_produto = nome_produto
+        super().__init__(nome_produto)
 
 
 class CarrinhoRepository:
@@ -256,9 +270,10 @@ class CarrinhoRepository:
         Executa a operação de finalização da compra.
 
         Responsabilidades do Repository:
-        - Atualizar estoque dos produtos
+        - Baixar o estoque dos produtos
+        - Registrar a compra (pedido + itens) como histórico
         - Remover os itens do carrinho
-        - Confirmar a transação
+        - Confirmar a transação (tudo ou nada)
         - Desfazer a transação em caso de erro
 
         As validações de negócio permanecem no Service.
@@ -266,18 +281,42 @@ class CarrinhoRepository:
 
         try:
 
-            valor_total = 0
+            valor_total = 0.0
             quantidade_itens = 0
 
+            itens_pedido = []
+
             # --------------------------------------------------
-            # ATUALIZAR ESTOQUE E CALCULAR TOTAL
+            # BAIXAR ESTOQUE, CALCULAR TOTAL E MONTAR HISTÓRICO
             # --------------------------------------------------
 
             for item in list(carrinho.itens):
 
                 produto = item.produto
 
-                produto.estoque -= item.quantidade
+                # Baixa condicional: só desconta se ainda houver
+                # estoque suficiente. Evita estoque negativo se
+                # duas compras acontecerem ao mesmo tempo.
+
+                resultado = self.session.execute(
+                    update(Produtos)
+                    .where(
+                        Produtos.id == produto.id,
+                        Produtos.estoque >= item.quantidade
+                    )
+                    .values(
+                        estoque=(
+                            Produtos.estoque -
+                            item.quantidade
+                        )
+                    )
+                )
+
+                if resultado.rowcount == 0:
+
+                    raise EstoqueInsuficienteError(
+                        produto.nome
+                    )
 
                 valor_total += (
                     produto.preco *
@@ -287,6 +326,36 @@ class CarrinhoRepository:
                 quantidade_itens += (
                     item.quantidade
                 )
+
+                # Nome e preço são copiados agora: o histórico
+                # não muda se o produto for editado depois.
+
+                itens_pedido.append(
+                    ItensPedido(
+                        produto_id=produto.id,
+                        nome_produto=produto.nome,
+                        preco_unitario=produto.preco,
+                        quantidade=item.quantidade
+                    )
+                )
+
+            valor_total = round(valor_total, 2)
+
+            # --------------------------------------------------
+            # REGISTRAR A COMPRA (PEDIDO)
+            # --------------------------------------------------
+
+            pedido = PedidoRepository(
+                self.session
+            ).adicionar(
+                Pedidos(
+                    cliente_id=carrinho.cliente_id,
+                    valor_total=valor_total,
+                    itens=itens_pedido
+                )
+            )
+
+            pedido_id = pedido.id
 
             # --------------------------------------------------
             # REMOVER ITENS DO CARRINHO
@@ -312,7 +381,10 @@ class CarrinhoRepository:
                     valor_total,
 
                 "quantidade_itens":
-                    quantidade_itens
+                    quantidade_itens,
+
+                "pedido_id":
+                    pedido_id
             }
 
         except Exception:

@@ -24,14 +24,22 @@ function VeterinarioDashboard({ dados }) {
   return (
     <>
       <DashboardSection titulo="Área do veterinário">
-        <DashboardCard titulo="Consultas hoje" valor={dados.consultas_hoje} icone={CalendarDays} />
-        <DashboardCard titulo="Próximas consultas" valor={dados.proximas_consultas} icone={Clock} />
-        <DashboardCard
-          titulo="Atendimentos realizados"
-          valor={dados.atendimentos_realizados}
-          icone={ClipboardCheck}
-        />
-        <DashboardCard titulo="Animais atendidos" valor={dados.animais_atendidos} icone={PawPrint} />
+        <div onClick={() => navigate("/agendamentos")} style={{ cursor: "pointer" }}>
+          <DashboardCard titulo="Consultas hoje" valor={dados.consultas_hoje} icone={CalendarDays} />
+        </div>
+        <div onClick={() => navigate("/agendamentos")} style={{ cursor: "pointer" }}>
+          <DashboardCard titulo="Próximas consultas" valor={dados.proximas_consultas} icone={Clock} />
+        </div>
+        <div onClick={() => navigate("/atendimentos")} style={{ cursor: "pointer" }}>
+          <DashboardCard
+            titulo="Atendimentos realizados"
+            valor={dados.atendimentos_realizados}
+            icone={ClipboardCheck}
+          />
+        </div>
+        <div onClick={() => navigate("/animais")} style={{ cursor: "pointer" }}>
+          <DashboardCard titulo="Animais atendidos" valor={dados.animais_atendidos} icone={PawPrint} />
+        </div>
         <div onClick={() => navigate("/vacinas")} style={{ cursor: "pointer" }}>
           <DashboardCard titulo="Vacinas aplicadas" valor={dados.vacinas_aplicadas} icone={Syringe} />
         </div>

@@ -1,0 +1,35 @@
+/* O layout vem de Animais.css e os selos de status/avisos de
+   MinhasConsultas.css. Aqui ficam só as peças de "Atendimentos". */
+
+/* Checkbox "Somente os meus", com o mesmo visual do botão de ordenação */
+.filtro-meus {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 18px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  font-size: 14px;
+  font-family: var(--font-body);
+  color: var(--color-text);
+  cursor: pointer;
+  user-select: none;
+}
+
+.filtro-meus:hover,
+.filtro-meus:focus-within {
+  border-color: var(--color-brand);
+}
+
+.filtro-meus input {
+  accent-color: var(--color-brand);
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .filtro-meus {
+    flex: 1;
+  }
+}

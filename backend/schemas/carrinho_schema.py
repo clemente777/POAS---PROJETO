@@ -25,3 +25,4 @@ class CompraResponse(BaseModel):
     mensagem: str
     valor_total: float
     quantidade_itens: int
+    pedido_id: int | None = None

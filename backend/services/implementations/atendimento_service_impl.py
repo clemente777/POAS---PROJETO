@@ -414,6 +414,17 @@ class AtendimentoServiceImpl:
             atendimento.observacoes
         )
 
+        # Sem data informada, usa o momento atual.
+        # (Antes, data_atendimento=None quebrava a validação
+        # abaixo com erro 500.)
+
+        if atendimento.data_atendimento is None:
+
+            atendimento.data_atendimento = (
+                datetime.now(timezone.utc)
+                .replace(tzinfo=None, microsecond=0)
+            )
+
         # A data não pode ser futura.
 
         self.validar_data(
