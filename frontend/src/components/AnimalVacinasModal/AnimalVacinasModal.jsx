@@ -1,87 +1,80 @@
-import { useEffect, useMemo, useState } from "react";
-import { Syringe } from "lucide-react";
+import { useEffect, useMemo, useState } from 'react'
+import { Syringe } from 'lucide-react'
 
-import Modal from "../Modal/Modal";
-import DoseBadge from "../DoseBadge/DoseBadge";
-import api from "../../services/api";
-import tratarErro from "../../services/tratarErro";
-import { formatarData, idsDosesVigentes, situacaoDaDose } from "../../utils/vacinas";
-import "./AnimalVacinasModal.css";
+import Modal from '../Modal/Modal'
+import DoseBadge from '../DoseBadge/DoseBadge'
+import api from '../../services/api'
+import tratarErro from '../../services/tratarErro'
+import { formatarData, idsDosesVigentes, situacaoDaDose } from '../../utils/vacinas'
+import './AnimalVacinasModal.css'
 
 // Carteira de vacinação de um animal.
 // - Cliente: rota própria, que só devolve animais dele.
 // - Administrador/Veterinário: lista as aplicações do animal e cruza com o
 //   catálogo para mostrar o nome da vacina.
-function AnimalVacinasModal({ animal, perfil = "Cliente", onClose }) {
-  const ehEquipe = perfil === "Administrador" || perfil === "Veterinário";
+function AnimalVacinasModal({ animal, perfil = 'Cliente', onClose }) {
+  const ehEquipe = perfil === 'Administrador' || perfil === 'Veterinário'
 
-  const [aplicacoes, setAplicacoes] = useState([]);
-  const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState("");
+  const [aplicacoes, setAplicacoes] = useState([])
+  const [carregando, setCarregando] = useState(true)
+  const [erro, setErro] = useState('')
 
   useEffect(() => {
     // Se o modal fechar antes da resposta chegar, ignora a resposta.
-    let ignorar = false;
+    let ignorar = false
 
     const buscar = ehEquipe
       ? Promise.all([
           api.get(`/aplicacoes-vacina/animal/${animal.id}`),
-          api.get("/vacinas/"),
+          api.get('/vacinas/'),
         ]).then(([resAplicacoes, resVacinas]) => {
           const vacinas = Object.fromEntries(
             (resVacinas.data || []).map((vacina) => [vacina.id, vacina])
-          );
+          )
 
           return (resAplicacoes.data || [])
             .map((aplicacao) => ({
               ...aplicacao,
               vacina_nome:
-                vacinas[aplicacao.vacina_id]?.nome ||
-                `Vacina #${aplicacao.vacina_id}`,
+                vacinas[aplicacao.vacina_id]?.nome || `Vacina #${aplicacao.vacina_id}`,
               veterinario_nome: null,
             }))
-            .sort(
-              (a, b) => new Date(b.data_aplicacao) - new Date(a.data_aplicacao)
-            );
+            .sort((a, b) => new Date(b.data_aplicacao) - new Date(a.data_aplicacao))
         })
       : api
           .get(`/aplicacoes-vacina/carteira/${animal.id}`)
-          .then((res) => res.data || []);
+          .then((res) => res.data || [])
 
     buscar
       .then((lista) => {
-        if (!ignorar) setAplicacoes(lista);
+        if (!ignorar) setAplicacoes(lista)
       })
       .catch((err) => {
-        if (!ignorar) setErro(tratarErro(err).mensagem);
+        if (!ignorar) setErro(tratarErro(err).mensagem)
       })
       .finally(() => {
-        if (!ignorar) setCarregando(false);
-      });
+        if (!ignorar) setCarregando(false)
+      })
 
     return () => {
-      ignorar = true;
-    };
-  }, [animal.id, ehEquipe]);
+      ignorar = true
+    }
+  }, [animal.id, ehEquipe])
 
   const itens = useMemo(() => {
-    const vigentes = idsDosesVigentes(aplicacoes);
+    const vigentes = idsDosesVigentes(aplicacoes)
 
     return aplicacoes.map((aplicacao) => ({
       ...aplicacao,
       situacao: situacaoDaDose(aplicacao, vigentes.has(aplicacao.id)),
-    }));
-  }, [aplicacoes]);
+    }))
+  }, [aplicacoes])
 
-  const atrasadas = itens.filter((i) => i.situacao.valor === "atrasada").length;
-  const aVencer = itens.filter((i) => i.situacao.valor === "vence-em-breve").length;
+  const atrasadas = itens.filter((i) => i.situacao.valor === 'atrasada').length
+  const aVencer = itens.filter((i) => i.situacao.valor === 'vence-em-breve').length
 
   return (
-    <Modal
-      titulo={`Vacinas de ${animal.nome}`}
-      onClose={onClose}
-      largura="620px"
-    >
+    <Modal titulo={`Vacinas de ${animal.nome}`} onClose={onClose} largura="620px">
       {carregando && <p className="vacinas-modal-status">Carregando...</p>}
 
       {erro && <p className="vacinas-modal-status erro">{erro}</p>}
@@ -98,12 +91,14 @@ function AnimalVacinasModal({ animal, perfil = "Cliente", onClose }) {
             <div className="vacinas-modal-resumo">
               {atrasadas > 0 && (
                 <span className="resumo-atrasada">
-                  {atrasadas} {atrasadas === 1 ? "reforço atrasado" : "reforços atrasados"}
+                  {atrasadas}{' '}
+                  {atrasadas === 1 ? 'reforço atrasado' : 'reforços atrasados'}
                 </span>
               )}
               {aVencer > 0 && (
                 <span className="resumo-vencer">
-                  {aVencer} {aVencer === 1 ? "reforço vence" : "reforços vencem"} em breve
+                  {aVencer} {aVencer === 1 ? 'reforço vence' : 'reforços vencem'} em
+                  breve
                 </span>
               )}
             </div>
@@ -141,7 +136,7 @@ function AnimalVacinasModal({ animal, perfil = "Cliente", onClose }) {
         </>
       )}
     </Modal>
-  );
+  )
 }
 
-export default AnimalVacinasModal;
+export default AnimalVacinasModal

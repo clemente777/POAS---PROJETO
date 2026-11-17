@@ -1,19 +1,19 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import "./Navbar.css";
-import Logo from "../Logo/Logo";
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import './Navbar.css'
+import Logo from '../Logo/Logo'
 
 function Navbar() {
-  const [scrolled, setScrolled] = useState(false);
+  const [scrolled, setScrolled] = useState(false)
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 12);
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+    const onScroll = () => setScrolled(window.scrollY > 12)
+    window.addEventListener('scroll', onScroll)
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   return (
-    <header className={`navbar ${scrolled ? "is-scrolled" : ""}`}>
+    <header className={`navbar ${scrolled ? 'is-scrolled' : ''}`}>
       <Link to="/" className="navbar-brand">
         <Logo />
       </Link>
@@ -44,7 +44,7 @@ function Navbar() {
         </Link>
       </nav>
     </header>
-  );
+  )
 }
 
-export default Navbar;
+export default Navbar

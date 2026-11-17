@@ -1,9 +1,7 @@
 .logo {
+  width: 300px;
 
-    width:300px;
+  height: 120px;
 
-    height:120px;
-
-    object-fit:contain;
-
+  object-fit: contain;
 }

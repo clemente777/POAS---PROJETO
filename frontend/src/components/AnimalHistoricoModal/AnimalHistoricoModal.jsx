@@ -1,34 +1,34 @@
-import { useEffect, useState } from "react";
-import { Stethoscope, PawPrint, User } from "lucide-react";
+import { useEffect, useState } from 'react'
+import { Stethoscope, PawPrint, User } from 'lucide-react'
 
-import Modal from "../Modal/Modal";
-import api from "../../services/api";
-import "./AnimalHistoricoModal.css";
+import Modal from '../Modal/Modal'
+import api from '../../services/api'
+import './AnimalHistoricoModal.css'
 
 function formatarData(isoString) {
-  if (!isoString) return "-";
+  if (!isoString) return '-'
 
-  return new Date(isoString).toLocaleString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return new Date(isoString).toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 }
 
 function AnimalHistoricoModal({ animalId, onClose }) {
-  const [dados, setDados] = useState(null);
-  const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState("");
+  const [dados, setDados] = useState(null)
+  const [carregando, setCarregando] = useState(true)
+  const [erro, setErro] = useState('')
 
   useEffect(() => {
     api
       .get(`/animais/${animalId}/historico`)
       .then((res) => setDados(res.data))
-      .catch(() => setErro("Não foi possível carregar o histórico."))
-      .finally(() => setCarregando(false));
-  }, [animalId]);
+      .catch(() => setErro('Não foi possível carregar o histórico.'))
+      .finally(() => setCarregando(false))
+  }, [animalId])
 
   return (
     <Modal titulo="Histórico do animal" onClose={onClose} largura="620px">
@@ -44,7 +44,8 @@ function AnimalHistoricoModal({ animalId, onClose }) {
               <div>
                 <strong>{dados.animal.nome}</strong>
                 <span>
-                  {dados.animal.especie} · {dados.animal.raca} · {dados.animal.idade} anos
+                  {dados.animal.especie} · {dados.animal.raca} · {dados.animal.idade}{' '}
+                  anos
                 </span>
               </div>
             </div>
@@ -87,7 +88,7 @@ function AnimalHistoricoModal({ animalId, onClose }) {
         </>
       )}
     </Modal>
-  );
+  )
 }
 
-export default AnimalHistoricoModal;
+export default AnimalHistoricoModal

@@ -5,46 +5,66 @@ import {
   PawPrint,
   Syringe,
   Pill,
-} from "lucide-react";
+} from 'lucide-react'
 
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from 'react-router-dom'
 
-import DashboardCard from "../../components/DashboardCard/DashboardCard";
-import DashboardSection from "../../components/DashboardSection/DashboardSection";
-import ChartCard from "../../components/ChartCard/ChartCard";
+import DashboardCard from '../../components/DashboardCard/DashboardCard'
+import DashboardSection from '../../components/DashboardSection/DashboardSection'
+import ChartCard from '../../components/ChartCard/ChartCard'
 
-import ConsultasVeterinarioChart from "../../components/Charts/ConsultasVeterinarioChart";
-import VacinasVeterinarioChart from "../../components/Charts/VacinasVeterinarioChart";
-import AgendamentosChart from "../../components/Charts/AgendamentosChart";
-import AnimaisEspecieChart from "../../components/Charts/AnimaisEspecieChart";
+import ConsultasVeterinarioChart from '../../components/Charts/ConsultasVeterinarioChart'
+import VacinasVeterinarioChart from '../../components/Charts/VacinasVeterinarioChart'
+import AgendamentosChart from '../../components/Charts/AgendamentosChart'
+import AnimaisEspecieChart from '../../components/Charts/AnimaisEspecieChart'
 
 function VeterinarioDashboard({ dados }) {
-  const navigate = useNavigate();
+  const navigate = useNavigate()
 
   return (
     <>
       <DashboardSection titulo="Área do veterinário">
-        <div onClick={() => navigate("/agendamentos")} style={{ cursor: "pointer" }}>
-          <DashboardCard titulo="Consultas hoje" valor={dados.consultas_hoje} icone={CalendarDays} />
+        <div onClick={() => navigate('/agendamentos')} style={{ cursor: 'pointer' }}>
+          <DashboardCard
+            titulo="Consultas hoje"
+            valor={dados.consultas_hoje}
+            icone={CalendarDays}
+          />
         </div>
-        <div onClick={() => navigate("/agendamentos")} style={{ cursor: "pointer" }}>
-          <DashboardCard titulo="Próximas consultas" valor={dados.proximas_consultas} icone={Clock} />
+        <div onClick={() => navigate('/agendamentos')} style={{ cursor: 'pointer' }}>
+          <DashboardCard
+            titulo="Próximas consultas"
+            valor={dados.proximas_consultas}
+            icone={Clock}
+          />
         </div>
-        <div onClick={() => navigate("/atendimentos")} style={{ cursor: "pointer" }}>
+        <div onClick={() => navigate('/atendimentos')} style={{ cursor: 'pointer' }}>
           <DashboardCard
             titulo="Atendimentos realizados"
             valor={dados.atendimentos_realizados}
             icone={ClipboardCheck}
           />
         </div>
-        <div onClick={() => navigate("/animais")} style={{ cursor: "pointer" }}>
-          <DashboardCard titulo="Animais atendidos" valor={dados.animais_atendidos} icone={PawPrint} />
+        <div onClick={() => navigate('/animais')} style={{ cursor: 'pointer' }}>
+          <DashboardCard
+            titulo="Animais atendidos"
+            valor={dados.animais_atendidos}
+            icone={PawPrint}
+          />
         </div>
-        <div onClick={() => navigate("/vacinas")} style={{ cursor: "pointer" }}>
-          <DashboardCard titulo="Vacinas aplicadas" valor={dados.vacinas_aplicadas} icone={Syringe} />
+        <div onClick={() => navigate('/vacinas')} style={{ cursor: 'pointer' }}>
+          <DashboardCard
+            titulo="Vacinas aplicadas"
+            valor={dados.vacinas_aplicadas}
+            icone={Syringe}
+          />
         </div>
-        <div onClick={() => navigate("/vacinas")} style={{ cursor: "pointer" }}>
-          <DashboardCard titulo="Próximas doses" valor={dados.proximas_doses} icone={Pill} />
+        <div onClick={() => navigate('/vacinas')} style={{ cursor: 'pointer' }}>
+          <DashboardCard
+            titulo="Próximas doses"
+            valor={dados.proximas_doses}
+            icone={Pill}
+          />
         </div>
       </DashboardSection>
 
@@ -68,7 +88,7 @@ function VeterinarioDashboard({ dados }) {
         </div>
       </DashboardSection>
     </>
-  );
+  )
 }
 
-export default VeterinarioDashboard;
+export default VeterinarioDashboard

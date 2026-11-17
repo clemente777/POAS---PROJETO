@@ -6,7 +6,7 @@
 
 .confirm-erro {
   margin-top: var(--space-sm);
-  background: #FDECEA;
+  background: #fdecea;
   color: var(--color-accent-dark);
   padding: 10px 14px;
   border-radius: var(--radius-sm);

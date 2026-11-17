@@ -1,15 +1,8 @@
-import { useMemo, useState } from "react";
-import {
-  MapContainer,
-  TileLayer,
-  Polygon,
-  Marker,
-  Popup,
-  useMap,
-} from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
-import "./ServiceAreaMap.css";
+import { useMemo, useState } from 'react'
+import { MapContainer, TileLayer, Polygon, Marker, Popup, useMap } from 'react-leaflet'
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
+import './ServiceAreaMap.css'
 
 /**
  * ServiceAreaMap
@@ -29,7 +22,7 @@ import "./ServiceAreaMap.css";
 function createPinIcon(color, { pulse = false } = {}) {
   const pulseRing = pulse
     ? `<span class="sam-pulse" style="background:${color}"></span>`
-    : "";
+    : ''
   const svg = `
     <div class="sam-pin-inner">
       ${pulseRing}
@@ -37,28 +30,28 @@ function createPinIcon(color, { pulse = false } = {}) {
         <path d="M17 0C7.6 0 0 7.6 0 17c0 12.4 17 27 17 27s17-14.6 17-27C34 7.6 26.4 0 17 0z" fill="${color}"/>
         <circle cx="17" cy="17" r="7" fill="white"/>
       </svg>
-    </div>`;
+    </div>`
   return L.divIcon({
     html: svg,
-    className: "sam-pin",
+    className: 'sam-pin',
     iconSize: [32, 42],
     iconAnchor: [16, 42],
     popupAnchor: [0, -36],
-  });
+  })
 }
 
-const CLINIC_PIN = createPinIcon("#F2615D", { pulse: true }); // accent (coral)
-const POINT_PIN = createPinIcon("#0E7C93"); // brand (teal)
+const CLINIC_PIN = createPinIcon('#F2615D', { pulse: true }) // accent (coral)
+const POINT_PIN = createPinIcon('#0E7C93') // brand (teal)
 
 function FitBounds({ coverageArea }) {
-  const map = useMap();
+  const map = useMap()
   useMemo(() => {
     if (coverageArea?.length) {
-      const bounds = L.latLngBounds(coverageArea);
-      map.fitBounds(bounds, { padding: [40, 40] });
+      const bounds = L.latLngBounds(coverageArea)
+      map.fitBounds(bounds, { padding: [40, 40] })
     }
-  }, [coverageArea, map]);
-  return null;
+  }, [coverageArea, map])
+  return null
 }
 
 export default function ServiceAreaMap({
@@ -66,11 +59,11 @@ export default function ServiceAreaMap({
   zoom = 12,
   coverageArea = [],
   points = [],
-  title = "Área de atendimento",
-  subtitle = "Cobertura disponível na região destacada",
+  title = 'Área de atendimento',
+  subtitle = 'Cobertura disponível na região destacada',
   autoFit = true,
 }) {
-  const [activePoint, setActivePoint] = useState(null);
+  const [activePoint, setActivePoint] = useState(null)
 
   return (
     <div className="sam-wrapper">
@@ -91,9 +84,7 @@ export default function ServiceAreaMap({
             {points.map((p) => (
               <li
                 key={p.id}
-                className={`sam-point-item ${
-                  activePoint === p.id ? "is-active" : ""
-                }`}
+                className={`sam-point-item ${activePoint === p.id ? 'is-active' : ''}`}
                 onClick={() => setActivePoint(p.id)}
               >
                 {p.name}
@@ -120,9 +111,9 @@ export default function ServiceAreaMap({
               <Polygon
                 positions={coverageArea}
                 pathOptions={{
-                  color: "#0E7C93",
+                  color: '#0E7C93',
                   weight: 2,
-                  fillColor: "#0E7C93",
+                  fillColor: '#0E7C93',
                   fillOpacity: 0.12,
                 }}
               />
@@ -134,7 +125,7 @@ export default function ServiceAreaMap({
             <Marker
               key={p.id}
               position={p.position}
-              icon={p.type === "clinic" ? CLINIC_PIN : POINT_PIN}
+              icon={p.type === 'clinic' ? CLINIC_PIN : POINT_PIN}
               eventHandlers={{
                 click: () => setActivePoint(p.id),
               }}
@@ -148,5 +139,5 @@ export default function ServiceAreaMap({
         </MapContainer>
       </div>
     </div>
-  );
+  )
 }

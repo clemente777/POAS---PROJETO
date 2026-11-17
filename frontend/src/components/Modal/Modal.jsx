@@ -1,7 +1,7 @@
-import "./Modal.css";
-import { X } from "lucide-react";
+import './Modal.css'
+import { X } from 'lucide-react'
 
-function Modal({ titulo, onClose, children, largura = "480px" }) {
+function Modal({ titulo, onClose, children, largura = '480px' }) {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div
@@ -19,7 +19,7 @@ function Modal({ titulo, onClose, children, largura = "480px" }) {
         <div className="modal-body">{children}</div>
       </div>
     </div>
-  );
+  )
 }
 
-export default Modal;
+export default Modal

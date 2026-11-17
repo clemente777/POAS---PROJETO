@@ -1,11 +1,11 @@
-import "./Sidebar.css";
+import './Sidebar.css'
 
-import { useState } from "react";
+import { useState } from 'react'
 
-import { menusPorPerfil } from "../../permissions/permissoes";
+import { menusPorPerfil } from '../../permissions/permissoes'
 
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../contexts/AuthContext'
 
 import {
   Menu,
@@ -20,44 +20,78 @@ import {
   ShoppingBag,
   Settings,
   LogOut,
-} from "lucide-react";
+} from 'lucide-react'
 
 const ITENS_MENU = [
-  { chave: "dashboard", label: "Dashboard", Icone: LayoutDashboard, rota: "/dashboard" },
-  { chave: "animais", label: "Animais", Icone: PawPrint, rota: "/animais" },
-  { chave: "meus_animais", label: "Meus Animais", Icone: Dog, rota: "/meus-animais" },
-  { chave: "clientes", label: "Clientes", Icone: Users, rota: null },
-  { chave: "agendamentos", label: "Agendamentos", Icone: CalendarCheck, rota: "/agendamentos" },
-  { chave: "minhas_consultas", label: "Minhas Consultas", Icone: CalendarCheck, rota: "/minhas-consultas" },
-  { chave: "atendimentos", label: "Atendimentos", Icone: Stethoscope, rota: "/atendimentos" },
-  { chave: "vacinas", label: "Vacinas", Icone: Syringe, rota: "/vacinas" },
-  { chave: "produtos", label: "Produtos", Icone: ShoppingCart, rota: "/produtos" },
-  { chave: "compras", label: "Minhas Compras", Icone: ShoppingBag, rota: "/compras" },
-  
-];
+  {
+    chave: 'dashboard',
+    label: 'Dashboard',
+    Icone: LayoutDashboard,
+    rota: '/dashboard',
+  },
+  { chave: 'animais', label: 'Animais', Icone: PawPrint, rota: '/animais' },
+  {
+    chave: 'meus_animais',
+    label: 'Meus Animais',
+    Icone: Dog,
+    rota: '/meus-animais',
+  },
+  { chave: 'clientes', label: 'Clientes', Icone: Users, rota: null },
+  {
+    chave: 'agendamentos',
+    label: 'Agendamentos',
+    Icone: CalendarCheck,
+    rota: '/agendamentos',
+  },
+  {
+    chave: 'minhas_consultas',
+    label: 'Minhas Consultas',
+    Icone: CalendarCheck,
+    rota: '/minhas-consultas',
+  },
+  {
+    chave: 'atendimentos',
+    label: 'Atendimentos',
+    Icone: Stethoscope,
+    rota: '/atendimentos',
+  },
+  { chave: 'vacinas', label: 'Vacinas', Icone: Syringe, rota: '/vacinas' },
+  {
+    chave: 'produtos',
+    label: 'Produtos',
+    Icone: ShoppingCart,
+    rota: '/produtos',
+  },
+  {
+    chave: 'compras',
+    label: 'Minhas Compras',
+    Icone: ShoppingBag,
+    rota: '/compras',
+  },
+]
 
 function Sidebar({ perfil, setSidebarAberto }) {
-  const navigate = useNavigate();
-  const location = useLocation();
+  const navigate = useNavigate()
+  const location = useLocation()
 
-  const { logout } = useAuth();
+  const { logout } = useAuth()
 
-  const [aberto, setAberto] = useState(true);
+  const [aberto, setAberto] = useState(true)
 
   function sair() {
-    logout();
-    navigate("/login");
+    logout()
+    navigate('/login')
   }
 
   function alternarSidebar() {
-    setAberto(!aberto);
-    setSidebarAberto(!aberto);
+    setAberto(!aberto)
+    setSidebarAberto(!aberto)
   }
 
-  const permissoes = menusPorPerfil[perfil] || [];
+  const permissoes = menusPorPerfil[perfil] || []
 
   return (
-    <aside className={`sidebar ${aberto ? "aberto" : "fechado"}`}>
+    <aside className={`sidebar ${aberto ? 'aberto' : 'fechado'}`}>
       <button className="toggle" onClick={alternarSidebar} aria-label="Alternar menu">
         <Menu size={22} />
       </button>
@@ -70,15 +104,15 @@ function Sidebar({ perfil, setSidebarAberto }) {
       <nav>
         {ITENS_MENU.filter((item) => permissoes.includes(item.chave)).map(
           ({ chave, label, Icone, rota }) => {
-            const ativo = rota && location.pathname === rota;
+            const ativo = rota && location.pathname === rota
 
             if (rota) {
               return (
-                <Link key={chave} to={rota} className={ativo ? "is-active" : ""}>
+                <Link key={chave} to={rota} className={ativo ? 'is-active' : ''}>
                   <Icone size={20} />
                   {aberto && <span>{label}</span>}
                 </Link>
-              );
+              )
             }
 
             // Ainda sem página própria: mantém visível, sem navegar.
@@ -87,7 +121,7 @@ function Sidebar({ perfil, setSidebarAberto }) {
                 <Icone size={20} />
                 {aberto && <span>{label}</span>}
               </a>
-            );
+            )
           }
         )}
 
@@ -102,7 +136,7 @@ function Sidebar({ perfil, setSidebarAberto }) {
         {aberto && <span>Sair</span>}
       </button>
     </aside>
-  );
+  )
 }
 
-export default Sidebar;
+export default Sidebar

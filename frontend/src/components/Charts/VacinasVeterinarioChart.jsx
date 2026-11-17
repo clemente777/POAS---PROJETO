@@ -1,25 +1,18 @@
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 
 // Usado no dashboard do Veterinário (vacinas_aplicadas) e do Administrador
 // (aplicacoes_vacina).
 function VacinasVeterinarioChart({ dados }) {
   const data = [
     {
-      nome: "Aplicadas",
+      nome: 'Aplicadas',
       quantidade: dados.vacinas_aplicadas ?? dados.aplicacoes_vacina ?? 0,
     },
     {
-      nome: "Próximas doses",
+      nome: 'Próximas doses',
       quantidade: dados.proximas_doses || 0,
     },
-  ];
+  ]
 
   return (
     <ResponsiveContainer width="100%" height={250}>
@@ -30,7 +23,7 @@ function VacinasVeterinarioChart({ dados }) {
         <Bar dataKey="quantidade" fill="#F2615D" />
       </BarChart>
     </ResponsiveContainer>
-  );
+  )
 }
 
-export default VacinasVeterinarioChart;
+export default VacinasVeterinarioChart

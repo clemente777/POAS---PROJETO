@@ -1,67 +1,70 @@
-import { useState } from "react";
+import { useState } from 'react'
 
-import Modal from "../Modal/Modal";
-import api from "../../services/api";
-import tratarErro from "../../services/tratarErro";
+import Modal from '../Modal/Modal'
+import api from '../../services/api'
+import tratarErro from '../../services/tratarErro'
 
 // Reaproveita .animal-form, .campo, .erro-campo, .erro-servidor, .form-acoes...
-import "../AnimalFormModal/AnimalFormModal.css";
-import "./VacinaFormModal.css";
+import '../AnimalFormModal/AnimalFormModal.css'
+import './VacinaFormModal.css'
 
 // Mesmos limites do VacinaCreate no back-end.
-const TEXTO_MIN = 2;
-const TEXTO_MAX = 100;
-const DESCRICAO_MAX = 300;
+const TEXTO_MIN = 2
+const TEXTO_MAX = 100
+const DESCRICAO_MAX = 300
 
 function validarCampos({ nome, fabricante, doses, intervalo }) {
-  const erros = {};
+  const erros = {}
 
   if (nome.trim().length < TEXTO_MIN) {
-    erros.nome = `Informe o nome da vacina (mínimo ${TEXTO_MIN} caracteres).`;
+    erros.nome = `Informe o nome da vacina (mínimo ${TEXTO_MIN} caracteres).`
   }
 
   if (fabricante.trim().length < TEXTO_MIN) {
-    erros.fabricante = `Informe o fabricante (mínimo ${TEXTO_MIN} caracteres).`;
+    erros.fabricante = `Informe o fabricante (mínimo ${TEXTO_MIN} caracteres).`
   }
 
   if (!/^\d+$/.test(doses) || Number(doses) < 1) {
-    erros.doses = "Informe um número inteiro maior que zero.";
+    erros.doses = 'Informe um número inteiro maior que zero.'
   }
 
   if (!/^\d+$/.test(intervalo) || Number(intervalo) < 1) {
-    erros.intervalo = "Informe um número inteiro maior que zero.";
+    erros.intervalo = 'Informe um número inteiro maior que zero.'
   }
 
-  return erros;
+  return erros
 }
 
 // vacina: objeto existente (edição) ou null (cadastro).
 function VacinaFormModal({ vacina, onClose, onSalvo }) {
-  const editando = Boolean(vacina);
+  const editando = Boolean(vacina)
 
-  const [nome, setNome] = useState(vacina?.nome ?? "");
-  const [fabricante, setFabricante] = useState(vacina?.fabricante ?? "");
-  const [doses, setDoses] = useState(
-    vacina ? String(vacina.quantidade_doses) : "1"
-  );
+  const [nome, setNome] = useState(vacina?.nome ?? '')
+  const [fabricante, setFabricante] = useState(vacina?.fabricante ?? '')
+  const [doses, setDoses] = useState(vacina ? String(vacina.quantidade_doses) : '1')
   const [intervalo, setIntervalo] = useState(
-    vacina ? String(vacina.intervalo_dias) : ""
-  );
-  const [descricao, setDescricao] = useState(vacina?.descricao ?? "");
+    vacina ? String(vacina.intervalo_dias) : ''
+  )
+  const [descricao, setDescricao] = useState(vacina?.descricao ?? '')
 
-  const [erros, setErros] = useState({});
-  const [erroServidor, setErroServidor] = useState("");
-  const [salvando, setSalvando] = useState(false);
+  const [erros, setErros] = useState({})
+  const [erroServidor, setErroServidor] = useState('')
+  const [salvando, setSalvando] = useState(false)
 
   async function handleSubmit(e) {
-    e.preventDefault();
-    setErroServidor("");
+    e.preventDefault()
+    setErroServidor('')
 
-    const errosValidacao = validarCampos({ nome, fabricante, doses, intervalo });
-    setErros(errosValidacao);
+    const errosValidacao = validarCampos({
+      nome,
+      fabricante,
+      doses,
+      intervalo,
+    })
+    setErros(errosValidacao)
 
     if (Object.keys(errosValidacao).length > 0) {
-      return;
+      return
     }
 
     const dados = {
@@ -69,37 +72,34 @@ function VacinaFormModal({ vacina, onClose, onSalvo }) {
       fabricante: fabricante.trim(),
       quantidade_doses: Number(doses),
       intervalo_dias: Number(intervalo),
-    };
+    }
 
     // No PUT, "" limpa a descrição; no POST, melhor omitir o campo vazio.
     if (editando) {
-      dados.descricao = descricao.trim();
+      dados.descricao = descricao.trim()
     } else if (descricao.trim()) {
-      dados.descricao = descricao.trim();
+      dados.descricao = descricao.trim()
     }
 
-    setSalvando(true);
+    setSalvando(true)
 
     try {
       if (editando) {
-        await api.put(`/vacinas/${vacina.id}`, dados);
+        await api.put(`/vacinas/${vacina.id}`, dados)
       } else {
-        await api.post("/vacinas/", dados);
+        await api.post('/vacinas/', dados)
       }
 
-      onSalvo(editando);
+      onSalvo(editando)
     } catch (err) {
-      setErroServidor(tratarErro(err).mensagem);
+      setErroServidor(tratarErro(err).mensagem)
     } finally {
-      setSalvando(false);
+      setSalvando(false)
     }
   }
 
   return (
-    <Modal
-      titulo={editando ? "Editar vacina" : "Nova vacina"}
-      onClose={onClose}
-    >
+    <Modal titulo={editando ? 'Editar vacina' : 'Nova vacina'} onClose={onClose}>
       <form onSubmit={handleSubmit} className="animal-form vacina-form" noValidate>
         <div className="campo">
           <label htmlFor="vacina-nome">Nome</label>
@@ -121,9 +121,7 @@ function VacinaFormModal({ vacina, onClose, onSalvo }) {
             maxLength={TEXTO_MAX}
             onChange={(e) => setFabricante(e.target.value)}
           />
-          {erros.fabricante && (
-            <span className="erro-campo">{erros.fabricante}</span>
-          )}
+          {erros.fabricante && <span className="erro-campo">{erros.fabricante}</span>}
         </div>
 
         <div className="linha-dupla">
@@ -153,15 +151,13 @@ function VacinaFormModal({ vacina, onClose, onSalvo }) {
               onChange={(e) => setIntervalo(e.target.value)}
               placeholder="Ex: 365"
             />
-            {erros.intervalo && (
-              <span className="erro-campo">{erros.intervalo}</span>
-            )}
+            {erros.intervalo && <span className="erro-campo">{erros.intervalo}</span>}
           </div>
         </div>
 
         <span className="campo-ajuda">
-          O intervalo é usado para calcular a data da próxima dose quando a
-          vacina é aplicada.
+          O intervalo é usado para calcular a data da próxima dose quando a vacina é
+          aplicada.
         </span>
 
         <div className="campo">
@@ -192,12 +188,12 @@ function VacinaFormModal({ vacina, onClose, onSalvo }) {
           </button>
 
           <button type="submit" className="btn-primario" disabled={salvando}>
-            {salvando ? "Salvando..." : editando ? "Salvar alterações" : "Cadastrar"}
+            {salvando ? 'Salvando...' : editando ? 'Salvar alterações' : 'Cadastrar'}
           </button>
         </div>
       </form>
     </Modal>
-  );
+  )
 }
 
-export default VacinaFormModal;
+export default VacinaFormModal

@@ -1,50 +1,50 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
 
-import Modal from "../Modal/Modal";
-import api from "../../services/api";
-import tratarErro from "../../services/tratarErro";
+import Modal from '../Modal/Modal'
+import api from '../../services/api'
+import tratarErro from '../../services/tratarErro'
 
 // Reaproveita .animal-form, .campo, .erro-campo, .erro-servidor, .form-acoes...
-import "../AnimalFormModal/AnimalFormModal.css";
-import "./ConsultaFormModal.css";
+import '../AnimalFormModal/AnimalFormModal.css'
+import './ConsultaFormModal.css'
 
-const DESCRICAO_MIN = 5;
-const DESCRICAO_MAX = 255;
+const DESCRICAO_MIN = 5
+const DESCRICAO_MAX = 255
 
 // Data/hora atual no formato do <input type="datetime-local">
 // (YYYY-MM-DDTHH:mm), em horário local.
 function agoraParaInput() {
-  const agora = new Date();
-  agora.setMinutes(agora.getMinutes() - agora.getTimezoneOffset());
-  return agora.toISOString().slice(0, 16);
+  const agora = new Date()
+  agora.setMinutes(agora.getMinutes() - agora.getTimezoneOffset())
+  return agora.toISOString().slice(0, 16)
 }
 
 function validarCampos({ animalId, dataHora, descricao }) {
-  const erros = {};
+  const erros = {}
 
   if (!animalId) {
-    erros.animal = "Selecione o animal.";
+    erros.animal = 'Selecione o animal.'
   }
 
   if (!dataHora) {
-    erros.data = "Informe a data e o horário.";
+    erros.data = 'Informe a data e o horário.'
   } else if (new Date(dataHora) <= new Date()) {
-    erros.data = "Escolha um horário no futuro.";
+    erros.data = 'Escolha um horário no futuro.'
   }
 
   if (descricao.trim().length < DESCRICAO_MIN) {
-    erros.descricao = `Descreva o motivo (mínimo ${DESCRICAO_MIN} caracteres).`;
+    erros.descricao = `Descreva o motivo (mínimo ${DESCRICAO_MIN} caracteres).`
   }
 
-  return erros;
+  return erros
 }
 
 // animais: lista dos animais disponíveis (vem da página).
 // consulta: opcional. Quando informada, o formulário reagenda essa consulta
 // (muda data/horário e motivo) em vez de criar uma nova.
 function ConsultaFormModal({ animais, consulta = null, onClose, onSalvo }) {
-  const editando = Boolean(consulta);
+  const editando = Boolean(consulta)
 
   // Se só há um animal, já deixa selecionado.
   const [animalId, setAnimalId] = useState(
@@ -52,58 +52,61 @@ function ConsultaFormModal({ animais, consulta = null, onClose, onSalvo }) {
       ? String(consulta.animal_id)
       : animais.length === 1
         ? String(animais[0].id)
-        : ""
-  );
+        : ''
+  )
   // A API devolve "2026-10-20T14:30:00"; o input quer "2026-10-20T14:30".
   const [dataHora, setDataHora] = useState(
-    consulta ? String(consulta.data_agendamento).slice(0, 16) : ""
-  );
-  const [descricao, setDescricao] = useState(consulta ? consulta.descricao : "");
+    consulta ? String(consulta.data_agendamento).slice(0, 16) : ''
+  )
+  const [descricao, setDescricao] = useState(consulta ? consulta.descricao : '')
 
-  const [minimo] = useState(agoraParaInput);
+  const [minimo] = useState(agoraParaInput)
 
-  const [erros, setErros] = useState({});
-  const [erroServidor, setErroServidor] = useState("");
-  const [salvando, setSalvando] = useState(false);
+  const [erros, setErros] = useState({})
+  const [erroServidor, setErroServidor] = useState('')
+  const [salvando, setSalvando] = useState(false)
 
   async function handleSubmit(e) {
-    e.preventDefault();
-    setErroServidor("");
+    e.preventDefault()
+    setErroServidor('')
 
-    const errosValidacao = validarCampos({ animalId, dataHora, descricao });
-    setErros(errosValidacao);
+    const errosValidacao = validarCampos({ animalId, dataHora, descricao })
+    setErros(errosValidacao)
 
     if (Object.keys(errosValidacao).length > 0) {
-      return;
+      return
     }
 
-    setSalvando(true);
+    setSalvando(true)
 
     try {
       if (editando) {
         await api.put(`/agendamentos/${consulta.id}`, {
           data_agendamento: dataHora,
           descricao: descricao.trim(),
-        });
+        })
       } else {
-        await api.post("/agendamentos/", {
+        await api.post('/agendamentos/', {
           animal_id: Number(animalId),
           // "2026-10-20T14:30" (sem fuso), igual ao que a API guarda e devolve
           data_agendamento: dataHora,
           descricao: descricao.trim(),
-        });
+        })
       }
 
-      onSalvo();
+      onSalvo()
     } catch (err) {
-      setErroServidor(tratarErro(err).mensagem);
+      setErroServidor(tratarErro(err).mensagem)
     } finally {
-      setSalvando(false);
+      setSalvando(false)
     }
   }
 
   return (
-    <Modal titulo={editando ? "Reagendar consulta" : "Agendar consulta"} onClose={onClose}>
+    <Modal
+      titulo={editando ? 'Reagendar consulta' : 'Agendar consulta'}
+      onClose={onClose}
+    >
       {animais.length === 0 ? (
         <div className="consulta-sem-animal">
           <p>Você precisa cadastrar um animal antes de agendar uma consulta.</p>
@@ -174,17 +177,17 @@ function ConsultaFormModal({ animais, consulta = null, onClose, onSalvo }) {
             <button type="submit" className="btn-primario" disabled={salvando}>
               {salvando
                 ? editando
-                  ? "Salvando..."
-                  : "Agendando..."
+                  ? 'Salvando...'
+                  : 'Agendando...'
                 : editando
-                  ? "Salvar"
-                  : "Agendar"}
+                  ? 'Salvar'
+                  : 'Agendar'}
             </button>
           </div>
         </form>
       )}
     </Modal>
-  );
+  )
 }
 
-export default ConsultaFormModal;
+export default ConsultaFormModal

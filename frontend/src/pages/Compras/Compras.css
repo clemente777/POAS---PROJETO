@@ -25,14 +25,16 @@
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .compras-tab:hover {
   color: var(--color-ink);
 }
 
-.compras-tab[aria-selected="true"] {
+.compras-tab[aria-selected='true'] {
   background: var(--color-brand);
   color: white;
 }
@@ -48,7 +50,7 @@
   text-align: center;
 }
 
-.compras-tab[aria-selected="true"] .compras-badge {
+.compras-tab[aria-selected='true'] .compras-badge {
   background: white;
 }
 
@@ -213,7 +215,7 @@
 }
 
 .compra-remover:hover:not(:disabled) {
-  background: #FDECEA;
+  background: #fdecea;
   color: var(--color-accent-dark);
 }
 

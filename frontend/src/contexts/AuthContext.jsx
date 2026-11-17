@@ -1,69 +1,44 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState } from 'react'
 
-const AuthContext = createContext();
-
+const AuthContext = createContext()
 
 export function AuthProvider({ children }) {
+  const [usuario, setUsuario] = useState(() => {
+    const salvo = localStorage.getItem('usuario')
 
-    const [usuario, setUsuario] = useState(() => {
+    return salvo ? JSON.parse(salvo) : null
+  })
 
-        const salvo = localStorage.getItem("usuario");
+  function login(dadosUsuario) {
+    setUsuario(dadosUsuario)
 
-        return salvo ? JSON.parse(salvo) : null;
+    localStorage.setItem('usuario', JSON.stringify(dadosUsuario))
+  }
 
-    });
+  function logout() {
+    setUsuario(null)
 
+    localStorage.removeItem('usuario')
 
+    localStorage.removeItem('token')
+  }
 
-    function login(dadosUsuario) {
-
-        setUsuario(dadosUsuario);
-
-        localStorage.setItem(
-            "usuario",
-            JSON.stringify(dadosUsuario)
-        );
-
-    }
-
-
-
-    function logout(){
-
-        setUsuario(null);
-
-        localStorage.removeItem("usuario");
-
-        localStorage.removeItem("token");
-
-    }
-
-
-
-    return (
-
-        <AuthContext.Provider
-
-            value={{
-                usuario,
-                login,
-                logout
-            }}
-
-        >
-
-            {children}
-
-        </AuthContext.Provider>
-
-    );
-
+  return (
+    <AuthContext.Provider
+      value={{
+        usuario,
+        login,
+        logout,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  )
 }
 
-
-
-export function useAuth(){
-
-    return useContext(AuthContext);
-
+// O hook mora junto do Provider de propósito (12 telas importam daqui).
+// A regra abaixo só afeta o hot reload deste arquivo durante o desenvolvimento.
+// eslint-disable-next-line react-refresh/only-export-components
+export function useAuth() {
+  return useContext(AuthContext)
 }

@@ -1,31 +1,23 @@
 .button {
+  width: 100%;
 
+  height: 50px;
 
-width:100%;
+  border: none;
 
-height:50px;
+  border-radius: 25px;
 
-border:none;
+  background: #ff4f8b;
 
-border-radius:25px;
+  color: white;
 
-background:#ff4f8b;
+  font-size: 18px;
 
-color:white;
+  cursor: pointer;
 
-font-size:18px;
-
-cursor:pointer;
-
-transition:.3s;
-
-
+  transition: 0.3s;
 }
 
-
-
-.button:hover{
-
-opacity:.85;
-
+.button:hover {
+  opacity: 0.85;
 }

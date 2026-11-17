@@ -6,17 +6,18 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
-} from "recharts";
-import { CHART_COLORS } from "./chartColors";
+} from 'recharts'
+import { CHART_COLORS } from './chartColors'
 
 // Recebe o objeto { Cachorro: 3, Gato: 2 } (como a API devolve) ou uma
 // lista [{ especie, quantidade }].
 function AnimaisEspecieChart({ animais_por_especie }) {
   const data = Array.isArray(animais_por_especie)
     ? animais_por_especie
-    : Object.entries(animais_por_especie || {}).map(
-        ([especie, quantidade]) => ({ especie, quantidade })
-      );
+    : Object.entries(animais_por_especie || {}).map(([especie, quantidade]) => ({
+        especie,
+        quantidade,
+      }))
 
   return (
     <ResponsiveContainer width="100%" height={250}>
@@ -32,7 +33,7 @@ function AnimaisEspecieChart({ animais_por_especie }) {
         </Bar>
       </BarChart>
     </ResponsiveContainer>
-  );
+  )
 }
 
-export default AnimaisEspecieChart;
+export default AnimaisEspecieChart

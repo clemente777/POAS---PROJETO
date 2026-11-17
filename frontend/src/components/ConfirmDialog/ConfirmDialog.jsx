@@ -1,14 +1,14 @@
-import Modal from "../Modal/Modal";
-import "./ConfirmDialog.css";
+import Modal from '../Modal/Modal'
+import './ConfirmDialog.css'
 
 function ConfirmDialog({
-  titulo = "Confirmar ação",
+  titulo = 'Confirmar ação',
   mensagem,
   confirmando = false,
-  erro = "",
-  textoConfirmar = "Confirmar",
-  textoConfirmando = "Excluindo...",
-  textoCancelar = "Cancelar",
+  erro = '',
+  textoConfirmar = 'Confirmar',
+  textoConfirmando = 'Excluindo...',
+  textoCancelar = 'Cancelar',
   onConfirmar,
   onCancelar,
 }) {
@@ -28,7 +28,7 @@ function ConfirmDialog({
         </button>
       </div>
     </Modal>
-  );
+  )
 }
 
-export default ConfirmDialog;
+export default ConfirmDialog

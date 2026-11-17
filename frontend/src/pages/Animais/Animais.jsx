@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from 'react'
 import {
   Plus,
   Search,
@@ -9,129 +9,150 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowUpDown,
-} from "lucide-react";
+} from 'lucide-react'
 
-import api from "../../services/api";
-import { useAuth } from "../../contexts/AuthContext";
+import api from '../../services/api'
+import { useAuth } from '../../contexts/AuthContext'
 
-import Sidebar from "../../components/Sidebar/Sidebar";
-import AnimalFormModal from "../../components/AnimalFormModal/AnimalFormModal";
-import AnimalHistoricoModal from "../../components/AnimalHistoricoModal/AnimalHistoricoModal";
-import AnimalVacinasModal from "../../components/AnimalVacinasModal/AnimalVacinasModal";
-import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
+import Sidebar from '../../components/Sidebar/Sidebar'
+import AnimalFormModal from '../../components/AnimalFormModal/AnimalFormModal'
+import AnimalHistoricoModal from '../../components/AnimalHistoricoModal/AnimalHistoricoModal'
+import AnimalVacinasModal from '../../components/AnimalVacinasModal/AnimalVacinasModal'
+import ConfirmDialog from '../../components/ConfirmDialog/ConfirmDialog'
 
-import "./Animais.css";
+import './Animais.css'
 
-const LIMITE_POR_PAGINA = 10;
+const LIMITE_POR_PAGINA = 10
 
 function Animais() {
-  const { usuario } = useAuth();
+  const { usuario } = useAuth()
 
-  const [sidebarAberto, setSidebarAberto] = useState(true);
+  const [sidebarAberto, setSidebarAberto] = useState(true)
 
-  const [animais, setAnimais] = useState([]);
-  const [clientesMap, setClientesMap] = useState({});
+  const [clientesMap, setClientesMap] = useState({})
 
-  const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState("");
+  const [busca, setBusca] = useState('')
+  const [buscaAplicada, setBuscaAplicada] = useState('')
+  const [ordem, setOrdem] = useState('asc')
+  const [pagina, setPagina] = useState(1)
 
-  const [busca, setBusca] = useState("");
-  const [buscaAplicada, setBuscaAplicada] = useState("");
-  const [ordem, setOrdem] = useState("asc");
-  const [pagina, setPagina] = useState(1);
+  const [modalForm, setModalForm] = useState(null) // null | "novo" | animal (edição)
+  const [modalHistoricoId, setModalHistoricoId] = useState(null)
+  const [animalVacinas, setAnimalVacinas] = useState(null)
+  const [animalParaExcluir, setAnimalParaExcluir] = useState(null)
+  const [excluindo, setExcluindo] = useState(false)
+  const [erroExclusao, setErroExclusao] = useState('')
 
-  const [modalForm, setModalForm] = useState(null); // null | "novo" | animal (edição)
-  const [modalHistoricoId, setModalHistoricoId] = useState(null);
-  const [animalVacinas, setAnimalVacinas] = useState(null);
-  const [animalParaExcluir, setAnimalParaExcluir] = useState(null);
-  const [excluindo, setExcluindo] = useState(false);
-  const [erroExclusao, setErroExclusao] = useState("");
+  // Incrementar força a lista a ser buscada de novo (após salvar/excluir).
+  const [recarga, setRecarga] = useState(0)
 
-  const carregarAnimais = useCallback(async () => {
-    setCarregando(true);
-    setErro("");
+  // Resultado da última busca, junto com a "chave" dos filtros que o gerou.
+  // Se a chave atual for diferente da guardada, ainda estamos carregando.
+  const [resultado, setResultado] = useState({
+    chave: null,
+    animais: [],
+    erro: '',
+  })
 
-    try {
-      const res = await api.get("/animais/", {
+  const chaveBusca = `${pagina}|${buscaAplicada}|${ordem}|${recarga}`
+
+  useEffect(() => {
+    // Se os filtros mudarem antes da resposta chegar, ignora a resposta antiga.
+    let ignorar = false
+
+    api
+      .get('/animais/', {
         params: {
           pagina,
           limite: LIMITE_POR_PAGINA,
           nome: buscaAplicada || undefined,
           ordem,
         },
-      });
+      })
+      .then((res) => {
+        if (ignorar) return
+        setResultado({ chave: chaveBusca, animais: res.data || [], erro: '' })
+      })
+      .catch((err) => {
+        if (ignorar) return
+        setResultado({
+          chave: chaveBusca,
+          animais: [],
+          erro: err?.response?.data?.detail || 'Não foi possível carregar os animais.',
+        })
+      })
 
-      setAnimais(res.data || []);
-    } catch (err) {
-      setErro(
-        err?.response?.data?.detail || "Não foi possível carregar os animais."
-      );
-    } finally {
-      setCarregando(false);
+    return () => {
+      ignorar = true
     }
-  }, [pagina, buscaAplicada, ordem]);
+  }, [chaveBusca, pagina, buscaAplicada, ordem])
 
-  useEffect(() => {
-    carregarAnimais();
-  }, [carregarAnimais]);
+  const carregando = resultado.chave !== chaveBusca
+  const animais = resultado.animais
+  const erro = carregando ? '' : resultado.erro
+
+  // Busca a lista de novo (mantém o nome usado pelos handlers abaixo).
+  function carregarAnimais() {
+    setRecarga((n) => n + 1)
+  }
 
   // Carrega um mapa id -> nome de clientes pra exibir o tutor na tabela
   // (a resposta de /animais/ só traz cliente_id).
   useEffect(() => {
     api
-      .get("/clientes/", { params: { limit: 200 } })
+      .get('/clientes/', { params: { limit: 200 } })
       .then((res) => {
-        const mapa = {};
-        (res.data || []).forEach((c) => {
-          mapa[c.id] = c.nome;
-        });
-        setClientesMap(mapa);
+        const mapa = {}
+        ;(res.data || []).forEach((c) => {
+          mapa[c.id] = c.nome
+        })
+        setClientesMap(mapa)
       })
-      .catch(() => setClientesMap({}));
-  }, []);
+      .catch(() => setClientesMap({}))
+  }, [])
 
   function handleBuscar(e) {
-    e.preventDefault();
-    setPagina(1);
-    setBuscaAplicada(busca);
+    e.preventDefault()
+    setPagina(1)
+    setBuscaAplicada(busca)
   }
 
   function alternarOrdem() {
-    setOrdem((atual) => (atual === "asc" ? "desc" : "asc"));
-    setPagina(1);
+    setOrdem((atual) => (atual === 'asc' ? 'desc' : 'asc'))
+    setPagina(1)
   }
 
   function abrirNovo() {
-    setModalForm("novo");
+    setModalForm('novo')
   }
 
   function abrirEdicao(animal) {
-    setModalForm(animal);
+    setModalForm(animal)
   }
 
   function fecharForm() {
-    setModalForm(null);
+    setModalForm(null)
   }
 
   function salvouForm() {
-    setModalForm(null);
-    carregarAnimais();
+    setModalForm(null)
+    carregarAnimais()
   }
 
   async function confirmarExclusao() {
-    setExcluindo(true);
-    setErroExclusao("");
+    setExcluindo(true)
+    setErroExclusao('')
 
     try {
-      await api.delete(`/animais/${animalParaExcluir.id}`);
-      setAnimalParaExcluir(null);
-      carregarAnimais();
+      await api.delete(`/animais/${animalParaExcluir.id}`)
+      setAnimalParaExcluir(null)
+      carregarAnimais()
     } catch (err) {
       setErroExclusao(
-        err?.response?.data?.detail || "Não foi possível excluir este animal."
-      );
+        err?.response?.data?.detail || 'Não foi possível excluir este animal.'
+      )
     } finally {
-      setExcluindo(false);
+      setExcluindo(false)
     }
   }
 
@@ -139,7 +160,7 @@ function Animais() {
     <div className="animais-page">
       <Sidebar perfil={usuario?.perfil} setSidebarAberto={setSidebarAberto} />
 
-      <main className={`animais-content ${sidebarAberto ? "aberto" : "fechado"}`}>
+      <main className={`animais-content ${sidebarAberto ? 'aberto' : 'fechado'}`}>
         <header className="animais-header">
           <div>
             <h1>Animais</h1>
@@ -163,7 +184,7 @@ function Animais() {
 
           <button className="btn-ordem" onClick={alternarOrdem} type="button">
             <ArrowUpDown size={16} />
-            Nome ({ordem === "asc" ? "A-Z" : "Z-A"})
+            Nome ({ordem === 'asc' ? 'A-Z' : 'Z-A'})
           </button>
         </div>
 
@@ -206,7 +227,7 @@ function Animais() {
                     <td>{animal.especie}</td>
                     <td>{animal.raca}</td>
                     <td>{animal.idade} anos</td>
-                    <td>{clientesMap[animal.cliente_id] || "-"}</td>
+                    <td>{clientesMap[animal.cliente_id] || '-'}</td>
                     <td className="col-acoes">
                       <button
                         className="btn-icone"
@@ -237,8 +258,8 @@ function Animais() {
                         className="btn-icone btn-icone-perigo"
                         title="Excluir"
                         onClick={() => {
-                          setAnimalParaExcluir(animal);
-                          setErroExclusao("");
+                          setAnimalParaExcluir(animal)
+                          setErroExclusao('')
                         }}
                       >
                         <Trash2 size={16} />
@@ -271,7 +292,7 @@ function Animais() {
 
       {modalForm && (
         <AnimalFormModal
-          animal={modalForm === "novo" ? null : modalForm}
+          animal={modalForm === 'novo' ? null : modalForm}
           onClose={fecharForm}
           onSalvo={salvouForm}
         />
@@ -304,7 +325,7 @@ function Animais() {
         />
       )}
     </div>
-  );
+  )
 }
 
-export default Animais;
+export default Animais

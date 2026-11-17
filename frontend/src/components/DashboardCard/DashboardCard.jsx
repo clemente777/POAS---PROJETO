@@ -1,11 +1,6 @@
-import "./DashboardCard.css";
+import './DashboardCard.css'
 
-function DashboardCard({
-  titulo,
-  valor,
-  icone: Icone,
-  cor = "var(--color-brand)",
-}) {
+function DashboardCard({ titulo, valor, icone: Icone, cor = 'var(--color-brand)' }) {
   return (
     <div className="dashboard-card">
       <div className="card-icon" style={{ background: cor }}>
@@ -14,10 +9,10 @@ function DashboardCard({
 
       <div className="card-info">
         <h3>{titulo}</h3>
-        <strong>{valor ?? "-"}</strong>
+        <strong>{valor ?? '-'}</strong>
       </div>
     </div>
-  );
+  )
 }
 
-export default DashboardCard;
+export default DashboardCard

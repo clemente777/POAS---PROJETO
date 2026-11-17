@@ -1,8 +1,8 @@
-import "../Dashboard/Dashboard.css";
-import "./Compras.css";
+import '../Dashboard/Dashboard.css'
+import './Compras.css'
 
-import { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { useEffect, useState } from 'react'
+import { Navigate } from 'react-router-dom'
 import {
   Check,
   ChevronDown,
@@ -12,35 +12,35 @@ import {
   Receipt,
   ShoppingBag,
   Trash2,
-} from "lucide-react";
+} from 'lucide-react'
 
-import api from "../../services/api";
-import tratarErro from "../../services/tratarErro";
-import Sidebar from "../../components/Sidebar/Sidebar";
+import api from '../../services/api'
+import tratarErro from '../../services/tratarErro'
+import Sidebar from '../../components/Sidebar/Sidebar'
 
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from '../../contexts/AuthContext'
 
-const POR_PAGINA = 10;
+const POR_PAGINA = 10
 
-const moeda = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
+const moeda = new Intl.NumberFormat('pt-BR', {
+  style: 'currency',
+  currency: 'BRL',
+})
 
 function formatarDataHora(iso) {
-  if (!iso) return "";
+  if (!iso) return ''
 
-  return new Date(iso).toLocaleString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return new Date(iso).toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 }
 
 function rotuloItens(quantidade) {
-  return `${quantidade} ${quantidade === 1 ? "item" : "itens"}`;
+  return `${quantidade} ${quantidade === 1 ? 'item' : 'itens'}`
 }
 
 // ==================================================
@@ -51,21 +51,21 @@ function rotuloItens(quantidade) {
 // Os itens vêm só com produto_id, então buscamos os produtos
 // para mostrar nome, preço e estoque.
 async function buscarCarrinho() {
-  const { data: carrinhos } = await api.get("/carrinhos/", {
+  const { data: carrinhos } = await api.get('/carrinhos/', {
     params: { limit: 1 },
-  });
+  })
 
-  const carrinho = carrinhos[0] ?? null;
+  const carrinho = carrinhos[0] ?? null
 
   if (!carrinho) {
-    return { carrinho: null, itens: [] };
+    return { carrinho: null, itens: [] }
   }
 
-  const { data: itens } = await api.get("/itens-carrinho/", {
+  const { data: itens } = await api.get('/itens-carrinho/', {
     params: { carrinho_id: carrinho.id, limit: 100 },
-  });
+  })
 
-  const ids = [...new Set(itens.map((item) => item.produto_id))];
+  const ids = [...new Set(itens.map((item) => item.produto_id))]
 
   const produtos = await Promise.all(
     ids.map((id) =>
@@ -74,9 +74,9 @@ async function buscarCarrinho() {
         .then((resposta) => resposta.data)
         .catch(() => null)
     )
-  );
+  )
 
-  const produtoPorId = new Map(ids.map((id, i) => [id, produtos[i]]));
+  const produtoPorId = new Map(ids.map((id, i) => [id, produtos[i]]))
 
   return {
     carrinho,
@@ -84,15 +84,15 @@ async function buscarCarrinho() {
       ...item,
       produto: produtoPorId.get(item.produto_id),
     })),
-  };
+  }
 }
 
 async function buscarPedidos(skip) {
-  const { data } = await api.get("/pedidos/", {
+  const { data } = await api.get('/pedidos/', {
     params: { skip, limit: POR_PAGINA },
-  });
+  })
 
-  return data;
+  return data
 }
 
 // ==================================================
@@ -100,179 +100,178 @@ async function buscarPedidos(skip) {
 // ==================================================
 
 function Compras() {
-  const { usuario } = useAuth();
+  const { usuario } = useAuth()
 
-  const ehCliente = usuario?.perfil === "Cliente";
+  const ehCliente = usuario?.perfil === 'Cliente'
 
-  const [sidebarAberto, setSidebarAberto] = useState(true);
-  const [aba, setAba] = useState("carrinho");
+  const [sidebarAberto, setSidebarAberto] = useState(true)
+  const [aba, setAba] = useState('carrinho')
 
-  const [carrinho, setCarrinho] = useState(null);
-  const [itens, setItens] = useState([]);
+  const [carrinho, setCarrinho] = useState(null)
+  const [itens, setItens] = useState([])
 
-  const [pedidos, setPedidos] = useState([]);
-  const [temMais, setTemMais] = useState(false);
-  const [expandido, setExpandido] = useState(null);
+  const [pedidos, setPedidos] = useState([])
+  const [temMais, setTemMais] = useState(false)
+  const [expandido, setExpandido] = useState(null)
 
-  const [carregando, setCarregando] = useState(true);
-  const [ocupado, setOcupado] = useState(false);
-  const [erro, setErro] = useState("");
-  const [aviso, setAviso] = useState("");
+  const [carregando, setCarregando] = useState(true)
+  const [ocupado, setOcupado] = useState(false)
+  const [erro, setErro] = useState('')
+  const [aviso, setAviso] = useState('')
 
   useEffect(() => {
-    if (!ehCliente) return;
+    if (!ehCliente) return
 
-    let cancelado = false;
+    let cancelado = false
 
     async function iniciar() {
       try {
         const [dadosCarrinho, listaPedidos] = await Promise.all([
           buscarCarrinho(),
           buscarPedidos(0),
-        ]);
+        ])
 
-        if (cancelado) return;
+        if (cancelado) return
 
-        setCarrinho(dadosCarrinho.carrinho);
-        setItens(dadosCarrinho.itens);
-        setPedidos(listaPedidos);
-        setTemMais(listaPedidos.length === POR_PAGINA);
+        setCarrinho(dadosCarrinho.carrinho)
+        setItens(dadosCarrinho.itens)
+        setPedidos(listaPedidos)
+        setTemMais(listaPedidos.length === POR_PAGINA)
       } catch (error) {
-        if (!cancelado) setErro(tratarErro(error).mensagem);
+        if (!cancelado) setErro(tratarErro(error).mensagem)
       } finally {
-        if (!cancelado) setCarregando(false);
+        if (!cancelado) setCarregando(false)
       }
     }
 
-    iniciar();
+    iniciar()
 
     return () => {
-      cancelado = true;
-    };
-  }, [ehCliente]);
+      cancelado = true
+    }
+  }, [ehCliente])
 
-  if (!usuario) return <Navigate to="/login" replace />;
-  if (!ehCliente) return <Navigate to="/dashboard" replace />;
+  if (!usuario) return <Navigate to="/login" replace />
+  if (!ehCliente) return <Navigate to="/dashboard" replace />
 
   if (carregando) {
-    return <div className="loading-dashboard">Carregando suas compras...</div>;
+    return <div className="loading-dashboard">Carregando suas compras...</div>
   }
 
   // ---------- derivados do carrinho ----------
 
-  const totalUnidades = itens.reduce((soma, item) => soma + item.quantidade, 0);
+  const totalUnidades = itens.reduce((soma, item) => soma + item.quantidade, 0)
 
   const total = itens.reduce(
-    (soma, item) =>
-      soma + (item.produto ? item.produto.preco * item.quantidade : 0),
+    (soma, item) => soma + (item.produto ? item.produto.preco * item.quantidade : 0),
     0
-  );
+  )
 
   function problemaDoItem(item) {
-    const produto = item.produto;
+    const produto = item.produto
 
     if (!produto) {
-      return "Este produto não está mais disponível. Remova-o para finalizar.";
+      return 'Este produto não está mais disponível. Remova-o para finalizar.'
     }
 
     if (produto.estoque === 0) {
-      return "Sem estoque no momento. Remova-o para finalizar.";
+      return 'Sem estoque no momento. Remova-o para finalizar.'
     }
 
     if (item.quantidade > produto.estoque) {
-      return `Restam só ${produto.estoque} em estoque. Reduza a quantidade para finalizar.`;
+      return `Restam só ${produto.estoque} em estoque. Reduza a quantidade para finalizar.`
     }
 
-    return "";
+    return ''
   }
 
-  const comProblema = itens.filter((item) => problemaDoItem(item));
-  const podeFinalizar = itens.length > 0 && comProblema.length === 0;
+  const comProblema = itens.filter((item) => problemaDoItem(item))
+  const podeFinalizar = itens.length > 0 && comProblema.length === 0
 
   // ---------- ações ----------
 
   async function executar(acao, { manterAviso = false } = {}) {
-    setOcupado(true);
-    setErro("");
-    if (!manterAviso) setAviso("");
+    setOcupado(true)
+    setErro('')
+    if (!manterAviso) setAviso('')
 
     try {
-      await acao();
+      await acao()
     } catch (error) {
-      setErro(tratarErro(error).mensagem);
+      setErro(tratarErro(error).mensagem)
     } finally {
-      setOcupado(false);
+      setOcupado(false)
     }
   }
 
   function alterarQuantidade(item, nova) {
-    if (ocupado || nova < 1) return;
+    if (ocupado || nova < 1) return
 
-    if (item.produto && nova > item.produto.estoque) return;
+    if (item.produto && nova > item.produto.estoque) return
 
     executar(async () => {
-      await api.put(`/itens-carrinho/${item.id}`, { quantidade: nova });
+      await api.put(`/itens-carrinho/${item.id}`, { quantidade: nova })
 
       setItens((atual) =>
         atual.map((i) => (i.id === item.id ? { ...i, quantidade: nova } : i))
-      );
-    });
+      )
+    })
   }
 
   function removerItem(item) {
-    if (ocupado) return;
+    if (ocupado) return
 
     executar(async () => {
-      await api.delete(`/itens-carrinho/${item.id}`);
+      await api.delete(`/itens-carrinho/${item.id}`)
 
-      setItens((atual) => atual.filter((i) => i.id !== item.id));
-    });
+      setItens((atual) => atual.filter((i) => i.id !== item.id))
+    })
   }
 
   function finalizarCompra() {
-    if (ocupado || !carrinho || !podeFinalizar) return;
+    if (ocupado || !carrinho || !podeFinalizar) return
 
     executar(async () => {
-      const { data } = await api.post(`/carrinhos/${carrinho.id}/finalizar`);
+      const { data } = await api.post(`/carrinhos/${carrinho.id}/finalizar`)
 
       setAviso(
         `Compra finalizada: ${rotuloItens(data.quantidade_itens)}, ${moeda.format(
           data.valor_total
         )}.`
-      );
+      )
 
       const [novoCarrinho, lista] = await Promise.all([
         buscarCarrinho(),
         buscarPedidos(0),
-      ]);
+      ])
 
-      setCarrinho(novoCarrinho.carrinho);
-      setItens(novoCarrinho.itens);
-      setPedidos(lista);
-      setTemMais(lista.length === POR_PAGINA);
-      setExpandido(data.pedido_id ?? lista[0]?.id ?? null);
-      setAba("historico");
-    });
+      setCarrinho(novoCarrinho.carrinho)
+      setItens(novoCarrinho.itens)
+      setPedidos(lista)
+      setTemMais(lista.length === POR_PAGINA)
+      setExpandido(data.pedido_id ?? lista[0]?.id ?? null)
+      setAba('historico')
+    })
   }
 
   function carregarMais() {
-    if (ocupado) return;
+    if (ocupado) return
 
     executar(
       async () => {
-        const lista = await buscarPedidos(pedidos.length);
+        const lista = await buscarPedidos(pedidos.length)
 
-        setPedidos((atual) => [...atual, ...lista]);
-        setTemMais(lista.length === POR_PAGINA);
+        setPedidos((atual) => [...atual, ...lista])
+        setTemMais(lista.length === POR_PAGINA)
       },
       { manterAviso: true }
-    );
+    )
   }
 
   function trocarAba(nova) {
-    setAba(nova);
-    setErro("");
-    setAviso("");
+    setAba(nova)
+    setErro('')
+    setAviso('')
   }
 
   // ---------- tela ----------
@@ -281,7 +280,7 @@ function Compras() {
     <div className="dashboard">
       <Sidebar perfil={usuario.perfil} setSidebarAberto={setSidebarAberto} />
 
-      <main className={`dashboard-content ${sidebarAberto ? "aberto" : "fechado"}`}>
+      <main className={`dashboard-content ${sidebarAberto ? 'aberto' : 'fechado'}`}>
         <header className="dashboard-header">
           <div className="dashboard-title">
             <h1>Minhas compras</h1>
@@ -294,10 +293,10 @@ function Compras() {
             type="button"
             role="tab"
             id="aba-carrinho"
-            aria-selected={aba === "carrinho"}
+            aria-selected={aba === 'carrinho'}
             aria-controls="painel-carrinho"
             className="compras-tab"
-            onClick={() => trocarAba("carrinho")}
+            onClick={() => trocarAba('carrinho')}
           >
             <ShoppingBag size={16} />
             Carrinho
@@ -308,10 +307,10 @@ function Compras() {
             type="button"
             role="tab"
             id="aba-historico"
-            aria-selected={aba === "historico"}
+            aria-selected={aba === 'historico'}
             aria-controls="painel-historico"
             className="compras-tab"
-            onClick={() => trocarAba("historico")}
+            onClick={() => trocarAba('historico')}
           >
             <Receipt size={16} />
             Histórico
@@ -331,21 +330,23 @@ function Compras() {
           </p>
         )}
 
-        {aba === "carrinho" && (
+        {aba === 'carrinho' && (
           <section id="painel-carrinho" role="tabpanel" aria-labelledby="aba-carrinho">
             {itens.length === 0 ? (
               <div className="compras-vazio">
                 <ShoppingBag size={32} />
                 <h2>Seu carrinho está vazio</h2>
-                <p>Os produtos que você adicionar aparecem aqui, prontos para finalizar.</p>
+                <p>
+                  Os produtos que você adicionar aparecem aqui, prontos para finalizar.
+                </p>
               </div>
             ) : (
               <div className="compras-carrinho">
                 <ul className="compras-itens">
                   {itens.map((item) => {
-                    const produto = item.produto;
-                    const problema = problemaDoItem(item);
-                    const nome = produto ? produto.nome : "Produto indisponível";
+                    const produto = item.produto
+                    const problema = problemaDoItem(item)
+                    const nome = produto ? produto.nome : 'Produto indisponível'
 
                     return (
                       <li key={item.id} className="compra-item">
@@ -358,17 +359,25 @@ function Compras() {
 
                           {produto && (
                             <>
-                              <span className="compra-item-desc">{produto.descricao}</span>
+                              <span className="compra-item-desc">
+                                {produto.descricao}
+                              </span>
                               <span className="compra-item-preco">
                                 {moeda.format(produto.preco)} cada
                               </span>
                             </>
                           )}
 
-                          {problema && <span className="compra-item-alerta">{problema}</span>}
+                          {problema && (
+                            <span className="compra-item-alerta">{problema}</span>
+                          )}
                         </div>
 
-                        <div className="compra-qtd" role="group" aria-label={`Quantidade de ${nome}`}>
+                        <div
+                          className="compra-qtd"
+                          role="group"
+                          aria-label={`Quantidade de ${nome}`}
+                        >
                           <button
                             type="button"
                             aria-label="Diminuir quantidade"
@@ -394,7 +403,9 @@ function Compras() {
                         </div>
 
                         <strong className="compra-item-subtotal">
-                          {produto ? moeda.format(produto.preco * item.quantidade) : "—"}
+                          {produto
+                            ? moeda.format(produto.preco * item.quantidade)
+                            : '—'}
                         </strong>
 
                         <button
@@ -407,7 +418,7 @@ function Compras() {
                           <Trash2 size={18} />
                         </button>
                       </li>
-                    );
+                    )
                   })}
                 </ul>
 
@@ -446,8 +457,12 @@ function Compras() {
           </section>
         )}
 
-        {aba === "historico" && (
-          <section id="painel-historico" role="tabpanel" aria-labelledby="aba-historico">
+        {aba === 'historico' && (
+          <section
+            id="painel-historico"
+            role="tabpanel"
+            aria-labelledby="aba-historico"
+          >
             {pedidos.length === 0 ? (
               <div className="compras-vazio">
                 <Receipt size={32} />
@@ -458,11 +473,11 @@ function Compras() {
               <>
                 <ul className="pedidos">
                   {pedidos.map((pedido) => {
-                    const aberto = expandido === pedido.id;
+                    const aberto = expandido === pedido.id
                     const unidades = pedido.itens.reduce(
                       (soma, item) => soma + item.quantidade,
                       0
-                    );
+                    )
 
                     return (
                       <li key={pedido.id} className="pedido">
@@ -483,7 +498,7 @@ function Compras() {
                           </strong>
                           <ChevronDown
                             size={18}
-                            className={`pedido-seta ${aberto ? "aberto" : ""}`}
+                            className={`pedido-seta ${aberto ? 'aberto' : ''}`}
                           />
                         </button>
 
@@ -491,9 +506,12 @@ function Compras() {
                           <ul id={`pedido-${pedido.id}`} className="pedido-itens">
                             {pedido.itens.map((item) => (
                               <li key={item.id}>
-                                <span className="pedido-item-nome">{item.nome_produto}</span>
+                                <span className="pedido-item-nome">
+                                  {item.nome_produto}
+                                </span>
                                 <span className="pedido-item-calculo">
-                                  {item.quantidade} × {moeda.format(item.preco_unitario)}
+                                  {item.quantidade} ×{' '}
+                                  {moeda.format(item.preco_unitario)}
                                 </span>
                                 <strong>
                                   {moeda.format(item.preco_unitario * item.quantidade)}
@@ -503,7 +521,7 @@ function Compras() {
                           </ul>
                         )}
                       </li>
-                    );
+                    )
                   })}
                 </ul>
 
@@ -523,7 +541,7 @@ function Compras() {
         )}
       </main>
     </div>
-  );
+  )
 }
 
-export default Compras;
+export default Compras

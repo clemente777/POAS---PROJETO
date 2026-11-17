@@ -6,36 +6,33 @@ import {
   ShoppingBag,
   Wallet,
   Syringe,
-} from "lucide-react";
+} from 'lucide-react'
 
-import { useNavigate } from "react-router-dom";
-import DashboardCard from "../../components/DashboardCard/DashboardCard";
-import DashboardSection from "../../components/DashboardSection/DashboardSection";
+import { useNavigate } from 'react-router-dom'
+import DashboardCard from '../../components/DashboardCard/DashboardCard'
+import DashboardSection from '../../components/DashboardSection/DashboardSection'
 
 function formatarData(isoString) {
-  if (!isoString) return null;
+  if (!isoString) return null
 
-  const data = new Date(isoString);
+  const data = new Date(isoString)
 
-  return data.toLocaleString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return data.toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 }
 
 function ClienteDashboard({ dados }) {
-  const navigate = useNavigate();
-  const proxima = dados.proxima_consulta;
+  const navigate = useNavigate()
+  const proxima = dados.proxima_consulta
 
   return (
     <>
       <DashboardSection titulo="Minha área">
-        <div
-          onClick={() => navigate("/meus-animais")}
-          style={{ cursor: "pointer" }}
-        >
+        <div onClick={() => navigate('/meus-animais')} style={{ cursor: 'pointer' }}>
           <DashboardCard
             titulo="Meus animais"
             valor={dados.total_animais}
@@ -55,10 +52,7 @@ function ClienteDashboard({ dados }) {
           icone={ClipboardCheck}
         />
 
-        <div
-          onClick={() => navigate("/meus-animais")}
-          style={{ cursor: "pointer" }}
-        >
+        <div onClick={() => navigate('/meus-animais')} style={{ cursor: 'pointer' }}>
           <DashboardCard
             titulo="Próximas doses de vacina"
             valor={dados.proximas_doses_vacina}
@@ -101,8 +95,8 @@ function ClienteDashboard({ dados }) {
           {dados.meus_animais.map((animal, index) => (
             <div
               key={`${animal.nome}-${index}`}
-              onClick={() => navigate("/meus-animais")}
-              style={{ cursor: "pointer" }}
+              onClick={() => navigate('/meus-animais')}
+              style={{ cursor: 'pointer' }}
             >
               <DashboardCard
                 titulo={animal.nome}
@@ -115,7 +109,7 @@ function ClienteDashboard({ dados }) {
         </DashboardSection>
       )}
     </>
-  );
+  )
 }
 
-export default ClienteDashboard;
+export default ClienteDashboard

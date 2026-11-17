@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   Plus,
   Search,
@@ -7,187 +7,191 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowUpDown,
-} from "lucide-react";
+} from 'lucide-react'
 
-import api from "../../services/api";
-import tratarErro from "../../services/tratarErro";
-import { useAuth } from "../../contexts/AuthContext";
+import api from '../../services/api'
+import tratarErro from '../../services/tratarErro'
+import { useAuth } from '../../contexts/AuthContext'
 
-import Sidebar from "../../components/Sidebar/Sidebar";
-import ConsultaFormModal from "../../components/ConsultaFormModal/ConsultaFormModal";
-import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
+import Sidebar from '../../components/Sidebar/Sidebar'
+import ConsultaFormModal from '../../components/ConsultaFormModal/ConsultaFormModal'
+import ConfirmDialog from '../../components/ConfirmDialog/ConfirmDialog'
 
 // Layout base (sidebar, cabeçalho, tabela, paginação) é o mesmo de Animais.
-import "../Animais/Animais.css";
-import "./MinhasConsultas.css";
+import '../Animais/Animais.css'
+import './MinhasConsultas.css'
 
-const LIMITE_POR_PAGINA = 10;
+const LIMITE_POR_PAGINA = 10
 
 // Mesmos valores aceitos pela API (STATUS_VALIDOS no service de agendamentos).
-const STATUS_OPCOES = ["Pendente", "Confirmado", "Finalizado", "Cancelado"];
+const STATUS_OPCOES = ['Pendente', 'Confirmado', 'Finalizado', 'Cancelado']
 
 // Só dá pra cancelar o que ainda não foi finalizado/cancelado.
-const STATUS_CANCELAVEIS = ["Pendente", "Confirmado"];
+const STATUS_CANCELAVEIS = ['Pendente', 'Confirmado']
 
 // A API devolve a data sem fuso ("2026-10-20T14:30:00"); o navegador
 // interpreta como horário local, que é o mesmo que o cliente digitou.
 function formatarDataHora(iso) {
-  const data = new Date(iso);
+  const data = new Date(iso)
 
-  if (Number.isNaN(data.getTime())) return "—";
+  if (Number.isNaN(data.getTime())) return '—'
 
-  return data.toLocaleString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return data.toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 }
 
 function MinhasConsultas() {
-  const { usuario } = useAuth();
+  const { usuario } = useAuth()
 
-  const [sidebarAberto, setSidebarAberto] = useState(true);
+  const [sidebarAberto, setSidebarAberto] = useState(true)
 
   // Animais do cliente: usados no formulário e pra mostrar o nome na tabela
   // (a API de agendamentos só devolve o animal_id).
-  const [animais, setAnimais] = useState([]);
-  const [carregandoAnimais, setCarregandoAnimais] = useState(true);
-  const [erroAnimais, setErroAnimais] = useState("");
+  const [animais, setAnimais] = useState([])
+  const [carregandoAnimais, setCarregandoAnimais] = useState(true)
+  const [erroAnimais, setErroAnimais] = useState('')
 
-  const [busca, setBusca] = useState("");
-  const [buscaAplicada, setBuscaAplicada] = useState("");
-  const [status, setStatus] = useState("");
-  const [ordem, setOrdem] = useState("desc");
-  const [pagina, setPagina] = useState(1);
+  const [busca, setBusca] = useState('')
+  const [buscaAplicada, setBuscaAplicada] = useState('')
+  const [status, setStatus] = useState('')
+  const [ordem, setOrdem] = useState('desc')
+  const [pagina, setPagina] = useState(1)
 
   // Incrementar força a lista a ser buscada de novo (após agendar/cancelar).
-  const [recarga, setRecarga] = useState(0);
+  const [recarga, setRecarga] = useState(0)
 
   // Resultado da última busca, junto com a "chave" dos filtros que o gerou.
   // Se a chave atual for diferente da guardada, ainda estamos carregando.
   const [resultado, setResultado] = useState({
     chave: null,
     consultas: [],
-    erro: "",
-  });
+    erro: '',
+  })
 
-  const [modalNovo, setModalNovo] = useState(false);
-  const [aviso, setAviso] = useState("");
+  const [modalNovo, setModalNovo] = useState(false)
+  const [aviso, setAviso] = useState('')
 
-  const [consultaParaCancelar, setConsultaParaCancelar] = useState(null);
-  const [cancelando, setCancelando] = useState(false);
-  const [erroCancelamento, setErroCancelamento] = useState("");
+  const [consultaParaCancelar, setConsultaParaCancelar] = useState(null)
+  const [cancelando, setCancelando] = useState(false)
+  const [erroCancelamento, setErroCancelamento] = useState('')
 
   useEffect(() => {
     api
-      .get("/animais/", { params: { pagina: 1, limite: 100 } })
+      .get('/animais/', { params: { pagina: 1, limite: 100 } })
       .then((res) => setAnimais(res.data || []))
       .catch((err) => setErroAnimais(tratarErro(err).mensagem))
-      .finally(() => setCarregandoAnimais(false));
-  }, []);
+      .finally(() => setCarregandoAnimais(false))
+  }, [])
 
   const nomesAnimais = useMemo(
     () => Object.fromEntries(animais.map((animal) => [animal.id, animal.nome])),
     [animais]
-  );
+  )
 
-  const chaveBusca = `${pagina}|${status}|${buscaAplicada}|${ordem}|${recarga}`;
+  const chaveBusca = `${pagina}|${status}|${buscaAplicada}|${ordem}|${recarga}`
 
   useEffect(() => {
     // Se os filtros mudarem antes da resposta chegar, ignora a resposta antiga.
-    let ignorar = false;
+    let ignorar = false
 
     api
-      .get("/agendamentos/", {
+      .get('/agendamentos/', {
         params: {
           skip: (pagina - 1) * LIMITE_POR_PAGINA,
           limit: LIMITE_POR_PAGINA,
           status: status || undefined,
           descricao: buscaAplicada || undefined,
-          sort_by: "data_agendamento",
+          sort_by: 'data_agendamento',
           order: ordem,
         },
       })
       .then((res) => {
-        if (ignorar) return;
-        setResultado({ chave: chaveBusca, consultas: res.data || [], erro: "" });
+        if (ignorar) return
+        setResultado({
+          chave: chaveBusca,
+          consultas: res.data || [],
+          erro: '',
+        })
       })
       .catch((err) => {
-        if (ignorar) return;
+        if (ignorar) return
         setResultado({
           chave: chaveBusca,
           consultas: [],
           erro: tratarErro(err).mensagem,
-        });
-      });
+        })
+      })
 
     return () => {
-      ignorar = true;
-    };
-  }, [chaveBusca, pagina, status, buscaAplicada, ordem]);
+      ignorar = true
+    }
+  }, [chaveBusca, pagina, status, buscaAplicada, ordem])
 
-  const carregando = resultado.chave !== chaveBusca;
-  const consultas = resultado.consultas;
-  const erro = carregando ? "" : resultado.erro;
+  const carregando = resultado.chave !== chaveBusca
+  const consultas = resultado.consultas
+  const erro = carregando ? '' : resultado.erro
 
   function recarregar() {
-    setRecarga((n) => n + 1);
+    setRecarga((n) => n + 1)
   }
 
   function handleBuscar(e) {
-    e.preventDefault();
-    setPagina(1);
-    setBuscaAplicada(busca.trim());
+    e.preventDefault()
+    setPagina(1)
+    setBuscaAplicada(busca.trim())
   }
 
   function handleStatus(e) {
-    setStatus(e.target.value);
-    setPagina(1);
+    setStatus(e.target.value)
+    setPagina(1)
   }
 
   function alternarOrdem() {
-    setOrdem((atual) => (atual === "asc" ? "desc" : "asc"));
-    setPagina(1);
+    setOrdem((atual) => (atual === 'asc' ? 'desc' : 'asc'))
+    setPagina(1)
   }
 
   function salvouConsulta() {
-    setModalNovo(false);
-    setAviso("Consulta agendada com sucesso!");
-    recarregar();
+    setModalNovo(false)
+    setAviso('Consulta agendada com sucesso!')
+    recarregar()
   }
 
   function pedirCancelamento(consulta) {
-    setConsultaParaCancelar(consulta);
-    setErroCancelamento("");
+    setConsultaParaCancelar(consulta)
+    setErroCancelamento('')
   }
 
   async function confirmarCancelamento() {
-    setCancelando(true);
-    setErroCancelamento("");
+    setCancelando(true)
+    setErroCancelamento('')
 
     try {
-      await api.post(`/agendamentos/${consultaParaCancelar.id}/cancelar`);
+      await api.post(`/agendamentos/${consultaParaCancelar.id}/cancelar`)
 
-      setConsultaParaCancelar(null);
-      setAviso("Consulta cancelada.");
-      recarregar();
+      setConsultaParaCancelar(null)
+      setAviso('Consulta cancelada.')
+      recarregar()
     } catch (err) {
-      setErroCancelamento(tratarErro(err).mensagem);
+      setErroCancelamento(tratarErro(err).mensagem)
     } finally {
-      setCancelando(false);
+      setCancelando(false)
     }
   }
 
-  const temFiltro = Boolean(status || buscaAplicada);
-  const semAnimais = !carregandoAnimais && !erroAnimais && animais.length === 0;
+  const temFiltro = Boolean(status || buscaAplicada)
+  const semAnimais = !carregandoAnimais && !erroAnimais && animais.length === 0
 
   return (
     <div className="animais-page consultas-page">
       <Sidebar perfil={usuario?.perfil} setSidebarAberto={setSidebarAberto} />
 
-      <main className={`animais-content ${sidebarAberto ? "aberto" : "fechado"}`}>
+      <main className={`animais-content ${sidebarAberto ? 'aberto' : 'fechado'}`}>
         <header className="animais-header">
           <div>
             <h1>Minhas Consultas</h1>
@@ -197,12 +201,12 @@ function MinhasConsultas() {
           <button
             className="btn-novo"
             onClick={() => {
-              setAviso("");
-              setModalNovo(true);
+              setAviso('')
+              setModalNovo(true)
             }}
             disabled={carregandoAnimais || animais.length === 0}
             title={
-              semAnimais ? "Cadastre um animal para poder agendar" : erroAnimais || ""
+              semAnimais ? 'Cadastre um animal para poder agendar' : erroAnimais || ''
             }
           >
             <Plus size={18} /> Agendar consulta
@@ -213,7 +217,7 @@ function MinhasConsultas() {
 
         {semAnimais && (
           <p className="consultas-aviso consultas-aviso-info">
-            Para agendar uma consulta, primeiro cadastre um animal em{" "}
+            Para agendar uma consulta, primeiro cadastre um animal em{' '}
             <Link to="/meus-animais">Meus Animais</Link>.
           </p>
         )}
@@ -244,7 +248,7 @@ function MinhasConsultas() {
 
           <button className="btn-ordem" onClick={alternarOrdem} type="button">
             <ArrowUpDown size={16} />
-            Data ({ordem === "desc" ? "mais recentes" : "mais antigas"})
+            Data ({ordem === 'desc' ? 'mais recentes' : 'mais antigas'})
           </button>
         </div>
 
@@ -276,8 +280,8 @@ function MinhasConsultas() {
                 <tr>
                   <td colSpan={5} className="tabela-status">
                     {temFiltro
-                      ? "Nenhuma consulta encontrada com esses filtros."
-                      : "Você ainda não tem consultas agendadas."}
+                      ? 'Nenhuma consulta encontrada com esses filtros.'
+                      : 'Você ainda não tem consultas agendadas.'}
                   </td>
                 </tr>
               )}
@@ -349,10 +353,8 @@ function MinhasConsultas() {
         <ConfirmDialog
           titulo="Cancelar consulta"
           mensagem={`Tem certeza que deseja cancelar a consulta de "${
-            nomesAnimais[consultaParaCancelar.animal_id] || "seu animal"
-          }" marcada para ${formatarDataHora(
-            consultaParaCancelar.data_agendamento
-          )}?`}
+            nomesAnimais[consultaParaCancelar.animal_id] || 'seu animal'
+          }" marcada para ${formatarDataHora(consultaParaCancelar.data_agendamento)}?`}
           confirmando={cancelando}
           erro={erroCancelamento}
           textoConfirmar="Cancelar consulta"
@@ -363,7 +365,7 @@ function MinhasConsultas() {
         />
       )}
     </div>
-  );
+  )
 }
 
-export default MinhasConsultas;
+export default MinhasConsultas

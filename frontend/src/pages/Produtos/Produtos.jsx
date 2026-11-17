@@ -1,177 +1,161 @@
+import { useEffect, useState } from 'react'
+import { Navigate, useNavigate } from 'react-router-dom'
+import { Search, ShoppingCart, Package, Plus, Minus } from 'lucide-react'
 
-import { useEffect, useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
-import {
-  Search,
-  ShoppingCart,
-  Package,
-  Plus,
-  Minus,
-} from "lucide-react";
+import '../Dashboard/Dashboard.css'
+import './Produtos.css'
 
-import "../Dashboard/Dashboard.css";
-import "./Produtos.css";
+import Sidebar from '../../components/Sidebar/Sidebar'
+import { useAuth } from '../../contexts/AuthContext'
+import api from '../../services/api'
+import tratarErro from '../../services/tratarErro'
 
-import Sidebar from "../../components/Sidebar/Sidebar";
-import { useAuth } from "../../contexts/AuthContext";
-import api from "../../services/api";
-import tratarErro from "../../services/tratarErro";
-
-const moeda = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
+const moeda = new Intl.NumberFormat('pt-BR', {
+  style: 'currency',
+  currency: 'BRL',
+})
 
 function Produtos() {
-  const { usuario } = useAuth();
-  const navigate = useNavigate();
+  const { usuario } = useAuth()
+  const navigate = useNavigate()
 
-  const ehCliente = usuario?.perfil === "Cliente";
+  const ehCliente = usuario?.perfil === 'Cliente'
 
-  const [sidebarAberto, setSidebarAberto] = useState(true);
-  const [produtos, setProdutos] = useState([]);
-  const [busca, setBusca] = useState("");
-  const [quantidades, setQuantidades] = useState({});
-  const [carregando, setCarregando] = useState(true);
-  const [adicionando, setAdicionando] = useState(null);
-  const [erro, setErro] = useState("");
-  const [aviso, setAviso] = useState("");
+  const [sidebarAberto, setSidebarAberto] = useState(true)
+  const [produtos, setProdutos] = useState([])
+  const [busca, setBusca] = useState('')
+  const [quantidades, setQuantidades] = useState({})
+  const [carregando, setCarregando] = useState(true)
+  const [adicionando, setAdicionando] = useState(null)
+  const [erro, setErro] = useState('')
+  const [aviso, setAviso] = useState('')
 
   useEffect(() => {
-    if (!ehCliente) return;
+    if (!ehCliente) return
 
-    let cancelado = false;
+    let cancelado = false
 
     async function carregarProdutos() {
       try {
-        const resposta = await api.get("/produtos/", {
+        const resposta = await api.get('/produtos/', {
           params: {
             skip: 0,
             limit: 100,
             em_estoque: true,
-            sort_by: "nome",
-            order: "asc",
+            sort_by: 'nome',
+            order: 'asc',
           },
-        });
+        })
 
         if (!cancelado) {
-          setProdutos(resposta.data);
+          setProdutos(resposta.data)
         }
       } catch (error) {
         if (!cancelado) {
-          setErro(tratarErro(error).mensagem);
+          setErro(tratarErro(error).mensagem)
         }
       } finally {
         if (!cancelado) {
-          setCarregando(false);
+          setCarregando(false)
         }
       }
     }
 
-    carregarProdutos();
+    carregarProdutos()
 
     return () => {
-      cancelado = true;
-    };
-  }, [ehCliente]);
+      cancelado = true
+    }
+  }, [ehCliente])
 
   if (!usuario) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" replace />
   }
 
   if (!ehCliente) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/dashboard" replace />
   }
 
   const produtosFiltrados = produtos.filter((produto) =>
     `${produto.nome} ${produto.descricao}`
       .toLowerCase()
       .includes(busca.trim().toLowerCase())
-  );
+  )
 
   // O cliente tem um único carrinho. Se ainda não existir
   // (ele não é criado no cadastro), criamos na primeira compra.
   async function obterCarrinhoId() {
-    const { data: carrinhos } = await api.get("/carrinhos/", {
+    const { data: carrinhos } = await api.get('/carrinhos/', {
       params: { limit: 1 },
-    });
+    })
 
     if (carrinhos[0]) {
-      return carrinhos[0].id;
+      return carrinhos[0].id
     }
 
     // Para o perfil Cliente, esta rota devolve só o próprio cadastro.
-    const { data: clientes } = await api.get("/clientes/", {
+    const { data: clientes } = await api.get('/clientes/', {
       params: { limit: 1 },
-    });
+    })
 
-    const cliente = clientes[0];
+    const cliente = clientes[0]
 
     if (!cliente) {
-      throw new Error("Cadastro de cliente não encontrado.");
+      throw new Error('Cadastro de cliente não encontrado.')
     }
 
-    const { data: novoCarrinho } = await api.post("/carrinhos/", {
+    const { data: novoCarrinho } = await api.post('/carrinhos/', {
       cliente_id: cliente.id,
-    });
+    })
 
-    return novoCarrinho.id;
+    return novoCarrinho.id
   }
 
   async function adicionarAoCarrinho(produto) {
-    const quantidade = quantidades[produto.id] || 1;
+    const quantidade = quantidades[produto.id] || 1
 
-    setAdicionando(produto.id);
-    setErro("");
-    setAviso("");
+    setAdicionando(produto.id)
+    setErro('')
+    setAviso('')
 
     try {
-      const carrinhoId = await obterCarrinhoId();
+      const carrinhoId = await obterCarrinhoId()
 
-      await api.post("/itens-carrinho/", {
+      await api.post('/itens-carrinho/', {
         carrinho_id: carrinhoId,
         produto_id: produto.id,
         quantidade,
-      });
+      })
 
-      setQuantidades((atual) => ({ ...atual, [produto.id]: 1 }));
+      setQuantidades((atual) => ({ ...atual, [produto.id]: 1 }))
 
       setAviso(
         `${quantidade} × "${produto.nome}" ${
-          quantidade === 1 ? "adicionado" : "adicionados"
+          quantidade === 1 ? 'adicionado' : 'adicionados'
         } ao carrinho.`
-      );
+      )
     } catch (error) {
-      setErro(tratarErro(error).mensagem);
+      setErro(tratarErro(error).mensagem)
     } finally {
-      setAdicionando(null);
+      setAdicionando(null)
     }
   }
 
   return (
     <div className="dashboard">
-      <Sidebar
-        perfil={usuario.perfil}
-        setSidebarAberto={setSidebarAberto}
-      />
+      <Sidebar perfil={usuario.perfil} setSidebarAberto={setSidebarAberto} />
 
-      <main
-        className={`dashboard-content ${
-          sidebarAberto ? "aberto" : "fechado"
-        }`}
-      >
+      <main className={`dashboard-content ${sidebarAberto ? 'aberto' : 'fechado'}`}>
         <header className="dashboard-header">
           <div className="dashboard-title">
             <h1>Nossos produtos</h1>
-            <p>
-              Encontre produtos para cuidar melhor do seu pet.
-            </p>
+            <p>Encontre produtos para cuidar melhor do seu pet.</p>
           </div>
 
           <button
             type="button"
             className="produtos-carrinho-link"
-            onClick={() => navigate("/compras")}
+            onClick={() => navigate('/compras')}
           >
             <ShoppingCart size={19} />
             Minhas compras
@@ -203,27 +187,17 @@ function Produtos() {
         )}
 
         {carregando ? (
-          <p className="produtos-mensagem">
-            Carregando produtos...
-          </p>
+          <p className="produtos-mensagem">Carregando produtos...</p>
         ) : produtosFiltrados.length === 0 ? (
           <div className="produtos-vazio">
             <Package size={38} />
             <h2>Nenhum produto encontrado</h2>
-            <p>
-              Tente pesquisar por outro nome ou descrição.
-            </p>
+            <p>Tente pesquisar por outro nome ou descrição.</p>
           </div>
         ) : (
-          <section
-            className="produtos-grade"
-            aria-label="Produtos disponíveis"
-          >
+          <section className="produtos-grade" aria-label="Produtos disponíveis">
             {produtosFiltrados.map((produto) => (
-              <article
-                className="produto-card"
-                key={produto.id}
-              >
+              <article className="produto-card" key={produto.id}>
                 <div className="produto-imagem">
                   <Package size={48} />
                 </div>
@@ -231,19 +205,17 @@ function Produtos() {
                 <div className="produto-conteudo">
                   <h2>{produto.nome}</h2>
 
-                  <p className="produto-descricao">
-                    {produto.descricao}
-                  </p>
+                  <p className="produto-descricao">{produto.descricao}</p>
 
                   <strong className="produto-preco">
                     {moeda.format(produto.preco)}
                   </strong>
 
                   <p className="produto-estoque">
-                    {produto.estoque}{" "}
+                    {produto.estoque}{' '}
                     {produto.estoque === 1
-                      ? "unidade disponível"
-                      : "unidades disponíveis"}
+                      ? 'unidade disponível'
+                      : 'unidades disponíveis'}
                   </p>
 
                   <div className="produto-acoes">
@@ -251,33 +223,23 @@ function Produtos() {
                       <button
                         type="button"
                         aria-label={`Diminuir quantidade de ${produto.nome}`}
-                        disabled={
-                          (quantidades[produto.id] || 1) <= 1
-                        }
+                        disabled={(quantidades[produto.id] || 1) <= 1}
                         onClick={() =>
                           setQuantidades((atual) => ({
                             ...atual,
-                            [produto.id]: Math.max(
-                              1,
-                              (atual[produto.id] || 1) - 1
-                            ),
+                            [produto.id]: Math.max(1, (atual[produto.id] || 1) - 1),
                           }))
                         }
                       >
                         <Minus size={15} />
                       </button>
 
-                      <span>
-                        {quantidades[produto.id] || 1}
-                      </span>
+                      <span>{quantidades[produto.id] || 1}</span>
 
                       <button
                         type="button"
                         aria-label={`Aumentar quantidade de ${produto.nome}`}
-                        disabled={
-                          (quantidades[produto.id] || 1) >=
-                          produto.estoque
-                        }
+                        disabled={(quantidades[produto.id] || 1) >= produto.estoque}
                         onClick={() =>
                           setQuantidades((atual) => ({
                             ...atual,
@@ -296,14 +258,10 @@ function Produtos() {
                       type="button"
                       className="produto-adicionar"
                       disabled={adicionando === produto.id}
-                      onClick={() =>
-                        adicionarAoCarrinho(produto)
-                      }
+                      onClick={() => adicionarAoCarrinho(produto)}
                     >
                       <ShoppingCart size={16} />
-                      {adicionando === produto.id
-                        ? "Adicionando..."
-                        : "Adicionar"}
+                      {adicionando === produto.id ? 'Adicionando...' : 'Adicionar'}
                     </button>
                   </div>
                 </div>
@@ -313,7 +271,7 @@ function Produtos() {
         )}
       </main>
     </div>
-  );
+  )
 }
 
-export default Produtos;
+export default Produtos

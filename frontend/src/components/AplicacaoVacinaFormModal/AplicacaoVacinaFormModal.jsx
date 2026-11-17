@@ -1,108 +1,99 @@
-import { useState } from "react";
+import { useState } from 'react'
 
-import Modal from "../Modal/Modal";
-import api from "../../services/api";
-import tratarErro from "../../services/tratarErro";
+import Modal from '../Modal/Modal'
+import api from '../../services/api'
+import tratarErro from '../../services/tratarErro'
 
 // Reaproveita .animal-form, .campo, .erro-campo, .erro-servidor, .form-acoes...
-import "../AnimalFormModal/AnimalFormModal.css";
-import "../VacinaFormModal/VacinaFormModal.css";
+import '../AnimalFormModal/AnimalFormModal.css'
+import '../VacinaFormModal/VacinaFormModal.css'
 
 // Limites das colunas no banco (lote: 100, observações: 500).
-const LOTE_MAX = 100;
-const OBSERVACOES_MAX = 500;
+const LOTE_MAX = 100
+const OBSERVACOES_MAX = 500
 
 // "2026-11-20T10:30:00" -> "2026-11-20" (formato do <input type="date">)
 function isoParaInputData(iso) {
-  return iso ? iso.slice(0, 10) : "";
+  return iso ? iso.slice(0, 10) : ''
 }
 
 // aplicacao: objeto existente (edição) ou null (nova aplicação).
 // animais / vacinas: listas usadas nos selects e para mostrar os nomes.
-function AplicacaoVacinaFormModal({
-  aplicacao,
-  animais,
-  vacinas,
-  onClose,
-  onSalvo,
-}) {
-  const editando = Boolean(aplicacao);
+function AplicacaoVacinaFormModal({ aplicacao, animais, vacinas, onClose, onSalvo }) {
+  const editando = Boolean(aplicacao)
 
-  const [animalId, setAnimalId] = useState("");
-  const [vacinaId, setVacinaId] = useState("");
-  const [lote, setLote] = useState(aplicacao?.lote ?? "");
-  const [observacoes, setObservacoes] = useState(aplicacao?.observacoes ?? "");
+  const [animalId, setAnimalId] = useState('')
+  const [vacinaId, setVacinaId] = useState('')
+  const [lote, setLote] = useState(aplicacao?.lote ?? '')
+  const [observacoes, setObservacoes] = useState(aplicacao?.observacoes ?? '')
   const [proximaDose, setProximaDose] = useState(
     isoParaInputData(aplicacao?.proxima_dose)
-  );
+  )
 
-  const [erros, setErros] = useState({});
-  const [erroServidor, setErroServidor] = useState("");
-  const [salvando, setSalvando] = useState(false);
+  const [erros, setErros] = useState({})
+  const [erroServidor, setErroServidor] = useState('')
+  const [salvando, setSalvando] = useState(false)
 
-  const vacinaEscolhida = vacinas.find((v) => String(v.id) === vacinaId);
+  const vacinaEscolhida = vacinas.find((v) => String(v.id) === vacinaId)
 
-  const animalDaAplicacao = animais.find((a) => a.id === aplicacao?.animal_id);
-  const vacinaDaAplicacao = vacinas.find((v) => v.id === aplicacao?.vacina_id);
+  const animalDaAplicacao = animais.find((a) => a.id === aplicacao?.animal_id)
+  const vacinaDaAplicacao = vacinas.find((v) => v.id === aplicacao?.vacina_id)
 
   async function handleSubmit(e) {
-    e.preventDefault();
-    setErroServidor("");
+    e.preventDefault()
+    setErroServidor('')
 
-    const errosValidacao = {};
+    const errosValidacao = {}
 
     if (!editando) {
-      if (!animalId) errosValidacao.animal = "Selecione o animal.";
-      if (!vacinaId) errosValidacao.vacina = "Selecione a vacina.";
+      if (!animalId) errosValidacao.animal = 'Selecione o animal.'
+      if (!vacinaId) errosValidacao.vacina = 'Selecione a vacina.'
     }
 
-    setErros(errosValidacao);
+    setErros(errosValidacao)
 
     if (Object.keys(errosValidacao).length > 0) {
-      return;
+      return
     }
 
-    setSalvando(true);
+    setSalvando(true)
 
     try {
       if (editando) {
         const dados = {
           lote: lote.trim(),
           observacoes: observacoes.trim(),
-        };
+        }
 
         // Só envia a data se foi alterada, para não perder o horário original.
         if (proximaDose && proximaDose !== isoParaInputData(aplicacao.proxima_dose)) {
-          dados.proxima_dose = `${proximaDose}T00:00:00`;
+          dados.proxima_dose = `${proximaDose}T00:00:00`
         }
 
-        await api.put(`/aplicacoes-vacina/${aplicacao.id}`, dados);
+        await api.put(`/aplicacoes-vacina/${aplicacao.id}`, dados)
       } else {
         const dados = {
           animal_id: Number(animalId),
           vacina_id: Number(vacinaId),
-        };
+        }
 
-        if (lote.trim()) dados.lote = lote.trim();
-        if (observacoes.trim()) dados.observacoes = observacoes.trim();
+        if (lote.trim()) dados.lote = lote.trim()
+        if (observacoes.trim()) dados.observacoes = observacoes.trim()
 
         // A próxima dose é calculada pela API (data de hoje + intervalo da vacina).
-        await api.post("/aplicacoes-vacina/", dados);
+        await api.post('/aplicacoes-vacina/', dados)
       }
 
-      onSalvo(editando);
+      onSalvo(editando)
     } catch (err) {
-      setErroServidor(tratarErro(err).mensagem);
+      setErroServidor(tratarErro(err).mensagem)
     } finally {
-      setSalvando(false);
+      setSalvando(false)
     }
   }
 
   return (
-    <Modal
-      titulo={editando ? "Editar aplicação" : "Aplicar vacina"}
-      onClose={onClose}
-    >
+    <Modal titulo={editando ? 'Editar aplicação' : 'Aplicar vacina'} onClose={onClose}>
       <form onSubmit={handleSubmit} className="animal-form vacina-form" noValidate>
         {editando ? (
           <>
@@ -157,9 +148,9 @@ function AplicacaoVacinaFormModal({
               </select>
               {vacinaEscolhida && (
                 <span className="campo-ajuda">
-                  Próxima dose calculada automaticamente: daqui a{" "}
-                  {vacinaEscolhida.intervalo_dias} dia(s). A data da aplicação
-                  é a de hoje.
+                  Próxima dose calculada automaticamente: daqui a{' '}
+                  {vacinaEscolhida.intervalo_dias} dia(s). A data da aplicação é a de
+                  hoje.
                 </span>
               )}
               {erros.vacina && <span className="erro-campo">{erros.vacina}</span>}
@@ -221,16 +212,15 @@ function AplicacaoVacinaFormModal({
 
           <button type="submit" className="btn-primario" disabled={salvando}>
             {salvando
-              ? "Salvando..."
+              ? 'Salvando...'
               : editando
-                ? "Salvar alterações"
-                : "Registrar aplicação"}
+                ? 'Salvar alterações'
+                : 'Registrar aplicação'}
           </button>
         </div>
       </form>
     </Modal>
-  );
+  )
 }
 
-export default AplicacaoVacinaFormModal;
-    
+export default AplicacaoVacinaFormModal

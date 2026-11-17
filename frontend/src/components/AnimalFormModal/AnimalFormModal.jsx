@@ -1,73 +1,72 @@
+import { useState } from 'react'
 
-import { useState } from "react";
+import Modal from '../Modal/Modal'
+import api from '../../services/api'
+import './AnimalFormModal.css'
 
-import Modal from "../Modal/Modal";
-import api from "../../services/api";
-import "./AnimalFormModal.css";
-
-const ESPECIE_LIMITE = 100;
+const ESPECIE_LIMITE = 100
 
 function validarCampos({ nome, especie, raca, idade }) {
-  const erros = {};
+  const erros = {}
 
   if (!nome || nome.trim().length < 2) {
-    erros.nome = "Informe pelo menos 2 caracteres.";
+    erros.nome = 'Informe pelo menos 2 caracteres.'
   }
 
   if (!especie || especie.trim().length < 2) {
-    erros.especie = "Informe pelo menos 2 caracteres.";
+    erros.especie = 'Informe pelo menos 2 caracteres.'
   }
 
   if (!raca || raca.trim().length < 2) {
-    erros.raca = "Informe pelo menos 2 caracteres.";
+    erros.raca = 'Informe pelo menos 2 caracteres.'
   }
 
-  const idadeNum = Number(idade);
+  const idadeNum = Number(idade)
 
-  if (idade === "" || Number.isNaN(idadeNum) || idadeNum < 0 || idadeNum > 100) {
-    erros.idade = "Idade deve ser entre 0 e 100.";
+  if (idade === '' || Number.isNaN(idadeNum) || idadeNum < 0 || idadeNum > 100) {
+    erros.idade = 'Idade deve ser entre 0 e 100.'
   }
 
-  return erros;
+  return erros
 }
 
 function AnimalFormModal({ animal, clienteFixo = null, onClose, onSalvo }) {
-  const ehEdicao = Boolean(animal);
+  const ehEdicao = Boolean(animal)
 
-  const [nome, setNome] = useState(animal?.nome || "");
-  const [especie, setEspecie] = useState(animal?.especie || "");
-  const [raca, setRaca] = useState(animal?.raca || "");
-  const [idade, setIdade] = useState(animal?.idade ?? "");
+  const [nome, setNome] = useState(animal?.nome || '')
+  const [especie, setEspecie] = useState(animal?.especie || '')
+  const [raca, setRaca] = useState(animal?.raca || '')
+  const [idade, setIdade] = useState(animal?.idade ?? '')
 
-  const [erros, setErros] = useState({});
-  const [erroServidor, setErroServidor] = useState("");
-  const [salvando, setSalvando] = useState(false);
+  const [erros, setErros] = useState({})
+  const [erroServidor, setErroServidor] = useState('')
+  const [salvando, setSalvando] = useState(false)
 
   async function handleSubmit(e) {
-    e.preventDefault();
-    setErroServidor("");
+    e.preventDefault()
+    setErroServidor('')
 
     const errosValidacao = validarCampos({
       nome,
       especie,
       raca,
       idade,
-    });
+    })
 
-    setErros(errosValidacao);
+    setErros(errosValidacao)
 
     if (Object.keys(errosValidacao).length > 0) {
-      return;
+      return
     }
 
     if (!ehEdicao && !clienteFixo?.id) {
       setErroServidor(
-        "Não foi possível identificar o tutor. Entre novamente na sua conta e tente de novo."
-      );
-      return;
+        'Não foi possível identificar o tutor. Entre novamente na sua conta e tente de novo.'
+      )
+      return
     }
 
-    setSalvando(true);
+    setSalvando(true)
 
     try {
       if (ehEdicao) {
@@ -76,29 +75,29 @@ function AnimalFormModal({ animal, clienteFixo = null, onClose, onSalvo }) {
           especie,
           raca,
           idade: Number(idade),
-        });
+        })
       } else {
-        await api.post("/animais/", {
+        await api.post('/animais/', {
           nome,
           especie,
           raca,
           idade: Number(idade),
           cliente_id: clienteFixo.id,
-        });
+        })
       }
 
-      onSalvo();
+      onSalvo()
     } catch (err) {
       setErroServidor(
-        err?.response?.data?.detail || "Erro ao salvar o animal. Tente novamente."
-      );
+        err?.response?.data?.detail || 'Erro ao salvar o animal. Tente novamente.'
+      )
     } finally {
-      setSalvando(false);
+      setSalvando(false)
     }
   }
 
   return (
-    <Modal titulo={ehEdicao ? "Editar animal" : "Novo animal"} onClose={onClose}>
+    <Modal titulo={ehEdicao ? 'Editar animal' : 'Novo animal'} onClose={onClose}>
       <form onSubmit={handleSubmit} className="animal-form" noValidate>
         <div className="campo">
           <label>Nome</label>
@@ -161,12 +160,12 @@ function AnimalFormModal({ animal, clienteFixo = null, onClose, onSalvo }) {
           </button>
 
           <button type="submit" className="btn-primario" disabled={salvando}>
-            {salvando ? "Salvando..." : "Salvar"}
+            {salvando ? 'Salvando...' : 'Salvar'}
           </button>
         </div>
       </form>
     </Modal>
-  );
+  )
 }
 
-export default AnimalFormModal;
+export default AnimalFormModal

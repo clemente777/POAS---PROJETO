@@ -1,49 +1,49 @@
-import { useState } from "react";
+import { useState } from 'react'
 
-import Modal from "../Modal/Modal";
-import api from "../../services/api";
-import tratarErro from "../../services/tratarErro";
+import Modal from '../Modal/Modal'
+import api from '../../services/api'
+import tratarErro from '../../services/tratarErro'
 
 // Reaproveita .animal-form, .campo, .erro-campo, .erro-servidor, .form-acoes...
-import "../AnimalFormModal/AnimalFormModal.css";
+import '../AnimalFormModal/AnimalFormModal.css'
 // ...e o estilo de select/textarea e do contador de caracteres.
-import "../ConsultaFormModal/ConsultaFormModal.css";
+import '../ConsultaFormModal/ConsultaFormModal.css'
 
-const DIAGNOSTICO_MAX = 500;
-const OBSERVACOES_MAX = 1000;
+const DIAGNOSTICO_MAX = 500
+const OBSERVACOES_MAX = 1000
 
 // Data/hora atual no formato do <input type="datetime-local">
 // (YYYY-MM-DDTHH:mm), em horário local.
 function agoraParaInput() {
-  const agora = new Date();
-  agora.setMinutes(agora.getMinutes() - agora.getTimezoneOffset());
-  return agora.toISOString().slice(0, 16);
+  const agora = new Date()
+  agora.setMinutes(agora.getMinutes() - agora.getTimezoneOffset())
+  return agora.toISOString().slice(0, 16)
 }
 
 function validarCampos({ animalId, dataHora, diagnostico, observacoes }, editando) {
-  const erros = {};
+  const erros = {}
 
   if (!editando) {
     if (!animalId) {
-      erros.animal = "Selecione o animal.";
+      erros.animal = 'Selecione o animal.'
     }
 
     if (!dataHora) {
-      erros.data = "Informe a data e o horário.";
+      erros.data = 'Informe a data e o horário.'
     } else if (new Date(dataHora) > new Date()) {
-      erros.data = "A data do atendimento não pode ser futura.";
+      erros.data = 'A data do atendimento não pode ser futura.'
     }
   }
 
   if (!diagnostico.trim()) {
-    erros.diagnostico = "Informe o diagnóstico.";
+    erros.diagnostico = 'Informe o diagnóstico.'
   }
 
   if (observacoes.length > OBSERVACOES_MAX) {
-    erros.observacoes = `Máximo de ${OBSERVACOES_MAX} caracteres.`;
+    erros.observacoes = `Máximo de ${OBSERVACOES_MAX} caracteres.`
   }
 
-  return erros;
+  return erros
 }
 
 // Cria um atendimento ou, se receber `atendimento`, edita o diagnóstico
@@ -61,73 +61,73 @@ function AtendimentoFormModal({
   onClose,
   onSalvo,
 }) {
-  const editando = Boolean(atendimento);
-  const animalTravado = editando || animalIdInicial !== null;
+  const editando = Boolean(atendimento)
+  const animalTravado = editando || animalIdInicial !== null
 
   const [animalId, setAnimalId] = useState(
     atendimento
       ? String(atendimento.animal_id)
       : animalIdInicial !== null
         ? String(animalIdInicial)
-        : ""
-  );
-  const [dataHora, setDataHora] = useState(agoraParaInput);
-  const [diagnostico, setDiagnostico] = useState(atendimento?.diagnostico ?? "");
-  const [observacoes, setObservacoes] = useState(atendimento?.observacoes ?? "");
+        : ''
+  )
+  const [dataHora, setDataHora] = useState(agoraParaInput)
+  const [diagnostico, setDiagnostico] = useState(atendimento?.diagnostico ?? '')
+  const [observacoes, setObservacoes] = useState(atendimento?.observacoes ?? '')
 
-  const [maximo] = useState(agoraParaInput);
+  const [maximo] = useState(agoraParaInput)
 
-  const [erros, setErros] = useState({});
-  const [erroServidor, setErroServidor] = useState("");
-  const [salvando, setSalvando] = useState(false);
+  const [erros, setErros] = useState({})
+  const [erroServidor, setErroServidor] = useState('')
+  const [salvando, setSalvando] = useState(false)
 
   async function handleSubmit(e) {
-    e.preventDefault();
-    setErroServidor("");
+    e.preventDefault()
+    setErroServidor('')
 
     const errosValidacao = validarCampos(
       { animalId, dataHora, diagnostico, observacoes },
       editando
-    );
-    setErros(errosValidacao);
+    )
+    setErros(errosValidacao)
 
     if (Object.keys(errosValidacao).length > 0) {
-      return;
+      return
     }
 
-    setSalvando(true);
+    setSalvando(true)
 
     // A API rejeita observações só com espaços; vazio vira "sem observações".
-    const obs = observacoes.trim() || null;
+    const obs = observacoes.trim() || null
 
     try {
       if (editando) {
         await api.put(`/atendimentos/${atendimento.id}`, {
           diagnostico: diagnostico.trim(),
           observacoes: obs,
-        });
+        })
       } else {
-        await api.post("/atendimentos/", {
+        await api.post('/atendimentos/', {
           animal_id: Number(animalId),
           usuario_id: usuarioId,
           diagnostico: diagnostico.trim(),
           observacoes: obs,
           // "2026-10-20T14:30" (sem fuso), igual ao que a API guarda e devolve
           data_atendimento: dataHora,
-        });
+        })
       }
 
-      onSalvo();
+      onSalvo()
     } catch (err) {
-      setErroServidor(tratarErro(err).mensagem);
+      setErroServidor(tratarErro(err).mensagem)
     } finally {
-      setSalvando(false);
+      setSalvando(false)
     }
   }
 
   return (
     <Modal
-      titulo={editando ? "Editar atendimento" : "Registrar atendimento"}
+      titulo={editando ? 'Editar atendimento' : 'Registrar atendimento'}
       onClose={onClose}
       largura="560px"
     >
@@ -209,12 +209,12 @@ function AtendimentoFormModal({
           </button>
 
           <button type="submit" className="btn-primario" disabled={salvando}>
-            {salvando ? "Salvando..." : editando ? "Salvar" : "Registrar"}
+            {salvando ? 'Salvando...' : editando ? 'Salvar' : 'Registrar'}
           </button>
         </div>
       </form>
     </Modal>
-  );
+  )
 }
 
-export default AtendimentoFormModal;
+export default AtendimentoFormModal

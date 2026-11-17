@@ -104,7 +104,7 @@
 }
 
 .animais-erro {
-  background: #FDECEA;
+  background: #fdecea;
   color: var(--color-accent-dark);
   padding: 12px 16px;
   border-radius: var(--radius-sm);
