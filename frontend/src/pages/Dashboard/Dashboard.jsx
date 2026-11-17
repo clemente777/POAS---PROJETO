@@ -1,6 +1,7 @@
 
 import './Dashboard.css'
 
+import { Navigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { RefreshCw } from 'lucide-react'
 
@@ -85,6 +86,11 @@ function Dashboard() {
   const primeiroNome = (
     usuario?.nome || usuario?.name || ''
   ).trim().split(' ')[0]
+
+    // Impede acesso ao dashboard sem usuário autenticado.
+  if (!usuario || !localStorage.getItem('token')) {
+    return <Navigate to="/login" replace />
+  }
 
   if (carregando) {
     return (

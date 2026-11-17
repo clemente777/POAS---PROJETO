@@ -3,7 +3,7 @@
   "short_name": "PetOnline",
   "description": "Agende consultas, acompanhe vacinas e compre para o seu pet.",
   "lang": "pt-BR",
-  "start_url": "/dashboard",
+  "start_url": "/login",
   "scope": "/",
   "display": "standalone",
   "background_color": "#FAFAF8",
