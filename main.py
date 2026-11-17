@@ -1,37 +1,35 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
-from backend.models import *
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
-from fastapi.exceptions import RequestValidationError
-from backend.exceptions.handlers import tratar_validacao
-
+from backend.database.database import create_db_and_tables
 from backend.database.seed import (
     criar_admin,
     criar_produtos_teste,
 )
-
+from backend.exceptions.handlers import tratar_validacao
+from backend.models import *
 from backend.routes import (
+    agendamento_routes,
+    animal_routes,
+    aplicacao_vacina_routes,
+    atendimento_routes,
     cadastro_routes,
-    pedido_routes,
-    usuario_routes,
+    carrinho_routes,
+    cliente_routes,
+    dashboard_routes,
+    item_carrinho_routes,
     login_routes,
     logout_routes,
-    cliente_routes,
-    animal_routes,
-    agendamento_routes,
-    atendimento_routes,
+    pedido_routes,
     produto_routes,
-    carrinho_routes,
-    item_carrinho_routes,
-    dashboard_routes,
-    aplicacao_vacina_routes,
-    vacina_routes, 
-    
-    
+    usuario_routes,
+    vacina_routes,
 )
 
-from contextlib import asynccontextmanager
-from backend.database.database import create_db_and_tables
+
 @asynccontextmanager
 
 async def lifespan(app: FastAPI):
@@ -44,12 +42,18 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+app.add_exception_handler(
+    RequestValidationError,
+    tratar_validacao
+)
 app.add_middleware(
     CORSMiddleware,
 
     allow_origins=[
         "http://localhost:5173",
         "http://127.0.0.1:5173",
+        "http://10.144.8.227:5173"
+
     ],
 
     allow_credentials=True,

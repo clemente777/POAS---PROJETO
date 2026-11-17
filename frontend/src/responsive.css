@@ -1,0 +1,193 @@
+/*
+|--------------------------------------------------------------------------
+| Arquivo: responsive.css
+| Projeto: Petonline24h
+|--------------------------------------------------------------------------
+|
+| Ajustes globais para telas de celular (até 768px). Cobre o que é comum a
+| todas as páginas logadas: conteúdo sem margem lateral (o menu vira barra
+| inferior), cabeçalhos empilhados, botões fáceis de tocar, formulários que
+| não dão zoom no iPhone, janelas (modais) que sobem de baixo e tabelas do
+| cliente em formato de cartões.
+|
+| Os !important abaixo são necessários porque o CSS de cada página é
+| carregado depois deste e define margin-left fixo para o menu lateral.
+|
+*/
+
+@media (max-width: 768px) {
+  /* ---------- Conteúdo ocupa a tela toda; espaço embaixo p/ a barra ---------- */
+  body .dashboard-content.aberto,
+  body .dashboard-content.fechado,
+  body .animais-content.aberto,
+  body .animais-content.fechado {
+    margin-left: 0 !important;
+    min-width: 0;
+    padding: 16px 16px calc(var(--bottom-nav-h) + 28px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  /* ---------- Cabeçalhos ---------- */
+  .dashboard-header,
+  .animais-header {
+    gap: 12px;
+  }
+
+  .dashboard-title h1,
+  .animais-header h1 {
+    font-size: 22px;
+  }
+
+  /* Ação principal da tela ocupa a largura toda (fácil de tocar) */
+  .animais-header {
+    flex-wrap: wrap;
+  }
+
+  .animais-header .btn-novo {
+    width: 100%;
+    justify-content: center;
+    min-height: 48px;
+  }
+
+  /* ---------- Busca e filtros ---------- */
+  .animais-toolbar > * {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+
+  .busca-form {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .btn-ordem,
+  .filtro-status {
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  /* ---------- Formulários: 16px evita o zoom automático do iPhone ---------- */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  /* ---------- Modais viram "gavetas" que sobem da base ---------- */
+  .modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .modal-box {
+    max-width: 100% !important;
+    max-height: 92dvh;
+    border-radius: 24px 24px 0 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* ---------- Resumo do dashboard: cartões mais compactos ---------- */
+  .dashboard-card {
+    padding: 16px;
+  }
+
+  .card-icon {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+  }
+
+  .card-info strong {
+    font-size: 22px;
+  }
+
+  /* ---------- Paginação ---------- */
+  .animais-paginacao button {
+    min-height: 44px;
+  }
+
+  /* ---------- Gráficos do dashboard não estouram a tela ---------- */
+  .chart-container {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/*
+|--------------------------------------------------------------------------
+| Tabelas do cliente em formato de cartões (somente as marcadas com
+| a classe animais-tabela--cartoes). As demais ganham rolagem horizontal.
+|--------------------------------------------------------------------------
+*/
+@media (max-width: 640px) {
+  .animais-tabela-wrapper {
+    overflow-x: auto;
+  }
+
+  .animais-tabela-wrapper:has(.animais-tabela--cartoes) {
+    background: none;
+    border: 0;
+    border-radius: 0;
+    overflow: visible;
+  }
+
+  .animais-tabela--cartoes,
+  .animais-tabela--cartoes tbody,
+  .animais-tabela--cartoes tr,
+  .animais-tabela--cartoes td {
+    display: block;
+    width: 100%;
+  }
+
+  .animais-tabela--cartoes thead {
+    display: none;
+  }
+
+  .animais-tabela--cartoes tr {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 8px 16px;
+    margin-bottom: 12px;
+  }
+
+  .animais-tabela--cartoes td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 8px 0;
+    border-top: 0;
+    text-align: right;
+  }
+
+  .animais-tabela--cartoes td[data-label]::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    text-align: left;
+  }
+
+  .animais-tabela--cartoes td.col-acoes {
+    justify-content: flex-end;
+    gap: 4px;
+    margin-top: 4px;
+    padding-top: 10px;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .animais-tabela--cartoes td.tabela-status {
+    display: block;
+    text-align: center;
+  }
+
+  .animais-tabela--cartoes .btn-icone {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}

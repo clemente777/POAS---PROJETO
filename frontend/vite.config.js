@@ -44,4 +44,10 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
+
+  // host: true libera o acesso pela rede local (ex.: celular no mesmo Wi-Fi).
+  server: {
+    host: true,
+    port: 5173,
+  },
 })
