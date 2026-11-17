@@ -1,106 +1,105 @@
-import "./Dashboard.css";
+import './Dashboard.css'
 
-import { useEffect, useState } from "react";
-import { RefreshCw } from "lucide-react";
+import { useEffect, useState } from 'react'
+import { RefreshCw } from 'lucide-react'
 
-import api from "../../services/api";
-import Sidebar from "../../components/Sidebar/Sidebar";
+import api from '../../services/api'
+import Sidebar from '../../components/Sidebar/Sidebar'
 
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from '../../contexts/AuthContext'
 
-import AdminDashboard from "./AdminDashboard";
-import VeterinarioDashboard from "./VeterinarioDashboard";
-import ClienteDashboard from "./ClienteDashboard";
+import AdminDashboard from './AdminDashboard'
+import VeterinarioDashboard from './VeterinarioDashboard'
+import ClienteDashboard from './ClienteDashboard'
 
 const ENDPOINT_POR_PERFIL = {
-  Administrador: "/dashboard/admin",
-  "Veterinário": "/dashboard/veterinario",
-  Cliente: "/dashboard/cliente",
-};
+  Administrador: '/dashboard/admin',
+  Veterinário: '/dashboard/veterinario',
+  Cliente: '/dashboard/cliente',
+}
 
 function Dashboard() {
-  const { usuario } = useAuth();
+  const { usuario } = useAuth()
 
-  const [sidebarAberto, setSidebarAberto] = useState(true);
-  const [dados, setDados] = useState({});
-  const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState("");
+  const [sidebarAberto, setSidebarAberto] = useState(true)
+
+  const perfil = usuario?.perfil
+  const endpoint = ENDPOINT_POR_PERFIL[perfil]
+
+  // Incrementar força o dashboard a ser buscado de novo (botão "Atualizar").
+  const [recarga, setRecarga] = useState(0)
+
+  // Resultado da última busca, junto com a "chave" que o gerou.
+  // Se a chave atual for diferente da guardada, ainda estamos carregando.
+  const [resultado, setResultado] = useState({
+    chave: null,
+    dados: {},
+    erro: '',
+  })
+
+  const chaveBusca = `${perfil}|${recarga}`
 
   useEffect(() => {
-    if (usuario) {
-      carregarDashboard();
-    }
-  }, [usuario]);
+    if (!usuario || !endpoint) return
 
-  async function carregarDashboard() {
-    const endpoint = ENDPOINT_POR_PERFIL[usuario?.perfil];
+    // Se o perfil mudar antes da resposta chegar, ignora a resposta antiga.
+    let ignorar = false
 
-    if (!endpoint) {
-      setDados({});
-      setCarregando(false);
-      return;
-    }
+    api
+      .get(endpoint)
+      .then((resposta) => {
+        if (ignorar) return
+        setResultado({ chave: chaveBusca, dados: resposta.data, erro: '' })
+      })
+      .catch((error) => {
+        if (ignorar) return
+        console.error(error)
+        setResultado({
+          chave: chaveBusca,
+          dados: {},
+          erro: 'Erro ao carregar o Dashboard.',
+        })
+      })
 
-    try {
-      const resposta = await api.get(endpoint);
-      setDados(resposta.data);
-      setErro("");
-    } catch (error) {
-      console.error(error);
-      setErro("Erro ao carregar o Dashboard.");
-    } finally {
-      setCarregando(false);
+    return () => {
+      ignorar = true
     }
-  }
+  }, [usuario, endpoint, chaveBusca])
+
+  // Sem usuário fica no "carregando"; perfil sem endpoint mostra o painel vazio.
+  const carregando = !usuario || (Boolean(endpoint) && resultado.chave !== chaveBusca)
+  const dados = endpoint ? resultado.dados : {}
+  const erro = carregando ? '' : endpoint ? resultado.erro : ''
 
   if (carregando) {
-    return <div className="loading-dashboard">Carregando dashboard...</div>;
+    return <div className="loading-dashboard">Carregando dashboard...</div>
   }
-
-  const ehCliente = usuario?.perfil === "Cliente";
-  const primeiroNome = (usuario?.nome || usuario?.name || "").trim().split(" ")[0];
 
   return (
     <div className="dashboard">
       <Sidebar perfil={usuario?.perfil} setSidebarAberto={setSidebarAberto} />
 
-      <main className={`dashboard-content ${sidebarAberto ? "aberto" : "fechado"}`}>
+      <main className={`dashboard-content ${sidebarAberto ? 'aberto' : 'fechado'}`}>
         <header className="dashboard-header">
           <div className="dashboard-title">
-            {ehCliente ? (
-              <>
-                <h1>Olá{primeiroNome ? `, ${primeiroNome}` : ""}!</h1>
-                <p>O que você precisa para o seu pet hoje?</p>
-              </>
-            ) : (
-              <>
-                <h1>Dashboard {usuario?.perfil}</h1>
-                <p>Bem-vindo ao sistema Petonline24h</p>
-              </>
-            )}
+            <h1>Dashboard {usuario?.perfil}</h1>
+            <p>Bem-vindo ao sistema Petonline24h</p>
           </div>
 
-          <button
-            className="btn-refresh"
-            aria-label="Atualizar dashboard"
-            onClick={() => {
-              setCarregando(true);
-              carregarDashboard();
-            }}
-          >
+          <button className="btn-refresh" onClick={() => setRecarga((n) => n + 1)}>
             <RefreshCw size={16} />
-            <span className="btn-refresh-texto">Atualizar</span>
+            Atualizar
           </button>
         </header>
 
         {erro && <p className="dashboard-erro">{erro}</p>}
 
-        {usuario?.perfil === "Administrador" && <AdminDashboard dados={dados} />}
-        {usuario?.perfil === "Veterinário" && <VeterinarioDashboard dados={dados} />}
-        {usuario?.perfil === "Cliente" && <ClienteDashboard dados={dados} />}
+        {usuario?.perfil === 'Administrador' && <AdminDashboard dados={dados} />}
+        {usuario?.perfil === 'Veterinário' && <VeterinarioDashboard dados={dados} />}
+        {usuario?.perfil === 'Cliente' && <ClienteDashboard dados={dados} />}
       </main>
     </div>
-  );
+  )
 }
 
-export default Dashboard;
+export default Dashboard
