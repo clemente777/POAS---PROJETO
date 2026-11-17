@@ -10,7 +10,6 @@ class AnimalCreate(BaseModel):
     cliente_id: int
 
 
-
 # UPDATE
 class AnimalUpdate(BaseModel):
     nome: str | None = None
@@ -21,7 +20,6 @@ class AnimalUpdate(BaseModel):
 
 # RESPONSE
 class AnimalResponse(BaseModel):
-
     model_config = ConfigDict(from_attributes=True)
 
     id: int

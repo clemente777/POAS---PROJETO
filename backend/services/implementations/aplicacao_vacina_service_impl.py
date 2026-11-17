@@ -4,24 +4,15 @@ from fastapi import HTTPException
 
 from backend.models.aplicacao_vacina_model import AplicacoesVacina
 from backend.models.usuario_model import Usuarios
-
+from backend.repositories.aplicacao_vacina_repository import AplicacaoVacinaRepository
 from backend.schemas.aplicacao_vacina_schema import (
     AplicacaoVacinaCreate,
-    AplicacaoVacinaUpdate
+    AplicacaoVacinaUpdate,
 )
-
-from backend.repositories.aplicacao_vacina_repository import (
-    AplicacaoVacinaRepository
-)
-
-from backend.services.interfaces.aplicacao_vacina_service import (
-    AplicacaoVacinaService
-)
+from backend.services.interfaces.aplicacao_vacina_service import AplicacaoVacinaService
 
 
-class AplicacaoVacinaServiceImpl(
-    AplicacaoVacinaService
-):
+class AplicacaoVacinaServiceImpl(AplicacaoVacinaService):
     """
     Service responsável pelas regras de negócio
     relacionadas às aplicações de vacina.
@@ -30,7 +21,7 @@ class AplicacaoVacinaServiceImpl(
     def __init__(
         self,
         repository: AplicacaoVacinaRepository,
-        usuario_logado: Usuarios | None = None
+        usuario_logado: Usuarios | None = None,
     ):
         self.repository = repository
         self.usuario_logado = usuario_logado
@@ -47,19 +38,13 @@ class AplicacaoVacinaServiceImpl(
     # BUSCAR APLICAÇÃO POR ID
     # ==========================================================
 
-    def buscar_por_id(
-        self,
-        aplicacao_id: int
-    ):
+    def buscar_por_id(self, aplicacao_id: int):
 
-        aplicacao = self.repository.buscar_por_id(
-            aplicacao_id
-        )
+        aplicacao = self.repository.buscar_por_id(aplicacao_id)
 
         if not aplicacao:
             raise HTTPException(
-                status_code=404,
-                detail="Aplicação de vacina não encontrada."
+                status_code=404, detail="Aplicação de vacina não encontrada."
             )
 
         return aplicacao
@@ -68,46 +53,30 @@ class AplicacaoVacinaServiceImpl(
     # LISTAR APLICAÇÕES DE UM ANIMAL
     # ==========================================================
 
-    def listar_por_animal(
-        self,
-        animal_id: int
-    ):
+    def listar_por_animal(self, animal_id: int):
 
-        animal = self.repository.buscar_animal(
-            animal_id
-        )
+        animal = self.repository.buscar_animal(animal_id)
 
         if not animal:
-            raise HTTPException(
-                status_code=404,
-                detail="Animal não encontrado."
-            )
+            raise HTTPException(status_code=404, detail="Animal não encontrado.")
 
-        return self.repository.listar_por_animal(
-            animal_id
-        )
+        return self.repository.listar_por_animal(animal_id)
 
     # ==========================================================
     # CARTEIRA DE VACINAÇÃO DO ANIMAL (PERFIL CLIENTE)
     # ==========================================================
 
-    def listar_carteira_do_animal(
-        self,
-        animal_id: int
-    ):
+    def listar_carteira_do_animal(self, animal_id: int):
 
         # ------------------------------------------------------
         # O usuário logado precisa ter um cliente vinculado
         # ------------------------------------------------------
 
-        cliente = self.repository.buscar_cliente_por_usuario_id(
-            self.usuario_logado.id
-        )
+        cliente = self.repository.buscar_cliente_por_usuario_id(self.usuario_logado.id)
 
         if not cliente:
             raise HTTPException(
-                status_code=403,
-                detail="Usuário sem cliente vinculado."
+                status_code=403, detail="Usuário sem cliente vinculado."
             )
 
         # ------------------------------------------------------
@@ -116,19 +85,12 @@ class AplicacaoVacinaServiceImpl(
         # revelar quais ids existem.
         # ------------------------------------------------------
 
-        animal = self.repository.buscar_animal(
-            animal_id
-        )
+        animal = self.repository.buscar_animal(animal_id)
 
         if not animal or animal.cliente_id != cliente.id:
-            raise HTTPException(
-                status_code=404,
-                detail="Animal não encontrado."
-            )
+            raise HTTPException(status_code=404, detail="Animal não encontrado.")
 
-        linhas = self.repository.listar_por_animal_com_detalhes(
-            animal_id
-        )
+        linhas = self.repository.listar_por_animal_com_detalhes(animal_id)
 
         return [
             {
@@ -143,51 +105,32 @@ class AplicacaoVacinaServiceImpl(
                 "lote": aplicacao.lote,
                 "observacoes": aplicacao.observacoes,
             }
-            for (
-                aplicacao,
-                vacina_nome,
-                fabricante,
-                veterinario_nome
-            ) in linhas
+            for (aplicacao, vacina_nome, fabricante, veterinario_nome) in linhas
         ]
 
     # ==========================================================
     # APLICAR VACINA
     # ==========================================================
 
-    def aplicar_vacina(
-        self,
-        dados: AplicacaoVacinaCreate,
-        veterinario_id: int
-    ):
+    def aplicar_vacina(self, dados: AplicacaoVacinaCreate, veterinario_id: int):
 
         # ------------------------------------------------------
         # Verifica se o animal existe
         # ------------------------------------------------------
 
-        animal = self.repository.buscar_animal(
-            dados.animal_id
-        )
+        animal = self.repository.buscar_animal(dados.animal_id)
 
         if not animal:
-            raise HTTPException(
-                status_code=404,
-                detail="Animal não encontrado."
-            )
+            raise HTTPException(status_code=404, detail="Animal não encontrado.")
 
         # ------------------------------------------------------
         # Verifica se a vacina existe
         # ------------------------------------------------------
 
-        vacina = self.repository.buscar_vacina(
-            dados.vacina_id
-        )
+        vacina = self.repository.buscar_vacina(dados.vacina_id)
 
         if not vacina:
-            raise HTTPException(
-                status_code=404,
-                detail="Vacina não encontrada."
-            )
+            raise HTTPException(status_code=404, detail="Vacina não encontrada.")
 
         # ------------------------------------------------------
         # Data atual da aplicação
@@ -200,21 +143,13 @@ class AplicacaoVacinaServiceImpl(
         # no mesmo dia
         # ------------------------------------------------------
 
-        aplicacao_existente = (
-            self.repository.buscar_aplicacao_no_dia(
-                animal_id=dados.animal_id,
-                vacina_id=dados.vacina_id,
-                data=data_aplicacao
-            )
+        aplicacao_existente = self.repository.buscar_aplicacao_no_dia(
+            animal_id=dados.animal_id, vacina_id=dados.vacina_id, data=data_aplicacao
         )
 
         if aplicacao_existente:
             raise HTTPException(
-                status_code=400,
-                detail=(
-                    "Este animal já recebeu "
-                    "esta vacina hoje."
-                )
+                status_code=400, detail=("Este animal já recebeu esta vacina hoje.")
             )
 
         # ------------------------------------------------------
@@ -224,12 +159,7 @@ class AplicacaoVacinaServiceImpl(
         proxima_dose = None
 
         if vacina.intervalo_dias:
-            proxima_dose = (
-                data_aplicacao
-                + timedelta(
-                    days=vacina.intervalo_dias
-                )
-            )
+            proxima_dose = data_aplicacao + timedelta(days=vacina.intervalo_dias)
 
         # ------------------------------------------------------
         # Cria a aplicação
@@ -242,30 +172,22 @@ class AplicacaoVacinaServiceImpl(
             data_aplicacao=data_aplicacao,
             lote=dados.lote,
             observacoes=dados.observacoes,
-            proxima_dose=proxima_dose
+            proxima_dose=proxima_dose,
         )
 
         # ------------------------------------------------------
         # Repository salva no banco
         # ------------------------------------------------------
 
-        return self.repository.criar(
-            aplicacao
-        )
+        return self.repository.criar(aplicacao)
 
     # ==========================================================
     # ATUALIZAR APLICAÇÃO
     # ==========================================================
 
-    def atualizar(
-        self,
-        aplicacao_id: int,
-        dados: AplicacaoVacinaUpdate
-    ):
+    def atualizar(self, aplicacao_id: int, dados: AplicacaoVacinaUpdate):
 
-        aplicacao = self.buscar_por_id(
-            aplicacao_id
-        )
+        aplicacao = self.buscar_por_id(aplicacao_id)
 
         # ------------------------------------------------------
         # Atualiza lote
@@ -292,31 +214,16 @@ class AplicacaoVacinaServiceImpl(
         # Repository salva as alterações
         # ------------------------------------------------------
 
-        return self.repository.atualizar(
-            aplicacao
-        )
+        return self.repository.atualizar(aplicacao)
 
     # ==========================================================
     # DELETAR APLICAÇÃO
     # ==========================================================
 
-    def deletar(
-        self,
-        aplicacao_id: int
-    ):
+    def deletar(self, aplicacao_id: int):
 
-        aplicacao = self.buscar_por_id(
-            aplicacao_id
-        )
+        aplicacao = self.buscar_por_id(aplicacao_id)
 
-        self.repository.deletar(
-            aplicacao
-        )
+        self.repository.deletar(aplicacao)
 
-        return {
-            "mensagem": (
-                "Aplicação de vacina removida "
-                "com sucesso."
-            )
-        }
-
+        return {"mensagem": ("Aplicação de vacina removida com sucesso.")}

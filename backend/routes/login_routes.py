@@ -5,84 +5,74 @@ from fastapi.security import OAuth2PasswordRequestForm
 from pwdlib import PasswordHash
 from sqlalchemy.orm import Session
 
-from backend.database.database import get_session
 from backend.auth.token import create_access_token
+from backend.database.database import get_session
+from backend.repositories.cliente_repository import ClienteRepository
+from backend.repositories.usuario_repository import UsuarioRepository
+from backend.services.implementations.usuario_service_impl import UsuarioServiceImpl
 
-from backend.repositories.usuario_repository import (
-    UsuarioRepository
-)
-
-from backend.repositories.cliente_repository import (
-    ClienteRepository
-)
-
-from backend.services.implementations.usuario_service_impl import (
-    UsuarioServiceImpl
-)
-
-
-router = APIRouter(
-    prefix="/login",
-    tags=["Login"]
-)
-
+router = APIRouter(prefix="/login", tags=["Login"])
 
 senha_context = PasswordHash.recommended()
 
 
-SessionDep = Annotated[
-    Session,
-    Depends(get_session)
-]
+# ==========================================================
+# DEPENDÊNCIAS
+# ==========================================================
+
+SessionDep = Annotated[Session, Depends(get_session)]
+
+LoginFormDep = Annotated[OAuth2PasswordRequestForm, Depends()]
 
 
-def get_usuario_service(
-    session: SessionDep
-):
+# ==========================================================
+# SERVICE
+# ==========================================================
 
-    usuario_repository = UsuarioRepository(
-        session
-    )
 
-    cliente_repository = ClienteRepository(
-        session
-    )
+def get_usuario_service(session: SessionDep):
+    usuario_repository = UsuarioRepository(session)
+    cliente_repository = ClienteRepository(session)
 
     return UsuarioServiceImpl(
         repository=usuario_repository,
-        cliente_repository=cliente_repository
+        cliente_repository=cliente_repository,
     )
+
+
+UsuarioServiceDep = Annotated[
+    UsuarioServiceImpl,
+    Depends(get_usuario_service),
+]
+
+
+# ==========================================================
+# LOGIN
+# ==========================================================
 
 
 @router.post("/")
 def login(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    service: UsuarioServiceImpl = Depends(
-        get_usuario_service
-    )
+    form_data: LoginFormDep,
+    service: UsuarioServiceDep,
 ):
-
-    usuario = service.buscar_por_email(
-        form_data.username
-    )
+    usuario = service.buscar_por_email(form_data.username)
 
     if not usuario:
-
         raise HTTPException(
             status_code=401,
-            detail="Usuário não encontrado."
+            detail="Usuário não encontrado.",
         )
 
     senha_valida = senha_context.verify(
         form_data.password,
-        usuario.senha_hash
+        usuario.senha_hash,
     )
 
     if not senha_valida:
-
         raise HTTPException(
             status_code=401,
-            detail="Senha inválida."
+            detail="Senha inválida.",
         )
 
     # ----------------------------------------------------------
@@ -90,19 +80,12 @@ def login(
     # ----------------------------------------------------------
 
     if usuario.perfil == "Cliente":
-
-        cliente = service.buscar_cliente_por_usuario_id(
-            usuario.id
-        )
+        cliente = service.buscar_cliente_por_usuario_id(usuario.id)
 
         if not cliente:
-
             raise HTTPException(
                 status_code=404,
-                detail=(
-                    "Este usuário não possui "
-                    "cadastro de cliente."
-                )
+                detail="Este usuário não possui cadastro de cliente.",
             )
 
     # ----------------------------------------------------------
@@ -113,7 +96,7 @@ def login(
         {
             "sub": usuario.email,
             "perfil": usuario.perfil,
-            "usuario_id": usuario.id
+            "usuario_id": usuario.id,
         }
     )
 
@@ -124,6 +107,6 @@ def login(
             "id": usuario.id,
             "nome": usuario.nome,
             "email": usuario.email,
-            "perfil": usuario.perfil
-        }
+            "perfil": usuario.perfil,
+        },
     }

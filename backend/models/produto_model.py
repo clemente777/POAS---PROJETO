@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from sqlalchemy import Integer, String, Float
+from typing import TYPE_CHECKING
+
+from sqlalchemy import Float, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.database.database import Base
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from backend.models.item_carrinho_model import ItensCarrinho
@@ -23,8 +23,6 @@ class Produtos(Base):
     estoque: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     ativo: Mapped[bool] = mapped_column(default=True)
-    itens_carrinho: Mapped[list["ItensCarrinho"]] = relationship(
-        back_populates="produto",
-        lazy="selectin"
+    itens_carrinho: Mapped[list[ItensCarrinho]] = relationship(
+        back_populates="produto", lazy="selectin"
     )
-   

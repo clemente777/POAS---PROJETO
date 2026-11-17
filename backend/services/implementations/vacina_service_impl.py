@@ -1,27 +1,14 @@
 from fastapi import HTTPException
+from sqlalchemy.exc import SQLAlchemyError
 
 from backend.models.vacina_model import Vacinas
-
-from backend.schemas.vacina_schema import (
-    VacinaCreate,
-    VacinaUpdate
-)
-
-from backend.services.interfaces.vacina_service import (
-    VacinaService
-)
-
-from backend.repositories.vacina_repository import (
-    VacinaRepository
-)
+from backend.repositories.vacina_repository import VacinaRepository
+from backend.schemas.vacina_schema import VacinaCreate, VacinaUpdate
+from backend.services.interfaces.vacina_service import VacinaService
 
 
 class VacinaServiceImpl(VacinaService):
-
-    def __init__(
-        self,
-        repository: VacinaRepository
-    ):
+    def __init__(self, repository: VacinaRepository):
         self.repository = repository
 
     # ==================================================
@@ -36,20 +23,12 @@ class VacinaServiceImpl(VacinaService):
     # BUSCAR POR ID
     # ==================================================
 
-    def buscar_por_id(
-        self,
-        vacina_id: int
-    ):
+    def buscar_por_id(self, vacina_id: int):
 
-        vacina = self.repository.buscar_por_id(
-            vacina_id
-        )
+        vacina = self.repository.buscar_por_id(vacina_id)
 
         if not vacina:
-            raise HTTPException(
-                status_code=404,
-                detail="Vacina não encontrada."
-            )
+            raise HTTPException(status_code=404, detail="Vacina não encontrada.")
 
         return vacina
 
@@ -57,23 +36,15 @@ class VacinaServiceImpl(VacinaService):
     # BUSCAR POR NOME
     # ==================================================
 
-    def buscar_por_nome(
-        self,
-        nome: str
-    ):
+    def buscar_por_nome(self, nome: str):
 
-        return self.repository.buscar_por_nome(
-            nome
-        )
+        return self.repository.buscar_por_nome(nome)
 
     # ==================================================
     # CADASTRAR
     # ==================================================
 
-    def cadastrar(
-        self,
-        dados: VacinaCreate
-    ):
+    def cadastrar(self, dados: VacinaCreate):
 
         # --------------------------------------------------
         # NORMALIZAR NOME
@@ -84,26 +55,19 @@ class VacinaServiceImpl(VacinaService):
         if not nome:
             raise HTTPException(
                 status_code=400,
-                detail="Nome da vacina é obrigatório."
+                detail="Nome da vacina é obrigatório.",
             )
 
         # --------------------------------------------------
         # VERIFICAR DUPLICIDADE
         # --------------------------------------------------
 
-        vacina_existente = (
-            self.repository.buscar_por_nome_exato(
-                nome
-            )
-        )
+        vacina_existente = self.repository.buscar_por_nome_exato(nome)
 
         if vacina_existente:
             raise HTTPException(
                 status_code=400,
-                detail=(
-                    "Já existe uma vacina cadastrada "
-                    "com esse nome."
-                )
+                detail="Já existe uma vacina cadastrada com esse nome.",
             )
 
         # --------------------------------------------------
@@ -115,70 +79,49 @@ class VacinaServiceImpl(VacinaService):
             fabricante=dados.fabricante,
             quantidade_doses=dados.quantidade_doses,
             intervalo_dias=dados.intervalo_dias,
-            descricao=dados.descricao
+            descricao=dados.descricao,
         )
 
         try:
+            return self.repository.criar(vacina)
 
-            return self.repository.criar(
-                vacina
-            )
-
-        except Exception:
-
+        except SQLAlchemyError as erro:
             self.repository.rollback()
 
             raise HTTPException(
                 status_code=500,
-                detail="Erro ao cadastrar vacina."
-            )
+                detail="Erro ao cadastrar vacina.",
+            ) from erro
 
     # ==================================================
     # ATUALIZAR
     # ==================================================
 
-    def atualizar(
-        self,
-        vacina_id: int,
-        dados: VacinaUpdate
-    ):
+    def atualizar(self, vacina_id: int, dados: VacinaUpdate):
 
-        vacina = self.buscar_por_id(
-            vacina_id
-        )
+        vacina = self.buscar_por_id(vacina_id)
 
         # --------------------------------------------------
         # ATUALIZAR NOME
         # --------------------------------------------------
 
         if dados.nome is not None:
-
             nome = dados.nome.strip()
 
             if not nome:
                 raise HTTPException(
                     status_code=400,
-                    detail=(
-                        "Nome da vacina "
-                        "não pode ser vazio."
-                    )
+                    detail="Nome da vacina não pode ser vazio.",
                 )
 
-            vacina_existente = (
-                self.repository
-                .buscar_por_nome_exato_excluindo_id(
-                    nome,
-                    vacina.id
-                )
+            vacina_existente = self.repository.buscar_por_nome_exato_excluindo_id(
+                nome, vacina.id
             )
 
             if vacina_existente:
                 raise HTTPException(
                     status_code=400,
-                    detail=(
-                        "Já existe uma vacina cadastrada "
-                        "com esse nome."
-                    )
+                    detail="Já existe uma vacina cadastrada com esse nome.",
                 )
 
             vacina.nome = nome
@@ -195,38 +138,26 @@ class VacinaServiceImpl(VacinaService):
         # --------------------------------------------------
 
         if dados.quantidade_doses is not None:
-
             if dados.quantidade_doses <= 0:
                 raise HTTPException(
                     status_code=400,
-                    detail=(
-                        "Quantidade de doses "
-                        "deve ser maior que zero."
-                    )
+                    detail="Quantidade de doses deve ser maior que zero.",
                 )
 
-            vacina.quantidade_doses = (
-                dados.quantidade_doses
-            )
+            vacina.quantidade_doses = dados.quantidade_doses
 
         # --------------------------------------------------
         # ATUALIZAR INTERVALO
         # --------------------------------------------------
 
         if dados.intervalo_dias is not None:
-
             if dados.intervalo_dias < 0:
                 raise HTTPException(
                     status_code=400,
-                    detail=(
-                        "Intervalo de dias "
-                        "não pode ser negativo."
-                    )
+                    detail="Intervalo de dias não pode ser negativo.",
                 )
 
-            vacina.intervalo_dias = (
-                dados.intervalo_dias
-            )
+            vacina.intervalo_dias = dados.intervalo_dias
 
         # --------------------------------------------------
         # ATUALIZAR DESCRIÇÃO
@@ -236,65 +167,46 @@ class VacinaServiceImpl(VacinaService):
             vacina.descricao = dados.descricao
 
         try:
+            return self.repository.atualizar(vacina)
 
-            return self.repository.atualizar(
-                vacina
-            )
-
-        except Exception:
-
+        except SQLAlchemyError as erro:
             self.repository.rollback()
 
             raise HTTPException(
                 status_code=500,
-                detail="Erro ao atualizar vacina."
-            )
+                detail="Erro ao atualizar vacina.",
+            ) from erro
 
     # ==================================================
     # DELETAR
     # ==================================================
 
-    def deletar(
-        self,
-        vacina_id: int
-    ):
+    def deletar(self, vacina_id: int):
 
-        vacina = self.buscar_por_id(
-            vacina_id
-        )
+        vacina = self.buscar_por_id(vacina_id)
 
         # --------------------------------------------------
         # VERIFICAR APLICAÇÕES EXISTENTES
         # --------------------------------------------------
 
-        quantidade_aplicacoes = (
-            self.repository.contar_aplicacoes(
-                vacina.id
-            )
-        )
+        quantidade_aplicacoes = self.repository.contar_aplicacoes(vacina.id)
 
         if quantidade_aplicacoes > 0:
-
             raise HTTPException(
                 status_code=400,
                 detail=(
                     "Não é possível excluir uma vacina "
                     "que possui aplicações registradas."
-                )
+                ),
             )
 
         try:
+            return self.repository.deletar(vacina)
 
-            return self.repository.deletar(
-                vacina
-            )
-
-        except Exception:
-
+        except SQLAlchemyError as erro:
             self.repository.rollback()
 
             raise HTTPException(
                 status_code=500,
-                detail="Erro ao excluir vacina."
-            )
-
+                detail="Erro ao excluir vacina.",
+            ) from erro

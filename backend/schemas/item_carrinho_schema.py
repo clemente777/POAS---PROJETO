@@ -1,7 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 
 
-
 # CREATE
 class ItemCarrinhoCreate(BaseModel):
     carrinho_id: int

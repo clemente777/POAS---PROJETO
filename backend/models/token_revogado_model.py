@@ -11,5 +11,7 @@ class TokenRevogado(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     token: Mapped[str] = mapped_column(String(600), nullable=False, unique=True)
-    expira_em: Mapped[datetime] = mapped_column(DateTime,nullable=False)
-    revogado_em: Mapped[datetime] = mapped_column(DateTime,server_default=func.now(),nullable=False)
+    expira_em: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    revogado_em: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), nullable=False
+    )

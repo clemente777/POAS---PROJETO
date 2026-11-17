@@ -1,102 +1,180 @@
 import {
   PawPrint,
   CalendarCheck,
+  CalendarPlus,
   Clock,
   ClipboardCheck,
   ShoppingBag,
+  ShoppingCart,
   Wallet,
   Syringe,
-} from 'lucide-react'
+  ArrowRight,
+} from "lucide-react";
 
-import { useNavigate } from 'react-router-dom'
-import DashboardCard from '../../components/DashboardCard/DashboardCard'
-import DashboardSection from '../../components/DashboardSection/DashboardSection'
+import { Link } from "react-router-dom";
+import DashboardCard from "../../components/DashboardCard/DashboardCard";
+import DashboardSection from "../../components/DashboardSection/DashboardSection";
 
 function formatarData(isoString) {
-  if (!isoString) return null
+  if (!isoString) return null;
 
-  const data = new Date(isoString)
+  const data = new Date(isoString);
 
-  return data.toLocaleString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  return data.toLocaleString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
+// Ações mais usadas pelo cliente, a um toque de distância.
+const ATALHOS = [
+  {
+    rota: "/minhas-consultas?agendar=1",
+    titulo: "Agendar consulta",
+    descricao: "Escolha o pet e o horário",
+    Icone: CalendarPlus,
+    destaque: true,
+  },
+  {
+    rota: "/meus-animais",
+    titulo: "Vacinas e pets",
+    descricao: "Carteira de vacinação",
+    Icone: Syringe,
+  },
+  {
+    rota: "/produtos",
+    titulo: "Comprar produtos",
+    descricao: "Veja o que está disponível",
+    Icone: ShoppingCart,
+  },
+  {
+    rota: "/compras",
+    titulo: "Minhas compras",
+    descricao: "Acompanhe seus pedidos",
+    Icone: ShoppingBag,
+  },
+];
+
 function ClienteDashboard({ dados }) {
-  const navigate = useNavigate()
-  const proxima = dados.proxima_consulta
+  const proxima = dados.proxima_consulta;
 
   return (
     <>
-      <DashboardSection titulo="Minha área">
-        <div onClick={() => navigate('/meus-animais')} style={{ cursor: 'pointer' }}>
+      {/* 1. O que vem agora: próxima consulta ou convite para agendar */}
+      <section className="cliente-hero">
+        <div className="cliente-hero-icone">
+          <Clock size={24} />
+        </div>
+
+        <div className="cliente-hero-texto">
+          <span className="cliente-hero-rotulo">Próxima consulta</span>
+
+          {proxima ? (
+            <>
+              <strong>{proxima.animal}</strong>
+              <p>
+                {proxima.descricao} · {formatarData(proxima.data)}
+              </p>
+            </>
+          ) : (
+            <>
+              <strong>Nenhuma consulta agendada</strong>
+              <p>Agende em poucos toques.</p>
+            </>
+          )}
+        </div>
+
+        <Link
+          className="cliente-hero-botao"
+          to={proxima ? "/minhas-consultas" : "/minhas-consultas?agendar=1"}
+        >
+          {proxima ? "Ver consultas" : "Agendar agora"}
+          <ArrowRight size={16} />
+        </Link>
+      </section>
+
+      {/* 2. Atalhos para as tarefas mais comuns */}
+      <DashboardSection titulo="Acesso rápido" classe="atalhos-grid">
+        {ATALHOS.map(({ rota, titulo, descricao, Icone, destaque }) => (
+          <Link
+            key={rota}
+            to={rota}
+            className={`atalho ${destaque ? "atalho-destaque" : ""}`}
+          >
+            <span className="atalho-icone">
+              <Icone size={22} />
+            </span>
+
+            <span className="atalho-texto">
+              <strong>{titulo}</strong>
+              <small>{descricao}</small>
+            </span>
+          </Link>
+        ))}
+      </DashboardSection>
+
+      {/* 3. Resumo em números */}
+      <DashboardSection titulo="Resumo">
+        <Link to="/meus-animais" className="card-link">
           <DashboardCard
             titulo="Meus animais"
             valor={dados.total_animais}
             icone={PawPrint}
           />
-        </div>
+        </Link>
 
-        <DashboardCard
-          titulo="Consultas agendadas"
-          valor={dados.consultas_agendadas}
-          icone={CalendarCheck}
-        />
+        <Link to="/minhas-consultas" className="card-link">
+          <DashboardCard
+            titulo="Consultas agendadas"
+            valor={dados.consultas_agendadas}
+            icone={CalendarCheck}
+          />
+        </Link>
 
-        <DashboardCard
-          titulo="Consultas realizadas"
-          valor={dados.consultas_realizadas}
-          icone={ClipboardCheck}
-        />
+        <Link to="/minhas-consultas" className="card-link">
+          <DashboardCard
+            titulo="Consultas realizadas"
+            valor={dados.consultas_realizadas}
+            icone={ClipboardCheck}
+          />
+        </Link>
 
-        <div onClick={() => navigate('/meus-animais')} style={{ cursor: 'pointer' }}>
+        <Link to="/meus-animais" className="card-link">
           <DashboardCard
             titulo="Próximas doses de vacina"
             valor={dados.proximas_doses_vacina}
             icone={Syringe}
           />
-        </div>
+        </Link>
 
-        <DashboardCard
-          titulo="Minhas compras"
-          valor={dados.compras}
-          icone={ShoppingBag}
-        />
+        <Link to="/compras" className="card-link">
+          <DashboardCard
+            titulo="Minhas compras"
+            valor={dados.compras}
+            icone={ShoppingBag}
+          />
+        </Link>
 
-        <DashboardCard
-          titulo="Total gasto"
-          valor={`R$ ${Number(dados.valor_total_compras || 0).toFixed(2)}`}
-          icone={Wallet}
-          cor="var(--color-accent)"
-        />
+        <Link to="/compras" className="card-link">
+          <DashboardCard
+            titulo="Total gasto"
+            valor={`R$ ${Number(dados.valor_total_compras || 0).toFixed(2)}`}
+            icone={Wallet}
+            cor="var(--color-accent)"
+          />
+        </Link>
       </DashboardSection>
 
-      {proxima && (
-        <DashboardSection titulo="Próxima consulta">
-          <div className="proxima-consulta-card">
-            <div className="proxima-consulta-icon">
-              <Clock size={22} />
-            </div>
-
-            <div>
-              <strong>{proxima.animal}</strong>
-              <p>{proxima.descricao}</p>
-              <span>{formatarData(proxima.data)}</span>
-            </div>
-          </div>
-        </DashboardSection>
-      )}
-
+      {/* 4. Pets */}
       {dados.meus_animais?.length > 0 && (
         <DashboardSection titulo="Meus animais">
           {dados.meus_animais.map((animal, index) => (
-            <div
+            <Link
               key={`${animal.nome}-${index}`}
-              onClick={() => navigate('/meus-animais')}
-              style={{ cursor: 'pointer' }}
+              to="/meus-animais"
+              className="card-link"
             >
               <DashboardCard
                 titulo={animal.nome}
@@ -104,12 +182,12 @@ function ClienteDashboard({ dados }) {
                 icone={PawPrint}
                 cor="var(--color-brand-dark)"
               />
-            </div>
+            </Link>
           ))}
         </DashboardSection>
       )}
     </>
-  )
+  );
 }
 
-export default ClienteDashboard
+export default ClienteDashboard;

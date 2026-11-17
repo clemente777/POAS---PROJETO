@@ -1,13 +1,23 @@
-import './DashboardSection.css'
+import "./DashboardSection.css";
 
-function DashboardSection({ titulo, children }) {
-  return (
-    <section className="dashboard-section">
-      <h2>{titulo}</h2>
+function DashboardSection({ titulo, children, classe = "" }) {
 
-      <div className="section-content">{children}</div>
-    </section>
-  )
+    return (
+
+        <section className="dashboard-section">
+
+            <h2>{titulo}</h2>
+
+            <div className={`section-content ${classe}`.trim()}>
+
+                {children}
+
+            </div>
+
+        </section>
+
+    );
+
 }
 
-export default DashboardSection
+export default DashboardSection;

@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 
 
 class ItemCarrinhoService(ABC):
-
     @abstractmethod
     def listar_itens(self):
         pass

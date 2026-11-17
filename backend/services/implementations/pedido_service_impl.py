@@ -1,14 +1,8 @@
 from fastapi import HTTPException
 
 from backend.models.usuario_model import Usuarios
-
-from backend.repositories.pedido_repository import (
-    PedidoRepository
-)
-
-from backend.services.interfaces.pedido_service import (
-    PedidoService
-)
+from backend.repositories.pedido_repository import PedidoRepository
+from backend.services.interfaces.pedido_service import PedidoService
 
 
 class PedidoServiceImpl(PedidoService):
@@ -23,11 +17,7 @@ class PedidoServiceImpl(PedidoService):
 
     PERFIS_COM_ACESSO = ("Administrador", "Cliente")
 
-    def __init__(
-        self,
-        repository: PedidoRepository,
-        usuario_logado: Usuarios
-    ):
+    def __init__(self, repository: PedidoRepository, usuario_logado: Usuarios):
         self.repository = repository
         self.usuario_logado = usuario_logado
 
@@ -44,10 +34,8 @@ class PedidoServiceImpl(PedidoService):
     def validar_acesso(self):
 
         if self.obter_perfil() not in self.PERFIS_COM_ACESSO:
-
             raise HTTPException(
-                status_code=403,
-                detail="Você não possui acesso às compras."
+                status_code=403, detail="Você não possui acesso às compras."
             )
 
     # ==========================================================
@@ -55,45 +43,31 @@ class PedidoServiceImpl(PedidoService):
     # ==========================================================
 
     def listar_pedidos(
-        self,
-        skip: int = 0,
-        limite: int = 10,
-        cliente_id: int | None = None
+        self, skip: int = 0, limite: int = 10, cliente_id: int | None = None
     ):
 
         self.validar_acesso()
 
-        if skip < 0:
-            skip = 0
+        skip = max(skip, 0)
 
         if limite <= 0:
             limite = 10
 
-        if limite > 100:
-            limite = 100
+        limite = min(limite, 100)
 
         if self.is_admin():
-
             return self.repository.listar(
-                skip=skip,
-                limite=limite,
-                cliente_id=cliente_id
+                skip=skip, limite=limite, cliente_id=cliente_id
             )
 
         # Cliente: só enxerga o que é dele,
         # ignorando qualquer cliente_id informado.
-        cliente = self.repository.buscar_cliente_por_usuario_id(
-            self.usuario_logado.id
-        )
+        cliente = self.repository.buscar_cliente_por_usuario_id(self.usuario_logado.id)
 
         if not cliente:
             return []
 
-        return self.repository.listar(
-            skip=skip,
-            limite=limite,
-            cliente_id=cliente.id
-        )
+        return self.repository.listar(skip=skip, limite=limite, cliente_id=cliente.id)
 
     # ==========================================================
     # BUSCAR
@@ -106,25 +80,16 @@ class PedidoServiceImpl(PedidoService):
         pedido = self.repository.buscar_por_id(id)
 
         if not pedido:
-
-            raise HTTPException(
-                status_code=404,
-                detail="Compra não encontrada."
-            )
+            raise HTTPException(status_code=404, detail="Compra não encontrada.")
 
         if not self.is_admin():
-
-            cliente = (
-                self.repository.buscar_cliente_por_usuario_id(
-                    self.usuario_logado.id
-                )
+            cliente = self.repository.buscar_cliente_por_usuario_id(
+                self.usuario_logado.id
             )
 
             if not cliente or pedido.cliente_id != cliente.id:
-
                 raise HTTPException(
-                    status_code=403,
-                    detail="Você não possui acesso a esta compra."
+                    status_code=403, detail="Você não possui acesso a esta compra."
                 )
 
         return pedido

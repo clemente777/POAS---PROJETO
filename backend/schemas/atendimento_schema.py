@@ -1,14 +1,13 @@
-from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 
-
+from pydantic import BaseModel, ConfigDict
 
 # ===============================
 # CREATE
 # ===============================
 
-class AtendimentoCreate(BaseModel):
 
+class AtendimentoCreate(BaseModel):
     diagnostico: str
 
     observacoes: str | None = None
@@ -20,14 +19,12 @@ class AtendimentoCreate(BaseModel):
     data_atendimento: datetime | None = None
 
 
-
-
 # ===============================
 # UPDATE
 # ===============================
 
-class AtendimentoUpdate(BaseModel):
 
+class AtendimentoUpdate(BaseModel):
     diagnostico: str | None = None
 
     observacoes: str | None = None
@@ -37,18 +34,13 @@ class AtendimentoUpdate(BaseModel):
     usuario_id: int | None = None
 
 
-
-
 # ===============================
 # RESPONSE
 # ===============================
 
+
 class AtendimentoResponse(BaseModel):
-
-    model_config = ConfigDict(
-        from_attributes=True
-    )
-
+    model_config = ConfigDict(from_attributes=True)
 
     id: int
 

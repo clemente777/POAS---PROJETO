@@ -15,22 +15,14 @@ class UsuarioRepository:
     # ==========================================================
 
     def buscar_por_id(self, usuario_id: int):
-        return self.session.scalar(
-            select(Usuarios).where(
-                Usuarios.id == usuario_id
-            )
-        )
+        return self.session.scalar(select(Usuarios).where(Usuarios.id == usuario_id))
 
     # ==========================================================
     # BUSCAR POR EMAIL
     # ==========================================================
 
     def buscar_por_email(self, email: str):
-        return self.session.scalar(
-            select(Usuarios).where(
-                Usuarios.email == email
-            )
-        )
+        return self.session.scalar(select(Usuarios).where(Usuarios.email == email))
 
     # ==========================================================
     # LISTAR
@@ -44,7 +36,7 @@ class UsuarioRepository:
         email: str | None = None,
         perfil: str | None = None,
         sort_by: str = "id",
-        order: str = "asc"
+        order: str = "asc",
     ):
         query = select(Usuarios)
 
@@ -53,31 +45,21 @@ class UsuarioRepository:
         # ------------------------------------------------------
 
         if nome:
-            query = query.where(
-                Usuarios.nome.ilike(
-                    f"%{nome.strip()}%"
-                )
-            )
+            query = query.where(Usuarios.nome.ilike(f"%{nome.strip()}%"))
 
         # ------------------------------------------------------
         # FILTRO POR EMAIL
         # ------------------------------------------------------
 
         if email:
-            query = query.where(
-                Usuarios.email.ilike(
-                    f"%{email.strip()}%"
-                )
-            )
+            query = query.where(Usuarios.email.ilike(f"%{email.strip()}%"))
 
         # ------------------------------------------------------
         # FILTRO POR PERFIL
         # ------------------------------------------------------
 
         if perfil:
-            query = query.where(
-                Usuarios.perfil == perfil
-            )
+            query = query.where(Usuarios.perfil == perfil)
 
         # ------------------------------------------------------
         # ORDENAÇÃO
@@ -88,36 +70,23 @@ class UsuarioRepository:
             "nome": Usuarios.nome,
             "email": Usuarios.email,
             "perfil": Usuarios.perfil,
-            "criado_em": Usuarios.criado_em
+            "criado_em": Usuarios.criado_em,
         }
 
-        coluna = campos.get(
-            sort_by,
-            Usuarios.id
-        )
+        coluna = campos.get(sort_by, Usuarios.id)
 
         if order.lower() == "desc":
-            query = query.order_by(
-                desc(coluna)
-            )
+            query = query.order_by(desc(coluna))
         else:
-            query = query.order_by(
-                asc(coluna)
-            )
+            query = query.order_by(asc(coluna))
 
         # ------------------------------------------------------
         # PAGINAÇÃO
         # ------------------------------------------------------
 
-        query = (
-            query
-            .offset(skip)
-            .limit(limit)
-        )
+        query = query.offset(skip).limit(limit)
 
-        return self.session.scalars(
-            query
-        ).all()
+        return self.session.scalars(query).all()
 
     # ==========================================================
     # CRIAR
@@ -165,4 +134,3 @@ class UsuarioRepository:
         except Exception:
             self.session.rollback()
             raise
-

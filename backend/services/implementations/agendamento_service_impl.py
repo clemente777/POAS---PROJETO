@@ -1,19 +1,14 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from typing import ClassVar
 
 from fastapi import HTTPException
+from sqlalchemy.exc import SQLAlchemyError
 
 from backend.models.agendamento_model import Agendamentos
 from backend.models.animal_model import Animais
 from backend.models.usuario_model import Usuarios
-
-from backend.schemas.agendamento_schema import (
-    AgendamentoCreate,
-    AgendamentoUpdate
-)
-
-from backend.repositories.agendamento_repository import (
-    AgendamentoRepository
-)
+from backend.repositories.agendamento_repository import AgendamentoRepository
+from backend.schemas.agendamento_schema import AgendamentoCreate, AgendamentoUpdate
 
 
 class AgendamentoServiceImpl:
@@ -31,18 +26,14 @@ class AgendamentoServiceImpl:
     - Histórico não é apagado.
     """
 
-    STATUS_VALIDOS = [
+    STATUS_VALIDOS: ClassVar[list[str]] = [
         "Pendente",
         "Confirmado",
         "Cancelado",
-        "Finalizado"
+        "Finalizado",
     ]
 
-    def __init__(
-        self,
-        repository: AgendamentoRepository,
-        usuario_logado: Usuarios
-    ):
+    def __init__(self, repository: AgendamentoRepository, usuario_logado: Usuarios):
         self.repository = repository
         self.usuario_logado = usuario_logado
 
@@ -63,10 +54,7 @@ class AgendamentoServiceImpl:
     # VERIFICAR ACESSO AO ANIMAL
     # ==========================================================
 
-    def verificar_acesso_animal(
-        self,
-        animal: Animais
-    ):
+    def verificar_acesso_animal(self, animal: Animais):
 
         perfil = self.obter_perfil()
 
@@ -74,10 +62,7 @@ class AgendamentoServiceImpl:
         # ADMINISTRADOR E VETERINÁRIO
         # ------------------------------------------------------
 
-        if perfil in [
-            "Administrador",
-            "Veterinário"
-        ]:
+        if perfil in ["Administrador", "Veterinário"]:
             return
 
         # ------------------------------------------------------
@@ -85,32 +70,18 @@ class AgendamentoServiceImpl:
         # ------------------------------------------------------
 
         if perfil == "Cliente":
-
-            cliente = (
-                self.repository
-                .buscar_cliente_por_usuario_id(
-                    self.usuario_logado.id
-                )
+            cliente = self.repository.buscar_cliente_por_usuario_id(
+                self.usuario_logado.id
             )
 
             if not cliente:
-
                 raise HTTPException(
-                    status_code=403,
-                    detail=(
-                        "Usuário não possui "
-                        "cliente vinculado."
-                    )
+                    status_code=403, detail=("Usuário não possui cliente vinculado.")
                 )
 
             if animal.cliente_id != cliente.id:
-
                 raise HTTPException(
-                    status_code=403,
-                    detail=(
-                        "Você não possui acesso "
-                        "a este animal."
-                    )
+                    status_code=403, detail=("Você não possui acesso a este animal.")
                 )
 
             return
@@ -119,34 +90,20 @@ class AgendamentoServiceImpl:
         # PERFIL INVÁLIDO
         # ------------------------------------------------------
 
-        raise HTTPException(
-            status_code=403,
-            detail="Perfil sem permissão."
-        )
+        raise HTTPException(status_code=403, detail="Perfil sem permissão.")
 
     # ==========================================================
     # BUSCAR ANIMAL
     # ==========================================================
 
-    def buscar_animal(
-        self,
-        animal_id: int
-    ):
+    def buscar_animal(self, animal_id: int):
 
-        animal = self.repository.buscar_animal(
-            animal_id
-        )
+        animal = self.repository.buscar_animal(animal_id)
 
         if not animal:
+            raise HTTPException(status_code=404, detail="Animal não encontrado.")
 
-            raise HTTPException(
-                status_code=404,
-                detail="Animal não encontrado."
-            )
-
-        self.verificar_acesso_animal(
-            animal
-        )
+        self.verificar_acesso_animal(animal)
 
         return animal
 
@@ -154,25 +111,14 @@ class AgendamentoServiceImpl:
     # BUSCAR AGENDAMENTO POR ID
     # ==========================================================
 
-    def buscar_por_id(
-        self,
-        id: int
-    ):
+    def buscar_por_id(self, id: int):
 
-        agendamento = (
-            self.repository.buscar_por_id(id)
-        )
+        agendamento = self.repository.buscar_por_id(id)
 
         if not agendamento:
+            raise HTTPException(status_code=404, detail="Agendamento não encontrado.")
 
-            raise HTTPException(
-                status_code=404,
-                detail="Agendamento não encontrado."
-            )
-
-        self.verificar_acesso_animal(
-            agendamento.animal
-        )
+        self.verificar_acesso_animal(agendamento.animal)
 
         return agendamento
 
@@ -180,80 +126,45 @@ class AgendamentoServiceImpl:
     # VALIDAÇÃO DE DATA
     # ==========================================================
 
-    def validar_data(
-        self,
-        data: datetime
-    ):
+    def validar_data(self, data: datetime):
 
-        agora = datetime.now(
-            timezone.utc
-        )
+        agora = datetime.now(UTC)
 
         if data.tzinfo is None:
-
-            data = data.replace(
-                tzinfo=timezone.utc
-            )
+            data = data.replace(tzinfo=UTC)
 
         if data < agora:
-
             raise HTTPException(
-                status_code=400,
-                detail=(
-                    "Não é permitido agendamento "
-                    "em data passada."
-                )
+                status_code=400, detail=("Não é permitido agendamento em data passada.")
             )
 
     # ==========================================================
     # VALIDAÇÃO DE STATUS
     # ==========================================================
 
-    def validar_status(
-        self,
-        status: str
-    ):
+    def validar_status(self, status: str):
 
         if status not in self.STATUS_VALIDOS:
-
-            raise HTTPException(
-                status_code=400,
-                detail="Status inválido."
-            )
+            raise HTTPException(status_code=400, detail="Status inválido.")
 
     # ==========================================================
     # VALIDAÇÃO DE DESCRIÇÃO
     # ==========================================================
 
-    def validar_descricao(
-        self,
-        descricao: str
-    ):
+    def validar_descricao(self, descricao: str):
 
         if not descricao:
-
-            raise HTTPException(
-                status_code=400,
-                detail="Descrição obrigatória."
-            )
+            raise HTTPException(status_code=400, detail="Descrição obrigatória.")
 
         descricao = descricao.strip()
 
         if not descricao:
-
-            raise HTTPException(
-                status_code=400,
-                detail="Descrição inválida."
-            )
+            raise HTTPException(status_code=400, detail="Descrição inválida.")
 
         if len(descricao) < 5:
-
             raise HTTPException(
                 status_code=400,
-                detail=(
-                    "Descrição deve possuir "
-                    "no mínimo 5 caracteres."
-                )
+                detail=("Descrição deve possuir no mínimo 5 caracteres."),
             )
 
     # ==========================================================
@@ -261,55 +172,33 @@ class AgendamentoServiceImpl:
     # ==========================================================
 
     def validar_conflito_horario(
-        self,
-        animal_id: int,
-        data: datetime,
-        agendamento_id: int | None = None
+        self, animal_id: int, data: datetime, agendamento_id: int | None = None
     ):
 
-        existe = (
-            self.repository
-            .buscar_conflito_horario(
-                animal_id,
-                data,
-                agendamento_id
-            )
+        existe = self.repository.buscar_conflito_horario(
+            animal_id, data, agendamento_id
         )
 
         if existe:
-
             raise HTTPException(
                 status_code=409,
-                detail=(
-                    "Já existe agendamento para "
-                    "este animal neste horário."
-                )
+                detail=("Já existe agendamento para este animal neste horário."),
             )
 
     # ==========================================================
     # CRIAR AGENDAMENTO
     # ==========================================================
 
-    def criar(
-        self,
-        agendamento: AgendamentoCreate
-    ):
+    def criar(self, agendamento: AgendamentoCreate):
 
-        animal = self.buscar_animal(
-            agendamento.animal_id
-        )
+        self.buscar_animal(agendamento.animal_id)
 
-        self.validar_data(
-            agendamento.data_agendamento
-        )
+        self.validar_data(agendamento.data_agendamento)
 
-        self.validar_descricao(
-            agendamento.descricao
-        )
+        self.validar_descricao(agendamento.descricao)
 
         self.validar_conflito_horario(
-            agendamento.animal_id,
-            agendamento.data_agendamento
+            agendamento.animal_id, agendamento.data_agendamento
         )
 
         dados = agendamento.model_dump()
@@ -319,37 +208,24 @@ class AgendamentoServiceImpl:
         # ------------------------------------------------------
 
         if self.obter_perfil() == "Veterinário":
+            dados["veterinario_id"] = self.usuario_logado.id
 
-            dados["veterinario_id"] = (
-                self.usuario_logado.id
-            )
-
-        novo = Agendamentos(
-            **dados,
-            status="Pendente"
-        )
+        novo = Agendamentos(**dados, status="Pendente")
 
         try:
+            return self.repository.criar(novo)
 
-            return self.repository.criar(
-                novo
-            )
-
-        except Exception:
-
+        except SQLAlchemyError as erro:
             raise HTTPException(
                 status_code=500,
-                detail="Erro ao criar agendamento."
-            )
+                detail="Erro ao criar agendamento.",
+            ) from erro
 
     # ==========================================================
     # VALIDAR VETERINÁRIO RESPONSÁVEL
     # ==========================================================
 
-    def validar_veterinario_responsavel(
-        self,
-        veterinario_id: int | None
-    ):
+    def validar_veterinario_responsavel(self, veterinario_id: int | None):
         """
         Regras para definir quem atende o agendamento:
 
@@ -365,95 +241,49 @@ class AgendamentoServiceImpl:
             self.obter_perfil() == "Veterinário"
             and veterinario_id != self.usuario_logado.id
         ):
-
             raise HTTPException(
                 status_code=403,
-                detail=(
-                    "Você só pode assumir "
-                    "o agendamento para você mesmo."
-                )
+                detail=("Você só pode assumir o agendamento para você mesmo."),
             )
 
-        veterinario = (
-            self.repository
-            .buscar_veterinario_por_id(
-                veterinario_id
-            )
-        )
+        veterinario = self.repository.buscar_veterinario_por_id(veterinario_id)
 
         if not veterinario:
-
-            raise HTTPException(
-                status_code=404,
-                detail="Veterinário não encontrado."
-            )
+            raise HTTPException(status_code=404, detail="Veterinário não encontrado.")
 
         if veterinario.perfil != "Veterinário":
-
             raise HTTPException(
-                status_code=400,
-                detail=(
-                    "Usuário informado "
-                    "não é veterinário."
-                )
+                status_code=400, detail=("Usuário informado não é veterinário.")
             )
 
     # ==========================================================
     # ATRIBUIR VETERINÁRIO
     # ==========================================================
 
-    def atribuir_veterinario(
-        self,
-        id: int,
-        veterinario_id: int
-    ):
+    def atribuir_veterinario(self, id: int, veterinario_id: int):
 
-        agendamento = self.buscar_por_id(
-            id
-        )
+        agendamento = self.buscar_por_id(id)
 
-        veterinario = (
-            self.repository
-            .buscar_veterinario_por_id(
-                veterinario_id
-            )
-        )
+        veterinario = self.repository.buscar_veterinario_por_id(veterinario_id)
 
         if not veterinario:
-
-            raise HTTPException(
-                status_code=404,
-                detail="Veterinário não encontrado."
-            )
+            raise HTTPException(status_code=404, detail="Veterinário não encontrado.")
 
         if veterinario.perfil != "Veterinário":
-
             raise HTTPException(
-                status_code=400,
-                detail=(
-                    "Usuário informado "
-                    "não é veterinário."
-                )
+                status_code=400, detail=("Usuário informado não é veterinário.")
             )
 
-        agendamento.veterinario_id = (
-            veterinario_id
-        )
+        agendamento.veterinario_id = veterinario_id
 
         try:
+            return self.repository.atualizar(agendamento)
 
-            return self.repository.atualizar(
-                agendamento
-            )
-
-        except Exception:
-
+        except SQLAlchemyError as erro:
             raise HTTPException(
                 status_code=500,
-                detail=(
-                    "Erro ao atribuir veterinário."
-                )
-            )
+                detail="Erro ao atribuir veterinário.",
+            ) from erro
 
     # ==========================================================
     # LISTAR AGENDAMENTOS
@@ -468,7 +298,7 @@ class AgendamentoServiceImpl:
         descricao: str | None = None,
         data: datetime | None = None,
         sort_by: str = "data_agendamento",
-        order: str = "asc"
+        order: str = "asc",
     ):
 
         perfil = self.obter_perfil()
@@ -480,20 +310,12 @@ class AgendamentoServiceImpl:
         # ------------------------------------------------------
 
         if perfil == "Cliente":
-
-            cliente = (
-                self.repository
-                .buscar_cliente_por_usuario_id(
-                    self.usuario_logado.id
-                )
+            cliente = self.repository.buscar_cliente_por_usuario_id(
+                self.usuario_logado.id
             )
 
             if not cliente:
-
-                raise HTTPException(
-                    status_code=403,
-                    detail="Cliente não encontrado."
-                )
+                raise HTTPException(status_code=403, detail="Cliente não encontrado.")
 
             cliente_id = cliente.id
 
@@ -502,23 +324,18 @@ class AgendamentoServiceImpl:
         # ------------------------------------------------------
 
         if status:
-
-            self.validar_status(
-                status
-            )
+            self.validar_status(status)
 
         # ------------------------------------------------------
         # PAGINAÇÃO
         # ------------------------------------------------------
 
-        if skip < 0:
-            skip = 0
+        skip = max(skip, 0)
 
         if limit <= 0:
             limit = 10
 
-        if limit > 100:
-            limit = 100
+        limit = min(limit, 100)
 
         # ------------------------------------------------------
         # LISTAGEM
@@ -529,43 +346,26 @@ class AgendamentoServiceImpl:
             limit=limit,
             animal_id=animal_id,
             status=status,
-            descricao=(
-                descricao.strip()
-                if descricao
-                else None
-            ),
+            descricao=(descricao.strip() if descricao else None),
             data=data,
             cliente_id=cliente_id,
             sort_by=sort_by,
-            order=order
+            order=order,
         )
 
     # ==========================================================
     # ATUALIZAR AGENDAMENTO
     # ==========================================================
 
-    def atualizar(
-        self,
-        id: int,
-        dados: AgendamentoUpdate
-    ):
+    def atualizar(self, id: int, dados: AgendamentoUpdate):
 
-        agendamento = self.buscar_por_id(
-            id
-        )
+        agendamento = self.buscar_por_id(id)
 
-        valores = dados.model_dump(
-            exclude_unset=True
-        )
+        valores = dados.model_dump(exclude_unset=True)
 
         if not valores:
-
             raise HTTPException(
-                status_code=400,
-                detail=(
-                    "Nenhum dado informado "
-                    "para atualização."
-                )
+                status_code=400, detail=("Nenhum dado informado para atualização.")
             )
 
         # ------------------------------------------------------
@@ -573,15 +373,10 @@ class AgendamentoServiceImpl:
         # ------------------------------------------------------
 
         if "data_agendamento" in valores:
-
-            self.validar_data(
-                valores["data_agendamento"]
-            )
+            self.validar_data(valores["data_agendamento"])
 
             self.validar_conflito_horario(
-                agendamento.animal_id,
-                valores["data_agendamento"],
-                agendamento.id
+                agendamento.animal_id, valores["data_agendamento"], agendamento.id
             )
 
         # ------------------------------------------------------
@@ -589,30 +384,21 @@ class AgendamentoServiceImpl:
         # ------------------------------------------------------
 
         if "descricao" in valores:
-
-            self.validar_descricao(
-                valores["descricao"]
-            )
+            self.validar_descricao(valores["descricao"])
 
         # ------------------------------------------------------
         # STATUS
         # ------------------------------------------------------
 
         if "status" in valores:
-
-            self.validar_status(
-                valores["status"]
-            )
+            self.validar_status(valores["status"])
 
         # ------------------------------------------------------
         # VETERINÁRIO RESPONSÁVEL
         # ------------------------------------------------------
 
         if "veterinario_id" in valores:
-
-            self.validar_veterinario_responsavel(
-                valores["veterinario_id"]
-            )
+            self.validar_veterinario_responsavel(valores["veterinario_id"])
 
         # ------------------------------------------------------
         # CAMPOS PERMITIDOS
@@ -622,82 +408,51 @@ class AgendamentoServiceImpl:
             "data_agendamento",
             "descricao",
             "status",
-            "veterinario_id"
+            "veterinario_id",
         ]
 
         for campo, valor in valores.items():
-
             if campo in campos_permitidos:
-
-                setattr(
-                    agendamento,
-                    campo,
-                    valor
-                )
+                setattr(agendamento, campo, valor)
 
         try:
+            return self.repository.atualizar(agendamento)
 
-            return self.repository.atualizar(
-                agendamento
-            )
-
-        except Exception:
-
+        except SQLAlchemyError as erro:
             raise HTTPException(
                 status_code=500,
-                detail=(
-                    "Erro ao atualizar agendamento."
-                )
-            )
+                detail="Erro ao atualizar agendamento.",
+            ) from erro
 
     # ==========================================================
     # CANCELAR AGENDAMENTO
     # ==========================================================
 
-    def cancelar(
-        self,
-        id: int
-    ):
+    def cancelar(self, id: int):
 
-        agendamento = self.buscar_por_id(
-            id
-        )
+        agendamento = self.buscar_por_id(id)
 
         if agendamento.status == "Finalizado":
-
             raise HTTPException(
                 status_code=409,
-                detail=(
-                    "Não é possível cancelar "
-                    "atendimento finalizado."
-                )
+                detail=("Não é possível cancelar atendimento finalizado."),
             )
 
         if agendamento.status == "Cancelado":
-
             raise HTTPException(
-                status_code=409,
-                detail=(
-                    "Agendamento já está cancelado."
-                )
+                status_code=409, detail=("Agendamento já está cancelado.")
             )
 
         agendamento.status = "Cancelado"
 
         try:
+            return self.repository.cancelar(agendamento)
 
-            return self.repository.cancelar(
-                agendamento
-            )
-
-        except Exception:
-
+        except SQLAlchemyError as erro:
             raise HTTPException(
                 status_code=500,
-                detail=(
-                    "Erro ao cancelar agendamento."
-                )
-            )
+                detail="Erro ao cancelar agendamento.",
+            ) from erro
 
     # ==========================================================
     # DELETAR AGENDAMENTO
@@ -705,20 +460,11 @@ class AgendamentoServiceImpl:
     # BLOQUEADO
     # ==========================================================
 
-    def deletar(
-        self,
-        id: int
-    ):
+    def deletar(self, id: int):
 
-        self.repository.buscar_por_id(
-            id
-        )
+        self.repository.buscar_por_id(id)
 
         raise HTTPException(
             status_code=409,
-            detail=(
-                "Agendamentos não podem ser "
-                "excluídos. Utilize o cancelamento."
-            )
+            detail=("Agendamentos não podem ser excluídos. Utilize o cancelamento."),
         )
-

@@ -1,15 +1,8 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import jwt
-
 from fastapi import HTTPException
-
-from jwt import (
-    ExpiredSignatureError,
-    InvalidTokenError
-)
-
-
+from jwt import ExpiredSignatureError, InvalidTokenError
 
 SECRET_KEY = "sua-chave-super-secreta"
 
@@ -18,13 +11,7 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 
-
-
-
-def create_access_token(
-    data: dict
-):
-
+def create_access_token(data: dict):
     """
     Cria JWT autenticado.
 
@@ -35,74 +22,27 @@ def create_access_token(
     - expiração
     """
 
-
     to_encode = data.copy()
 
+    expire = datetime.now(UTC) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
 
-    expire = (
-        datetime.now(timezone.utc)
-        +
-        timedelta(
-            minutes=ACCESS_TOKEN_EXPIRE_MINUTES
-        )
-    )
+    to_encode.update({"exp": expire})
+
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-    to_encode.update(
-        {
-            "exp": expire
-        }
-    )
-
-
-    return jwt.encode(
-        to_encode,
-        SECRET_KEY,
-        algorithm=ALGORITHM
-    )
-
-
-
-
-
-def decode_token(
-    token: str
-):
-
+def decode_token(token: str):
     """
     Valida e decodifica JWT.
     """
 
-
     try:
-
-        payload = jwt.decode(
-            token,
-            SECRET_KEY,
-            algorithms=[
-                ALGORITHM
-            ]
-        )
-
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
 
         return payload
 
-
-
     except ExpiredSignatureError:
-
-
-        raise HTTPException(
-            status_code=401,
-            detail="Token expirado."
-        )
-
-
+        raise HTTPException(status_code=401, detail="Token expirado.")
 
     except InvalidTokenError:
-
-
-        raise HTTPException(
-            status_code=401,
-            detail="Token inválido."
-        )
+        raise HTTPException(status_code=401, detail="Token inválido.")

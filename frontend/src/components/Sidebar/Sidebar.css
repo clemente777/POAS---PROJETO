@@ -42,7 +42,7 @@
   font-size: 20px;
   font-weight: 600;
   margin-bottom: var(--space-lg);
-  color: #6fc9d9;
+  color: #6FC9D9;
 }
 
 nav {
@@ -56,7 +56,7 @@ nav a {
   align-items: center;
   gap: 12px;
   padding: 10px 12px;
-  color: #d7e2e4;
+  color: #D7E2E4;
   text-decoration: none;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -82,7 +82,7 @@ nav a.em-breve {
 
 nav a.em-breve:hover {
   background: none;
-  color: #d7e2e4;
+  color: #D7E2E4;
 }
 
 .logout {
@@ -104,4 +104,106 @@ nav a.em-breve:hover {
 
 .logout:hover {
   background: var(--color-accent-dark);
+}
+
+/* Rótulo curto só aparece na barra inferior do celular */
+.rotulo-curto {
+  display: none;
+}
+
+/*
+|--------------------------------------------------------------------------
+| CELULAR: o menu lateral vira uma barra de navegação inferior
+|--------------------------------------------------------------------------
+*/
+@media (max-width: 768px) {
+  .sidebar,
+  .sidebar.aberto,
+  .sidebar.fechado {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px));
+    flex-direction: row;
+    align-items: stretch;
+    padding: 0 6px env(safe-area-inset-bottom, 0px);
+    background: var(--color-surface);
+    color: var(--color-text-muted);
+    border-top: 1px solid var(--color-border);
+    box-shadow: 0 -10px 28px -18px rgba(16, 38, 43, 0.45);
+    transition: none;
+  }
+
+  .sidebar .toggle,
+  .sidebar .brand,
+  .sidebar nav a.item-perfil {
+    display: none;
+  }
+
+  .sidebar nav {
+    flex: 1;
+    min-width: 0;
+    flex-direction: row;
+    gap: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .sidebar nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sidebar nav a {
+    flex: 1 0 64px;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    margin: 6px 2px;
+    padding: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    border-radius: 14px;
+  }
+
+  .sidebar nav a:hover {
+    background: none;
+    color: var(--color-text-muted);
+  }
+
+  .sidebar nav a.is-active {
+    background: var(--color-brand-light);
+    color: var(--color-brand-dark);
+  }
+
+  .sidebar nav a.em-breve {
+    display: none;
+  }
+
+  .sidebar .logout {
+    flex: 0 0 56px;
+    margin: 6px 2px;
+    height: auto;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    background: transparent;
+    color: var(--color-accent-dark);
+    border-radius: 14px;
+  }
+
+  .sidebar .logout:hover {
+    background: #FDECEA;
+  }
+
+  .rotulo-longo {
+    display: none;
+  }
+
+  .rotulo-curto {
+    display: inline;
+  }
 }

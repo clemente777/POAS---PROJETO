@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
-class UsuarioService(ABC):
 
+class UsuarioService(ABC):
     @abstractmethod
     def listar_usuarios(self):
         pass

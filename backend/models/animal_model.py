@@ -1,18 +1,18 @@
 from __future__ import annotations
 
-from sqlalchemy import Integer, String, ForeignKey
+from typing import TYPE_CHECKING
+
+from sqlalchemy import ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.database.database import Base
 
-
-from typing import TYPE_CHECKING
-
 if TYPE_CHECKING:
-    from backend.models.cliente_model import Clientes
     from backend.models.agendamento_model import Agendamentos
-    from backend.models.atendimento_model import Atendimentos
     from backend.models.aplicacao_vacina_model import AplicacoesVacina
+    from backend.models.atendimento_model import Atendimentos
+    from backend.models.cliente_model import Clientes
+
 
 class Animais(Base):
     __tablename__ = "animais"
@@ -23,41 +23,20 @@ class Animais(Base):
     raca: Mapped[str] = mapped_column(String(100), nullable=False)
     idade: Mapped[int] = mapped_column(Integer, nullable=False)
 
-
-
-
     cliente_id: Mapped[int] = mapped_column(
-        ForeignKey("clientes.id", ondelete="CASCADE"),
-        nullable=False
+        ForeignKey("clientes.id", ondelete="CASCADE"), nullable=False
     )
 
+    cliente: Mapped[Clientes] = relationship("Clientes", back_populates="animais")
 
-    cliente: Mapped["Clientes"] = relationship(
-        "Clientes",
-        back_populates="animais"
+    agendamentos: Mapped[list[Agendamentos]] = relationship(
+        "Agendamentos", back_populates="animal", lazy="selectin"
     )
 
-
-    agendamentos: Mapped[list["Agendamentos"]] = relationship(
-        "Agendamentos",
-        back_populates="animal",
-        lazy="selectin"
+    atendimentos: Mapped[list[Atendimentos]] = relationship(
+        "Atendimentos", back_populates="animal", lazy="selectin"
     )
 
-
-    atendimentos: Mapped[list["Atendimentos"]] = relationship(
-        "Atendimentos",
-        back_populates="animal",
-        lazy="selectin"
+    aplicacoes_vacina: Mapped[list[AplicacoesVacina]] = relationship(
+        "AplicacoesVacina", back_populates="animal", cascade="all, delete-orphan"
     )
-    
-
-    aplicacoes_vacina: Mapped[list["AplicacoesVacina"]] = relationship(
-
-    "AplicacoesVacina",
-
-    back_populates="animal",
-
-    cascade="all, delete-orphan"
-
-)

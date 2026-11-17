@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, ConfigDict
+from pydantic import BaseModel, ConfigDict, EmailStr
 
 
 # CREATE
@@ -8,7 +8,6 @@ class ClienteCreate(BaseModel):
     telefone: str
     email: EmailStr
     endereco: str
-    
 
 
 # UPDATE

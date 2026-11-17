@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from sqlalchemy import Integer, ForeignKey
+from typing import TYPE_CHECKING
+
+from sqlalchemy import ForeignKey, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.database.database import Base
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from backend.models.carrinho_model import Carrinhos
@@ -19,14 +19,12 @@ class ItensCarrinho(Base):
     quantidade: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
 
     carrinho_id: Mapped[int] = mapped_column(
-        ForeignKey("carrinhos.id", ondelete="CASCADE"),
-        nullable=False
+        ForeignKey("carrinhos.id", ondelete="CASCADE"), nullable=False
     )
 
     produto_id: Mapped[int] = mapped_column(
-        ForeignKey("produtos.id", ondelete="RESTRICT"),
-        nullable=False
+        ForeignKey("produtos.id", ondelete="RESTRICT"), nullable=False
     )
 
-    carrinho: Mapped["Carrinhos"] = relationship(back_populates="itens")
-    produto: Mapped["Produtos"] = relationship(back_populates="itens_carrinho")
+    carrinho: Mapped[Carrinhos] = relationship(back_populates="itens")
+    produto: Mapped[Produtos] = relationship(back_populates="itens_carrinho")

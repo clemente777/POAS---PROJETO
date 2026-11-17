@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
-class AnimalService(ABC):
 
+class AnimalService(ABC):
     @abstractmethod
     def listar_animais(self):
         pass

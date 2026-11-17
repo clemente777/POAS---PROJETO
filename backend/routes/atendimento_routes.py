@@ -1,54 +1,71 @@
 from datetime import datetime
+from typing import Annotated
 
 from fastapi import APIRouter, Depends
-
 from sqlalchemy.orm import Session
-
-from backend.database.database import get_session
-
-from backend.schemas.atendimento_schema import (
-    AtendimentoCreate,
-    AtendimentoUpdate,
-    AtendimentoResponse
-)
-
-from backend.repositories.atendimento_repository import (
-    AtendimentoRepository
-)
-
-from backend.services.implementations.atendimento_service_impl import (
-    AtendimentoServiceImpl
-)
-
-from backend.models.usuario_model import Usuarios
 
 from backend.auth.dependencies import get_current_user
 from backend.auth.permissions import exigir_perfil
-
-
-router = APIRouter(
-    prefix="/atendimentos",
-    tags=["Atendimentos"]
+from backend.database.database import get_session
+from backend.models.usuario_model import Usuarios
+from backend.repositories.atendimento_repository import AtendimentoRepository
+from backend.schemas.atendimento_schema import (
+    AtendimentoCreate,
+    AtendimentoResponse,
+    AtendimentoUpdate,
 )
+from backend.services.implementations.atendimento_service_impl import (
+    AtendimentoServiceImpl,
+)
+
+router = APIRouter(prefix="/atendimentos", tags=["Atendimentos"])
+
+
+# ==========================================================
+# DEPENDÊNCIAS
+# ==========================================================
+
+SessionDep = Annotated[Session, Depends(get_session)]
+
+UsuarioLogadoDep = Annotated[
+    Usuarios,
+    Depends(get_current_user),
+]
+
+VeterinarioAdminDep = Annotated[
+    Usuarios,
+    Depends(exigir_perfil("Veterinário", "Administrador")),
+]
+
+ClienteVeterinarioAdminDep = Annotated[
+    Usuarios,
+    Depends(exigir_perfil("Cliente", "Veterinário", "Administrador")),
+]
+
+AdministradorDep = Annotated[
+    Usuarios,
+    Depends(exigir_perfil("Administrador")),
+]
 
 
 # ==========================================================
 # DEPENDÊNCIA DO SERVICE
 # ==========================================================
 
+
 def get_service(
-    session: Session = Depends(get_session),
-    usuario_logado: Usuarios = Depends(get_current_user)
+    session: SessionDep,
+    usuario_logado: UsuarioLogadoDep,
 ):
+    repository = AtendimentoRepository(session)
 
-    repository = AtendimentoRepository(
-        session
-    )
+    return AtendimentoServiceImpl(repository, usuario_logado)
 
-    return AtendimentoServiceImpl(
-        repository,
-        usuario_logado
-    )
+
+AtendimentoServiceDep = Annotated[
+    AtendimentoServiceImpl,
+    Depends(get_service),
+]
 
 
 # ==========================================================
@@ -56,29 +73,14 @@ def get_service(
 # SOMENTE VETERINÁRIO E ADMINISTRADOR
 # ==========================================================
 
-@router.post(
-    "/",
-    response_model=AtendimentoResponse,
-    status_code=201
-)
+
+@router.post("/", response_model=AtendimentoResponse, status_code=201)
 def criar(
     atendimento: AtendimentoCreate,
-
-    usuario_logado: Usuarios = Depends(
-        exigir_perfil(
-            "Veterinário",
-            "Administrador"
-        )
-    ),
-
-    service: AtendimentoServiceImpl = Depends(
-        get_service
-    )
+    usuario_logado: VeterinarioAdminDep,
+    service: AtendimentoServiceDep,
 ):
-
-    return service.criar(
-        atendimento
-    )
+    return service.criar(atendimento)
 
 
 # ==========================================================
@@ -86,11 +88,11 @@ def criar(
 # CLIENTE / VETERINÁRIO / ADMINISTRADOR
 # ==========================================================
 
-@router.get(
-    "/",
-    response_model=list[AtendimentoResponse]
-)
+
+@router.get("/", response_model=list[AtendimentoResponse])
 def listar(
+    usuario_logado: ClienteVeterinarioAdminDep,
+    service: AtendimentoServiceDep,
     skip: int = 0,
     limit: int = 10,
     animal_id: int | None = None,
@@ -99,20 +101,7 @@ def listar(
     data: datetime | None = None,
     sort_by: str = "data_atendimento",
     order: str = "asc",
-
-    usuario_logado: Usuarios = Depends(
-        exigir_perfil(
-            "Cliente",
-            "Veterinário",
-            "Administrador"
-        )
-    ),
-
-    service: AtendimentoServiceImpl = Depends(
-        get_service
-    )
 ):
-
     return service.listar(
         skip=skip,
         limit=limit,
@@ -121,7 +110,7 @@ def listar(
         diagnostico=diagnostico,
         data=data,
         sort_by=sort_by,
-        order=order
+        order=order,
     )
 
 
@@ -130,32 +119,16 @@ def listar(
 # CLIENTE / VETERINÁRIO / ADMINISTRADOR
 # ==========================================================
 
-@router.get(
-    "/historico/{animal_id}"
-)
+
+@router.get("/historico/{animal_id}")
 def historico(
     animal_id: int,
+    usuario_logado: ClienteVeterinarioAdminDep,
+    service: AtendimentoServiceDep,
     skip: int = 0,
     limit: int = 10,
-
-    usuario_logado: Usuarios = Depends(
-        exigir_perfil(
-            "Cliente",
-            "Veterinário",
-            "Administrador"
-        )
-    ),
-
-    service: AtendimentoServiceImpl = Depends(
-        get_service
-    )
 ):
-
-    return service.historico_completo(
-        animal_id,
-        skip,
-        limit
-    )
+    return service.historico_completo(animal_id, skip, limit)
 
 
 # ==========================================================
@@ -163,29 +136,14 @@ def historico(
 # CLIENTE / VETERINÁRIO / ADMINISTRADOR
 # ==========================================================
 
-@router.get(
-    "/{id}",
-    response_model=AtendimentoResponse
-)
+
+@router.get("/{id}", response_model=AtendimentoResponse)
 def buscar(
     id: int,
-
-    usuario_logado: Usuarios = Depends(
-        exigir_perfil(
-            "Cliente",
-            "Veterinário",
-            "Administrador"
-        )
-    ),
-
-    service: AtendimentoServiceImpl = Depends(
-        get_service
-    )
+    usuario_logado: ClienteVeterinarioAdminDep,
+    service: AtendimentoServiceDep,
 ):
-
-    return service.buscar_por_id(
-        id
-    )
+    return service.buscar_por_id(id)
 
 
 # ==========================================================
@@ -193,30 +151,15 @@ def buscar(
 # SOMENTE VETERINÁRIO E ADMINISTRADOR
 # ==========================================================
 
-@router.put(
-    "/{id}",
-    response_model=AtendimentoResponse
-)
+
+@router.put("/{id}", response_model=AtendimentoResponse)
 def atualizar(
     id: int,
     atendimento: AtendimentoUpdate,
-
-    usuario_logado: Usuarios = Depends(
-        exigir_perfil(
-            "Veterinário",
-            "Administrador"
-        )
-    ),
-
-    service: AtendimentoServiceImpl = Depends(
-        get_service
-    )
+    usuario_logado: VeterinarioAdminDep,
+    service: AtendimentoServiceDep,
 ):
-
-    return service.atualizar(
-        id,
-        atendimento
-    )
+    return service.atualizar(id, atendimento)
 
 
 # ==========================================================
@@ -224,28 +167,14 @@ def atualizar(
 # SOMENTE VETERINÁRIO E ADMINISTRADOR
 # ==========================================================
 
-@router.patch(
-    "/{id}/cancelar",
-    response_model=AtendimentoResponse
-)
+
+@router.patch("/{id}/cancelar", response_model=AtendimentoResponse)
 def cancelar(
     id: int,
-
-    usuario_logado: Usuarios = Depends(
-        exigir_perfil(
-            "Veterinário",
-            "Administrador"
-        )
-    ),
-
-    service: AtendimentoServiceImpl = Depends(
-        get_service
-    )
+    usuario_logado: VeterinarioAdminDep,
+    service: AtendimentoServiceDep,
 ):
-
-    return service.cancelar(
-        id
-    )
+    return service.cancelar(id)
 
 
 # ==========================================================
@@ -256,24 +185,11 @@ def cancelar(
 # dos atendimentos deve ser preservado.
 # ==========================================================
 
-@router.delete(
-    "/{id}"
-)
+
+@router.delete("/{id}")
 def deletar(
     id: int,
-
-    usuario_logado: Usuarios = Depends(
-        exigir_perfil(
-            "Administrador"
-        )
-    ),
-
-    service: AtendimentoServiceImpl = Depends(
-        get_service
-    )
+    usuario_logado: AdministradorDep,
+    service: AtendimentoServiceDep,
 ):
-
-    return service.deletar(
-        id
-    )
-
+    return service.deletar(id)

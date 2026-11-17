@@ -1,31 +1,26 @@
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
 
 
 class AplicacaoVacinaCreate(BaseModel):
-
     animal_id: int
 
     vacina_id: int
 
-    lote: Optional[str] = None
+    lote: str | None = None
 
-    observacoes: Optional[str] = None
+    observacoes: str | None = None
 
-    proxima_dose: Optional[datetime] = None
-
+    proxima_dose: datetime | None = None
 
 
 class AplicacaoVacinaUpdate(BaseModel):
+    lote: str | None = None
 
-    lote: Optional[str] = None
+    observacoes: str | None = None
 
-    observacoes: Optional[str] = None
-
-    proxima_dose: Optional[datetime] = None
-
+    proxima_dose: datetime | None = None
 
 
 class AplicacaoVacinaClienteResponse(BaseModel):
@@ -34,10 +29,7 @@ class AplicacaoVacinaClienteResponse(BaseModel):
     (o Cliente não tem acesso às rotas de vacinas nem de usuários).
     """
 
-    model_config = ConfigDict(
-        from_attributes=True
-    )
-
+    model_config = ConfigDict(from_attributes=True)
 
     id: int
 
@@ -49,24 +41,19 @@ class AplicacaoVacinaClienteResponse(BaseModel):
 
     fabricante: str
 
-    veterinario_nome: Optional[str] = None
+    veterinario_nome: str | None = None
 
     data_aplicacao: datetime
 
-    proxima_dose: Optional[datetime] = None
+    proxima_dose: datetime | None = None
 
-    lote: Optional[str] = None
+    lote: str | None = None
 
-    observacoes: Optional[str] = None
-
+    observacoes: str | None = None
 
 
 class AplicacaoVacinaResponse(BaseModel):
-
-    model_config = ConfigDict(
-        from_attributes=True
-    )
-
+    model_config = ConfigDict(from_attributes=True)
 
     id: int
 
@@ -78,8 +65,8 @@ class AplicacaoVacinaResponse(BaseModel):
 
     data_aplicacao: datetime
 
-    proxima_dose: Optional[datetime] = None
+    proxima_dose: datetime | None = None
 
-    lote: Optional[str] = None
+    lote: str | None = None
 
-    observacoes: Optional[str] = None
+    observacoes: str | None = None

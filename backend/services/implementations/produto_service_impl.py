@@ -1,20 +1,13 @@
 from fastapi import HTTPException
+from sqlalchemy.exc import SQLAlchemyError
 
 from backend.models.produto_model import Produtos
 from backend.models.usuario_model import Usuarios
-
-from backend.schemas.produto_schema import (
-    ProdutoCreate,
-    ProdutoUpdate
-)
-
-from backend.repositories.produto_repository import (
-    ProdutoRepository
-)
+from backend.repositories.produto_repository import ProdutoRepository
+from backend.schemas.produto_schema import ProdutoCreate, ProdutoUpdate
 
 
 class ProdutoServiceImpl:
-
     """
     Service responsável pelas regras
     de negócio dos produtos.
@@ -30,11 +23,7 @@ class ProdutoServiceImpl:
     - Produto usado em carrinho não pode ser excluído.
     """
 
-    def __init__(
-        self,
-        repository: ProdutoRepository,
-        usuario_logado: Usuarios
-    ):
+    def __init__(self, repository: ProdutoRepository, usuario_logado: Usuarios):
         self.repository = repository
         self.usuario_logado = usuario_logado
 
@@ -52,30 +41,19 @@ class ProdutoServiceImpl:
         if perfil != "Administrador":
             raise HTTPException(
                 status_code=403,
-                detail=(
-                    "Apenas administrador pode "
-                    "gerenciar produtos."
-                )
+                detail="Apenas administrador pode gerenciar produtos.",
             )
 
     # ==================================================
     # BUSCAR PRODUTO POR ID
     # ==================================================
 
-    def buscar_por_id(
-        self,
-        id: int
-    ):
+    def buscar_por_id(self, id: int):
 
-        produto = self.repository.buscar_por_id(
-            id
-        )
+        produto = self.repository.buscar_por_id(id)
 
         if not produto:
-            raise HTTPException(
-                status_code=404,
-                detail="Produto não encontrado."
-            )
+            raise HTTPException(status_code=404, detail="Produto não encontrado.")
 
         return produto
 
@@ -83,23 +61,15 @@ class ProdutoServiceImpl:
     # BUSCAR PRODUTO POR NOME
     # ==================================================
 
-    def buscar_por_nome(
-        self,
-        nome: str
-    ):
+    def buscar_por_nome(self, nome: str):
 
-        return self.repository.buscar_por_nome(
-            nome
-        )
+        return self.repository.buscar_por_nome(nome)
 
     # ==================================================
     # NORMALIZAÇÃO
     # ==================================================
 
-    def normalizar_nome(
-        self,
-        nome: str
-    ):
+    def normalizar_nome(self, nome: str):
 
         return nome.strip().title()
 
@@ -107,64 +77,46 @@ class ProdutoServiceImpl:
     # VALIDAR NOME
     # ==================================================
 
-    def validar_nome(
-        self,
-        nome: str
-    ):
+    def validar_nome(self, nome: str):
 
         if not nome or not nome.strip():
-            raise HTTPException(
-                status_code=400,
-                detail="Nome do produto obrigatório."
-            )
+            raise HTTPException(status_code=400, detail="Nome do produto obrigatório.")
 
         if len(nome.strip()) < 3:
             raise HTTPException(
                 status_code=400,
-                detail=(
-                    "Nome deve possuir no mínimo "
-                    "3 caracteres."
-                )
+                detail="Nome deve possuir no mínimo 3 caracteres.",
             )
 
     # ==================================================
     # VALIDAR PREÇO
     # ==================================================
 
-    def validar_preco(
-        self,
-        preco: float
-    ):
+    def validar_preco(self, preco: float):
 
         if preco <= 0:
             raise HTTPException(
                 status_code=400,
-                detail="Preço deve ser maior que zero."
+                detail="Preço deve ser maior que zero.",
             )
 
     # ==================================================
     # VALIDAR ESTOQUE
     # ==================================================
 
-    def validar_estoque(
-        self,
-        estoque: int
-    ):
+    def validar_estoque(self, estoque: int):
 
         if estoque < 0:
             raise HTTPException(
                 status_code=400,
-                detail="Estoque não pode ser negativo."
+                detail="Estoque não pode ser negativo.",
             )
 
     # ==================================================
     # CRIAR PRODUTO
     # ==================================================
 
-    def criar(
-        self,
-        produto: ProdutoCreate
-    ):
+    def criar(self, produto: ProdutoCreate):
 
         self.validar_admin()
 
@@ -172,63 +124,43 @@ class ProdutoServiceImpl:
         # NORMALIZAR NOME
         # --------------------------------------------------
 
-        nome = self.normalizar_nome(
-            produto.nome
-        )
+        nome = self.normalizar_nome(produto.nome)
 
         # --------------------------------------------------
         # VALIDAR DADOS
         # --------------------------------------------------
 
-        self.validar_nome(
-            nome
-        )
-
-        self.validar_preco(
-            produto.preco
-        )
-
-        self.validar_estoque(
-            produto.estoque
-        )
+        self.validar_nome(nome)
+        self.validar_preco(produto.preco)
+        self.validar_estoque(produto.estoque)
 
         # --------------------------------------------------
         # VERIFICAR DUPLICIDADE
         # --------------------------------------------------
 
-        existente = self.buscar_por_nome(
-            nome
-        )
+        existente = self.buscar_por_nome(nome)
 
         if existente:
-            raise HTTPException(
-                status_code=409,
-                detail="Produto já cadastrado."
-            )
+            raise HTTPException(status_code=409, detail="Produto já cadastrado.")
 
         # --------------------------------------------------
         # CRIAR PRODUTO
         # --------------------------------------------------
 
         dados = produto.model_dump()
-
         dados["nome"] = nome
 
-        novo_produto = Produtos(
-            **dados
-        )
+        novo_produto = Produtos(**dados)
 
         try:
-            return self.repository.criar(
-                novo_produto
-            )
+            return self.repository.criar(novo_produto)
 
-        except Exception:
+        except SQLAlchemyError:
             self.repository.rollback()
 
             raise HTTPException(
                 status_code=500,
-                detail="Erro ao cadastrar produto."
+                detail="Erro ao cadastrar produto.",
             )
 
     # ==================================================
@@ -247,7 +179,7 @@ class ProdutoServiceImpl:
         estoque_max: int | None = None,
         em_estoque: bool | None = None,
         sort_by: str = "nome",
-        order: str = "asc"
+        order: str = "asc",
     ):
 
         return self.repository.listar(
@@ -261,28 +193,20 @@ class ProdutoServiceImpl:
             estoque_max=estoque_max,
             em_estoque=em_estoque,
             sort_by=sort_by,
-            order=order
+            order=order,
         )
 
     # ==================================================
     # ATUALIZAR PRODUTO
     # ==================================================
 
-    def atualizar(
-        self,
-        id: int,
-        produto: ProdutoUpdate
-    ):
+    def atualizar(self, id: int, produto: ProdutoUpdate):
 
         self.validar_admin()
 
-        db = self.buscar_por_id(
-            id
-        )
+        db = self.buscar_por_id(id)
 
-        dados = produto.model_dump(
-            exclude_unset=True
-        )
+        dados = produto.model_dump(exclude_unset=True)
 
         # --------------------------------------------------
         # VERIFICAR SE EXISTEM DADOS
@@ -291,10 +215,7 @@ class ProdutoServiceImpl:
         if not dados:
             raise HTTPException(
                 status_code=400,
-                detail=(
-                    "Nenhum dado foi informado "
-                    "para atualização."
-                )
+                detail="Nenhum dado foi informado para atualização.",
             )
 
         # --------------------------------------------------
@@ -302,27 +223,14 @@ class ProdutoServiceImpl:
         # --------------------------------------------------
 
         if "nome" in dados:
+            nome = self.normalizar_nome(dados["nome"])
 
-            nome = self.normalizar_nome(
-                dados["nome"]
-            )
+            self.validar_nome(nome)
 
-            self.validar_nome(
-                nome
-            )
+            existente = self.buscar_por_nome(nome)
 
-            existente = self.buscar_por_nome(
-                nome
-            )
-
-            if (
-                existente
-                and existente.id != id
-            ):
-                raise HTTPException(
-                    status_code=409,
-                    detail="Produto já cadastrado."
-                )
+            if existente and existente.id != id:
+                raise HTTPException(status_code=409, detail="Produto já cadastrado.")
 
             dados["nome"] = nome
 
@@ -331,86 +239,62 @@ class ProdutoServiceImpl:
         # --------------------------------------------------
 
         if "preco" in dados:
-            self.validar_preco(
-                dados["preco"]
-            )
+            self.validar_preco(dados["preco"])
 
         # --------------------------------------------------
         # VALIDAR ESTOQUE
         # --------------------------------------------------
 
         if "estoque" in dados:
-            self.validar_estoque(
-                dados["estoque"]
-            )
+            self.validar_estoque(dados["estoque"])
 
         # --------------------------------------------------
         # APLICAR ALTERAÇÕES
         # --------------------------------------------------
 
         for campo, valor in dados.items():
-            setattr(
-                db,
-                campo,
-                valor
-            )
+            setattr(db, campo, valor)
 
         try:
-            return self.repository.atualizar(
-                db
-            )
+            return self.repository.atualizar(db)
 
-        except Exception:
+        except SQLAlchemyError:
             self.repository.rollback()
 
             raise HTTPException(
                 status_code=500,
-                detail="Erro ao atualizar produto."
+                detail="Erro ao atualizar produto.",
             )
 
     # ==================================================
     # DELETAR PRODUTO
     # ==================================================
 
-    def deletar(
-        self,
-        id: int
-    ):
+    def deletar(self, id: int):
 
         self.validar_admin()
 
-        produto = self.buscar_por_id(
-            id
-        )
+        produto = self.buscar_por_id(id)
 
         # --------------------------------------------------
         # VERIFICAR SE O PRODUTO ESTÁ EM ALGUM CARRINHO
         # --------------------------------------------------
 
-        if hasattr(
-            produto,
-            "itens_carrinho"
-        ):
-
-            if produto.itens_carrinho:
-
-                raise HTTPException(
-                    status_code=409,
-                    detail=(
-                        "Produto possui registros "
-                        "no carrinho e não pode ser excluído."
-                    )
-                )
-
-        try:
-            return self.repository.deletar(
-                produto
+        if hasattr(produto, "itens_carrinho") and produto.itens_carrinho:
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    "Produto possui registros no carrinho e não pode ser excluído."
+                ),
             )
 
-        except Exception:
+        try:
+            return self.repository.deletar(produto)
+
+        except SQLAlchemyError:
             self.repository.rollback()
 
             raise HTTPException(
                 status_code=500,
-                detail="Erro ao excluir produto."
+                detail="Erro ao excluir produto.",
             )

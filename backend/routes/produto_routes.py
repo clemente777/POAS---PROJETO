@@ -1,49 +1,43 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
+from backend.auth.dependencies import get_current_user
 from backend.database.database import get_session
-
+from backend.models.usuario_model import Usuarios
+from backend.repositories.produto_repository import ProdutoRepository
 from backend.schemas.produto_schema import (
     ProdutoCreate,
+    ProdutoResponse,
     ProdutoUpdate,
-    ProdutoResponse
 )
+from backend.services.implementations.produto_service_impl import ProdutoServiceImpl
 
-from backend.repositories.produto_repository import (
-    ProdutoRepository
-)
-
-from backend.services.implementations.produto_service_impl import (
-    ProdutoServiceImpl
-)
-
-from backend.models.usuario_model import Usuarios
-
-from backend.auth.dependencies import get_current_user
-
-
-router = APIRouter(
-    prefix="/produtos",
-    tags=["Produtos"]
-)
+router = APIRouter(prefix="/produtos", tags=["Produtos"])
 
 
 # ==================================================
 # DEPENDÊNCIA DO SERVICE
 # ==================================================
 
+
 def get_service(
-    session: Session = Depends(get_session),
-    usuario_logado: Usuarios = Depends(get_current_user)
+    session: Annotated[Session, Depends(get_session)],
+    usuario_logado: Annotated[Usuarios, Depends(get_current_user)],
 ):
-    repository = ProdutoRepository(
-        session
-    )
+    repository = ProdutoRepository(session)
 
     return ProdutoServiceImpl(
         repository=repository,
-        usuario_logado=usuario_logado
+        usuario_logado=usuario_logado,
     )
+
+
+ProdutoServiceDep = Annotated[
+    ProdutoServiceImpl,
+    Depends(get_service),
+]
 
 
 # ==================================================
@@ -51,20 +45,13 @@ def get_service(
 # Apenas Administrador
 # ==================================================
 
-@router.post(
-    "/",
-    response_model=ProdutoResponse,
-    status_code=201
-)
+
+@router.post("/", response_model=ProdutoResponse, status_code=201)
 def criar(
     produto: ProdutoCreate,
-    service: ProdutoServiceImpl = Depends(
-        get_service
-    )
+    service: ProdutoServiceDep,
 ):
-    return service.criar(
-        produto
-    )
+    return service.criar(produto)
 
 
 # ==================================================
@@ -72,11 +59,10 @@ def criar(
 # Usuários autenticados
 # ==================================================
 
-@router.get(
-    "/",
-    response_model=list[ProdutoResponse]
-)
+
+@router.get("/", response_model=list[ProdutoResponse])
 def listar(
+    service: ProdutoServiceDep,
     skip: int = 0,
     limit: int = 10,
     nome: str | None = None,
@@ -88,9 +74,6 @@ def listar(
     em_estoque: bool | None = None,
     sort_by: str = "nome",
     order: str = "asc",
-    service: ProdutoServiceImpl = Depends(
-        get_service
-    )
 ):
     return service.listar(
         skip=skip,
@@ -103,7 +86,7 @@ def listar(
         estoque_max=estoque_max,
         em_estoque=em_estoque,
         sort_by=sort_by,
-        order=order
+        order=order,
     )
 
 
@@ -112,19 +95,13 @@ def listar(
 # Usuários autenticados
 # ==================================================
 
-@router.get(
-    "/{id}",
-    response_model=ProdutoResponse
-)
+
+@router.get("/{id}", response_model=ProdutoResponse)
 def buscar(
     id: int,
-    service: ProdutoServiceImpl = Depends(
-        get_service
-    )
+    service: ProdutoServiceDep,
 ):
-    return service.buscar_por_id(
-        id
-    )
+    return service.buscar_por_id(id)
 
 
 # ==================================================
@@ -132,21 +109,14 @@ def buscar(
 # Apenas Administrador
 # ==================================================
 
-@router.put(
-    "/{id}",
-    response_model=ProdutoResponse
-)
+
+@router.put("/{id}", response_model=ProdutoResponse)
 def atualizar(
     id: int,
     produto: ProdutoUpdate,
-    service: ProdutoServiceImpl = Depends(
-        get_service
-    )
+    service: ProdutoServiceDep,
 ):
-    return service.atualizar(
-        id,
-        produto
-    )
+    return service.atualizar(id, produto)
 
 
 # ==================================================
@@ -154,16 +124,10 @@ def atualizar(
 # Apenas Administrador
 # ==================================================
 
-@router.delete(
-    "/{id}"
-)
+
+@router.delete("/{id}")
 def deletar(
     id: int,
-    service: ProdutoServiceImpl = Depends(
-        get_service
-    )
+    service: ProdutoServiceDep,
 ):
-    return {
-        "success": service.deletar(id)
-    }
-
+    return {"success": service.deletar(id)}

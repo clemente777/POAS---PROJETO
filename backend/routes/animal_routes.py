@@ -1,141 +1,106 @@
-from fastapi import APIRouter, Depends, HTTPException
+from typing import Annotated
+
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from backend.database.database import get_session
-
-from backend.schemas.animal_schema import (
-    AnimalCreate,
-    AnimalUpdate,
-    AnimalResponse
-)
-
-from backend.schemas.historico_schema import (
-    AnimalHistoricoResponse
-)
-
-from backend.services.implementations.animal_service_impl import (
-    AnimalServiceImpl
-)
-
-from backend.services.implementations.atendimento_service_impl import (
-    AtendimentoServiceImpl
-)
-
-from backend.repositories.animal_repository import (
-    AnimalRepository
-)
-
-from backend.repositories.atendimento_repository import (
-    AtendimentoRepository
-)
-
-from backend.models.usuario_model import Usuarios
-
 from backend.auth.dependencies import get_current_user
-
-
-router = APIRouter(
-    prefix="/animais",
-    tags=["Animais"]
+from backend.database.database import get_session
+from backend.models.usuario_model import Usuarios
+from backend.repositories.animal_repository import AnimalRepository
+from backend.repositories.atendimento_repository import AtendimentoRepository
+from backend.schemas.animal_schema import AnimalCreate, AnimalResponse, AnimalUpdate
+from backend.schemas.historico_schema import AnimalHistoricoResponse
+from backend.services.implementations.animal_service_impl import AnimalServiceImpl
+from backend.services.implementations.atendimento_service_impl import (
+    AtendimentoServiceImpl,
 )
+
+router = APIRouter(prefix="/animais", tags=["Animais"])
+
+
+# ==========================================================
+# DEPENDÊNCIAS
+# ==========================================================
+
+SessionDep = Annotated[Session, Depends(get_session)]
+
+UsuarioLogadoDep = Annotated[
+    Usuarios,
+    Depends(get_current_user),
+]
 
 
 # ==========================================================
 # SERVICE ANIMAL
 # ==========================================================
 
+
 def get_service(
-    session: Session = Depends(get_session),
-    usuario_logado: Usuarios = Depends(get_current_user)
+    session: SessionDep,
+    usuario_logado: UsuarioLogadoDep,
 ):
+    repository = AnimalRepository(session)
 
-    repository = AnimalRepository(
-        session
-    )
+    return AnimalServiceImpl(repository, usuario_logado)
 
-    return AnimalServiceImpl(
-        repository,
-        usuario_logado
-    )
+
+AnimalServiceDep = Annotated[
+    AnimalServiceImpl,
+    Depends(get_service),
+]
 
 
 # ==========================================================
 # SERVICE ATENDIMENTO
 # ==========================================================
 
+
 def get_atendimento_service(
-    session: Session = Depends(get_session),
-    usuario_logado: Usuarios = Depends(get_current_user)
+    session: SessionDep,
+    usuario_logado: UsuarioLogadoDep,
 ):
+    repository = AtendimentoRepository(session)
 
-    repository = AtendimentoRepository(
-        session
-    )
+    return AtendimentoServiceImpl(repository, usuario_logado)
 
-    return AtendimentoServiceImpl(
-        repository,
-        usuario_logado
-    )
+
+AtendimentoServiceDep = Annotated[
+    AtendimentoServiceImpl,
+    Depends(get_atendimento_service),
+]
 
 
 # ==========================================================
 # CRIAR
 # ==========================================================
 
-@router.post(
-    "/",
-    response_model=AnimalResponse,
-    status_code=201
-)
+
+@router.post("/", response_model=AnimalResponse, status_code=201)
 def criar(
-
     animal: AnimalCreate,
-
-    service: AnimalServiceImpl = Depends(
-        get_service
-    )
-
+    service: AnimalServiceDep,
 ):
-
-    return service.criar(
-        animal
-    )
+    return service.criar(animal)
 
 
 # ==========================================================
 # LISTAR
 # ==========================================================
 
-@router.get(
-    "/",
-    response_model=list[AnimalResponse]
-)
+
+@router.get("/", response_model=list[AnimalResponse])
 def listar(
-
+    service: AnimalServiceDep,
     pagina: int = 1,
-
     limite: int = 10,
-
     nome: str | None = None,
-
     ordem: str = "asc",
-
-    service: AnimalServiceImpl = Depends(
-        get_service
-    )
-
 ):
-
     return service.listar(
-
         pagina=pagina,
-
         limite=limite,
-
         nome=nome,
-
-        ordem=ordem
-
+        ordem=ordem,
     )
 
 
@@ -143,94 +108,50 @@ def listar(
 # BUSCAR POR ID
 # ==========================================================
 
-@router.get(
-    "/{id}",
-    response_model=AnimalResponse
-)
+
+@router.get("/{id}", response_model=AnimalResponse)
 def buscar(
-
     id: int,
-
-    service: AnimalServiceImpl = Depends(
-        get_service
-    )
-
+    service: AnimalServiceDep,
 ):
-
-    return service.buscar_por_id(
-        id
-    )
+    return service.buscar_por_id(id)
 
 
 # ==========================================================
 # ATUALIZAR
 # ==========================================================
 
-@router.put(
-    "/{id}",
-    response_model=AnimalResponse
-)
+
+@router.put("/{id}", response_model=AnimalResponse)
 def atualizar(
-
     id: int,
-
     animal: AnimalUpdate,
-
-    service: AnimalServiceImpl = Depends(
-        get_service
-    )
-
+    service: AnimalServiceDep,
 ):
-
-    return service.atualizar(
-
-        id,
-
-        animal
-
-    )
+    return service.atualizar(id, animal)
 
 
 # ==========================================================
 # DELETAR
 # ==========================================================
 
-@router.delete(
-    "/{id}"
-)
+
+@router.delete("/{id}")
 def deletar(
-
     id: int,
-
-    service: AnimalServiceImpl = Depends(
-        get_service
-    )
-
+    service: AnimalServiceDep,
 ):
-
-    return service.deletar(
-        id
-    )
+    return service.deletar(id)
 
 
 # ==========================================================
 # HISTÓRICO
 # ==========================================================
 
-@router.get(
-    "/{id}/historico",
-    response_model=AnimalHistoricoResponse
-)
+
+@router.get("/{id}/historico", response_model=AnimalHistoricoResponse)
 def historico(
-
     id: int,
-
-    service_atendimento: AtendimentoServiceImpl = Depends(
-        get_atendimento_service
-    )
-
+    service_atendimento: AtendimentoServiceDep,
 ):
-
-    return service_atendimento.historico_completo(
-        id
-    )
+    return service_atendimento.historico_completo(id)

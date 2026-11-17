@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
-class AtendimentoService(ABC):
 
+class AtendimentoService(ABC):
     @abstractmethod
     def listar_atendimentos(self):
         pass

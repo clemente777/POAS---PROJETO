@@ -5,7 +5,6 @@ from backend.models.produto_model import Produtos
 
 
 class ProdutoRepository:
-
     def __init__(self, session: Session):
         self.session = session
 
@@ -13,31 +12,15 @@ class ProdutoRepository:
     # BUSCAR PRODUTO POR ID
     # ==================================================
 
-    def buscar_por_id(
-        self,
-        id: int
-    ):
-        return self.session.scalar(
-            select(Produtos)
-            .where(
-                Produtos.id == id
-            )
-        )
+    def buscar_por_id(self, id: int):
+        return self.session.scalar(select(Produtos).where(Produtos.id == id))
 
     # ==================================================
     # BUSCAR PRODUTO POR NOME
     # ==================================================
 
-    def buscar_por_nome(
-        self,
-        nome: str
-    ):
-        return self.session.scalar(
-            select(Produtos)
-            .where(
-                Produtos.nome == nome
-            )
-        )
+    def buscar_por_nome(self, nome: str):
+        return self.session.scalar(select(Produtos).where(Produtos.nome == nome))
 
     # ==================================================
     # LISTAR PRODUTOS
@@ -55,87 +38,65 @@ class ProdutoRepository:
         estoque_max: int | None = None,
         em_estoque: bool | None = None,
         sort_by: str = "nome",
-        order: str = "asc"
+        order: str = "asc",
     ):
-        query = select(
-            Produtos
-        )
+        query = select(Produtos)
 
         # ==================================================
         # FILTRO POR NOME
         # ==================================================
 
         if nome:
-            query = query.where(
-                Produtos.nome.ilike(
-                    f"%{nome.strip()}%"
-                )
-            )
+            query = query.where(Produtos.nome.ilike(f"%{nome.strip()}%"))
 
         # ==================================================
         # FILTRO POR DESCRIÇÃO
         # ==================================================
 
         if descricao:
-            query = query.where(
-                Produtos.descricao.ilike(
-                    f"%{descricao.strip()}%"
-                )
-            )
+            query = query.where(Produtos.descricao.ilike(f"%{descricao.strip()}%"))
 
         # ==================================================
         # FILTRO DE PREÇO MÍNIMO
         # ==================================================
 
         if preco_min is not None:
-            query = query.where(
-                Produtos.preco >= preco_min
-            )
+            query = query.where(Produtos.preco >= preco_min)
 
         # ==================================================
         # FILTRO DE PREÇO MÁXIMO
         # ==================================================
 
         if preco_max is not None:
-            query = query.where(
-                Produtos.preco <= preco_max
-            )
+            query = query.where(Produtos.preco <= preco_max)
 
         # ==================================================
         # FILTRO DE ESTOQUE MÍNIMO
         # ==================================================
 
         if estoque_min is not None:
-            query = query.where(
-                Produtos.estoque >= estoque_min
-            )
+            query = query.where(Produtos.estoque >= estoque_min)
 
         # ==================================================
         # FILTRO DE ESTOQUE MÁXIMO
         # ==================================================
 
         if estoque_max is not None:
-            query = query.where(
-                Produtos.estoque <= estoque_max
-            )
+            query = query.where(Produtos.estoque <= estoque_max)
 
         # ==================================================
         # FILTRO DE PRODUTOS EM ESTOQUE
         # ==================================================
 
         if em_estoque is True:
-            query = query.where(
-                Produtos.estoque > 0
-            )
+            query = query.where(Produtos.estoque > 0)
 
         # ==================================================
         # FILTRO DE PRODUTOS SEM ESTOQUE
         # ==================================================
 
         if em_estoque is False:
-            query = query.where(
-                Produtos.estoque == 0
-            )
+            query = query.where(Produtos.estoque == 0)
 
         # ==================================================
         # ORDENAÇÃO
@@ -146,63 +107,41 @@ class ProdutoRepository:
             "nome": Produtos.nome,
             "descricao": Produtos.descricao,
             "preco": Produtos.preco,
-            "estoque": Produtos.estoque
+            "estoque": Produtos.estoque,
         }
 
-        coluna = campos.get(
-            sort_by,
-            Produtos.nome
-        )
+        coluna = campos.get(sort_by, Produtos.nome)
 
         if order.lower() == "desc":
-            query = query.order_by(
-                desc(coluna)
-            )
+            query = query.order_by(desc(coluna))
         else:
-            query = query.order_by(
-                asc(coluna)
-            )
+            query = query.order_by(asc(coluna))
 
         # ==================================================
         # PAGINAÇÃO
         # ==================================================
 
-        if skip < 0:
-            skip = 0
+        skip = max(skip, 0)
 
         if limit <= 0:
             limit = 10
 
-        if limit > 100:
-            limit = 100
+        limit = min(limit, 100)
 
-        query = (
-            query
-            .offset(skip)
-            .limit(limit)
-        )
+        query = query.offset(skip).limit(limit)
 
-        return self.session.scalars(
-            query
-        ).all()
+        return self.session.scalars(query).all()
 
     # ==================================================
     # CRIAR PRODUTO
     # ==================================================
 
-    def criar(
-        self,
-        produto: Produtos
-    ):
-        self.session.add(
-            produto
-        )
+    def criar(self, produto: Produtos):
+        self.session.add(produto)
 
         self.session.commit()
 
-        self.session.refresh(
-            produto
-        )
+        self.session.refresh(produto)
 
         return produto
 
@@ -210,15 +149,10 @@ class ProdutoRepository:
     # ATUALIZAR PRODUTO
     # ==================================================
 
-    def atualizar(
-        self,
-        produto: Produtos
-    ):
+    def atualizar(self, produto: Produtos):
         self.session.commit()
 
-        self.session.refresh(
-            produto
-        )
+        self.session.refresh(produto)
 
         return produto
 
@@ -226,13 +160,8 @@ class ProdutoRepository:
     # DELETAR PRODUTO
     # ==================================================
 
-    def deletar(
-        self,
-        produto: Produtos
-    ):
-        self.session.delete(
-            produto
-        )
+    def deletar(self, produto: Produtos):
+        self.session.delete(produto)
 
         self.session.commit()
 
@@ -244,4 +173,3 @@ class ProdutoRepository:
 
     def rollback(self):
         self.session.rollback()
-

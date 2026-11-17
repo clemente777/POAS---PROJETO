@@ -1,64 +1,64 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from backend.database.database import get_session
 from backend.auth.dependencies import get_current_user
-
+from backend.database.database import get_session
 from backend.models.usuario_model import Usuarios
-
-from backend.repositories.dashboard_repository import (
-    DashboardRepository
-)
-
-from backend.services.implementations.dashboard_service_impl import (
-    DashboardServiceImpl
-)
-
+from backend.repositories.dashboard_repository import DashboardRepository
 from backend.schemas.dashboard_schema import (
+    DashboardClienteResponse,
     DashboardResponse,
     DashboardVeterinarioResponse,
-    DashboardClienteResponse
 )
+from backend.services.implementations.dashboard_service_impl import DashboardServiceImpl
+
+router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 
 
-router = APIRouter(
-    prefix="/dashboard",
-    tags=["Dashboard"]
-)
+# ============================================================
+# TIPOS DAS DEPENDÊNCIAS
+# ============================================================
+
+SessionDep = Annotated[Session, Depends(get_session)]
+UsuarioDep = Annotated[Usuarios, Depends(get_current_user)]
 
 
 # ============================================================
 # DEPENDÊNCIA DO SERVICE
 # ============================================================
 
+
 def get_service(
-    session: Session = Depends(get_session),
-    usuario: Usuarios = Depends(get_current_user)
+    session: SessionDep,
+    usuario: UsuarioDep,
 ):
     repository = DashboardRepository(session)
 
     return DashboardServiceImpl(
         repository=repository,
-        usuario=usuario
+        usuario=usuario,
     )
+
+
+ServiceDep = Annotated[DashboardServiceImpl, Depends(get_service)]
 
 
 # ============================================================
 # DASHBOARD ADMIN
 # ============================================================
 
-@router.get(
-    "/admin",
-    response_model=DashboardResponse
-)
+
+@router.get("/admin", response_model=DashboardResponse)
 def dashboard_admin(
-    service: DashboardServiceImpl = Depends(get_service),
-    usuario: Usuarios = Depends(get_current_user)
+    service: ServiceDep,
+    usuario: UsuarioDep,
 ):
     if usuario.perfil != "Administrador":
         raise HTTPException(
             status_code=403,
-            detail="Apenas administradores podem acessar."
+            detail="Apenas administradores podem acessar.",
         )
 
     return service.dashboard_admin()
@@ -68,18 +68,16 @@ def dashboard_admin(
 # DASHBOARD VETERINÁRIO
 # ============================================================
 
-@router.get(
-    "/veterinario",
-    response_model=DashboardVeterinarioResponse
-)
+
+@router.get("/veterinario", response_model=DashboardVeterinarioResponse)
 def dashboard_veterinario(
-    service: DashboardServiceImpl = Depends(get_service),
-    usuario: Usuarios = Depends(get_current_user)
+    service: ServiceDep,
+    usuario: UsuarioDep,
 ):
     if usuario.perfil != "Veterinário":
         raise HTTPException(
             status_code=403,
-            detail="Apenas veterinários podem acessar."
+            detail="Apenas veterinários podem acessar.",
         )
 
     return service.dashboard_veterinario()
@@ -89,19 +87,16 @@ def dashboard_veterinario(
 # DASHBOARD CLIENTE
 # ============================================================
 
-@router.get(
-    "/cliente",
-    response_model=DashboardClienteResponse
-)
+
+@router.get("/cliente", response_model=DashboardClienteResponse)
 def dashboard_cliente(
-    service: DashboardServiceImpl = Depends(get_service),
-    usuario: Usuarios = Depends(get_current_user)
+    service: ServiceDep,
+    usuario: UsuarioDep,
 ):
     if usuario.perfil != "Cliente":
         raise HTTPException(
             status_code=403,
-            detail="Apenas clientes podem acessar."
+            detail="Apenas clientes podem acessar.",
         )
 
     return service.dashboard_cliente()
-

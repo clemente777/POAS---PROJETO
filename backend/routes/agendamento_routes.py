@@ -1,55 +1,74 @@
 from datetime import datetime
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, Response
 from sqlalchemy.orm import Session
 
-from backend.database.database import get_session
-
 from backend.auth.dependencies import get_current_user
 from backend.auth.permissions import exigir_perfil
-
+from backend.database.database import get_session
 from backend.models.usuario_model import Usuarios
-
-from backend.repositories.agendamento_repository import (
-    AgendamentoRepository
-)
-
+from backend.repositories.agendamento_repository import AgendamentoRepository
 from backend.schemas.agendamento_schema import (
     AgendamentoCreate,
+    AgendamentoResponse,
     AgendamentoUpdate,
-    AgendamentoResponse
 )
-
 from backend.services.implementations.agendamento_service_impl import (
-    AgendamentoServiceImpl
+    AgendamentoServiceImpl,
 )
 
+router = APIRouter(prefix="/agendamentos", tags=["Agendamentos"])
 
-router = APIRouter(
-    prefix="/agendamentos",
-    tags=["Agendamentos"]
-)
+
+# ==========================================================
+# DEPENDÊNCIAS
+# ==========================================================
+
+SessionDep = Annotated[
+    Session,
+    Depends(get_session),
+]
+
+UsuarioLogadoDep = Annotated[
+    Usuarios,
+    Depends(get_current_user),
+]
+
+ClienteVeterinarioAdminDep = Annotated[
+    Usuarios,
+    Depends(exigir_perfil("Cliente", "Veterinário", "Administrador")),
+]
+
+VeterinarioAdminDep = Annotated[
+    Usuarios,
+    Depends(exigir_perfil("Veterinário", "Administrador")),
+]
+
+AdministradorDep = Annotated[
+    Usuarios,
+    Depends(exigir_perfil("Administrador")),
+]
 
 
 # ==========================================================
 # DEPENDÊNCIA SERVICE
 # ==========================================================
 
+
 def get_service(
-    session: Session = Depends(get_session),
-    usuario_logado: Usuarios = Depends(
-        get_current_user
-    )
+    session: SessionDep,
+    usuario_logado: UsuarioLogadoDep,
 ):
+    repository = AgendamentoRepository(session)
 
-    repository = AgendamentoRepository(
-        session
-    )
+    return AgendamentoServiceImpl(repository, usuario_logado)
 
-    return AgendamentoServiceImpl(
-        repository,
-        usuario_logado
-    )
+
+AgendamentoServiceDep = Annotated[
+    AgendamentoServiceImpl,
+    Depends(get_service),
+]
 
 
 # ==========================================================
@@ -58,32 +77,14 @@ def get_service(
 # Cliente, Veterinário e Administrador
 # ==========================================================
 
-@router.post(
-    "/",
-    response_model=AgendamentoResponse,
-    status_code=201
-)
+
+@router.post("/", response_model=AgendamentoResponse, status_code=201)
 def criar(
-
     agendamento: AgendamentoCreate,
-
-    usuario_logado: Usuarios = Depends(
-        exigir_perfil(
-            "Cliente",
-            "Veterinário",
-            "Administrador"
-        )
-    ),
-
-    service: AgendamentoServiceImpl = Depends(
-        get_service
-    )
-
+    usuario_logado: ClienteVeterinarioAdminDep,
+    service: AgendamentoServiceDep,
 ):
-
-    return service.criar(
-        agendamento
-    )
+    return service.criar(agendamento)
 
 
 # ==========================================================
@@ -92,42 +93,20 @@ def criar(
 # Cliente, Veterinário e Administrador
 # ==========================================================
 
-@router.get(
-    "/",
-    response_model=list[AgendamentoResponse]
-)
+
+@router.get("/", response_model=list[AgendamentoResponse])
 def listar(
-
+    usuario_logado: ClienteVeterinarioAdminDep,
+    service: AgendamentoServiceDep,
     skip: int = 0,
-
     limit: int = 10,
-
     animal_id: int | None = None,
-
     status: str | None = None,
-
     descricao: str | None = None,
-
     data: datetime | None = None,
-
     sort_by: str = "data_agendamento",
-
     order: str = "asc",
-
-    usuario_logado: Usuarios = Depends(
-        exigir_perfil(
-            "Cliente",
-            "Veterinário",
-            "Administrador"
-        )
-    ),
-
-    service: AgendamentoServiceImpl = Depends(
-        get_service
-    )
-
 ):
-
     return service.listar(
         skip=skip,
         limit=limit,
@@ -136,7 +115,7 @@ def listar(
         descricao=descricao,
         data=data,
         sort_by=sort_by,
-        order=order
+        order=order,
     )
 
 
@@ -146,31 +125,14 @@ def listar(
 # Cliente, Veterinário e Administrador
 # ==========================================================
 
-@router.get(
-    "/{id}",
-    response_model=AgendamentoResponse
-)
+
+@router.get("/{id}", response_model=AgendamentoResponse)
 def buscar(
-
     id: int,
-
-    usuario_logado: Usuarios = Depends(
-        exigir_perfil(
-            "Cliente",
-            "Veterinário",
-            "Administrador"
-        )
-    ),
-
-    service: AgendamentoServiceImpl = Depends(
-        get_service
-    )
-
+    usuario_logado: ClienteVeterinarioAdminDep,
+    service: AgendamentoServiceDep,
 ):
-
-    return service.buscar_por_id(
-        id
-    )
+    return service.buscar_por_id(id)
 
 
 # ==========================================================
@@ -179,33 +141,15 @@ def buscar(
 # Veterinário e Administrador
 # ==========================================================
 
-@router.put(
-    "/{id}",
-    response_model=AgendamentoResponse
-)
+
+@router.put("/{id}", response_model=AgendamentoResponse)
 def atualizar(
-
     id: int,
-
     agendamento: AgendamentoUpdate,
-
-    usuario_logado: Usuarios = Depends(
-        exigir_perfil(
-            "Veterinário",
-            "Administrador"
-        )
-    ),
-
-    service: AgendamentoServiceImpl = Depends(
-        get_service
-    )
-
+    usuario_logado: VeterinarioAdminDep,
+    service: AgendamentoServiceDep,
 ):
-
-    return service.atualizar(
-        id,
-        agendamento
-    )
+    return service.atualizar(id, agendamento)
 
 
 # ==========================================================
@@ -214,31 +158,14 @@ def atualizar(
 # Cliente, Veterinário e Administrador
 # ==========================================================
 
-@router.post(
-    "/{id}/cancelar",
-    response_model=AgendamentoResponse
-)
+
+@router.post("/{id}/cancelar", response_model=AgendamentoResponse)
 def cancelar(
-
     id: int,
-
-    usuario_logado: Usuarios = Depends(
-        exigir_perfil(
-            "Cliente",
-            "Veterinário",
-            "Administrador"
-        )
-    ),
-
-    service: AgendamentoServiceImpl = Depends(
-        get_service
-    )
-
+    usuario_logado: ClienteVeterinarioAdminDep,
+    service: AgendamentoServiceDep,
 ):
-
-    return service.cancelar(
-        id
-    )
+    return service.cancelar(id)
 
 
 # ==========================================================
@@ -249,24 +176,12 @@ def cancelar(
 # O Service bloqueia a exclusão.
 # ==========================================================
 
-@router.delete(
-    "/{id}",
-    status_code=204
-)
+
+@router.delete("/{id}", status_code=204)
 def deletar(
-
     id: int,
-
-    usuario_logado: Usuarios = Depends(
-        exigir_perfil(
-            "Administrador"
-        )
-    ),
-
-    service: AgendamentoServiceImpl = Depends(get_service)):
-
+    usuario_logado: AdministradorDep,
+    service: AgendamentoServiceDep,
+):
     service.deletar(id)
-    return Response(
-        status_code=204
-    )
-
+    return Response(status_code=204)

@@ -4,7 +4,6 @@ from pydantic import BaseModel, ConfigDict
 
 
 class AgendamentoCreate(BaseModel):
-
     data_agendamento: datetime
 
     descricao: str
@@ -16,9 +15,7 @@ class AgendamentoCreate(BaseModel):
     veterinario_id: int | None = None
 
 
-
 class AgendamentoUpdate(BaseModel):
-
     data_agendamento: datetime | None = None
 
     descricao: str | None = None
@@ -28,13 +25,8 @@ class AgendamentoUpdate(BaseModel):
     veterinario_id: int | None = None
 
 
-
 class AgendamentoResponse(BaseModel):
-
-    model_config = ConfigDict(
-        from_attributes=True
-    )
-
+    model_config = ConfigDict(from_attributes=True)
 
     id: int
 

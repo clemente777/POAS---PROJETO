@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
-class ClienteService(ABC):
 
+class ClienteService(ABC):
     @abstractmethod
     def listar_clientes(self):
         pass

@@ -1,8 +1,8 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from backend.models.usuario_model import Usuarios
 from backend.models.cliente_model import Clientes
+from backend.models.usuario_model import Usuarios
 
 
 class CadastroRepository:
@@ -19,52 +19,30 @@ class CadastroRepository:
     - Controlar a transação de cadastro.
     """
 
-    def __init__(
-        self,
-        session: Session
-    ):
+    def __init__(self, session: Session):
         self.session = session
 
     # ==========================================================
     # BUSCAR USUÁRIO POR EMAIL
     # ==========================================================
 
-    def buscar_usuario_por_email(
-        self,
-        email: str
-    ) -> Usuarios | None:
+    def buscar_usuario_por_email(self, email: str) -> Usuarios | None:
 
-        return self.session.scalar(
-            select(Usuarios)
-            .where(
-                Usuarios.email == email
-            )
-        )
+        return self.session.scalar(select(Usuarios).where(Usuarios.email == email))
 
     # ==========================================================
     # BUSCAR CLIENTE POR CPF
     # ==========================================================
 
-    def buscar_cliente_por_cpf(
-        self,
-        cpf: str
-    ) -> Clientes | None:
+    def buscar_cliente_por_cpf(self, cpf: str) -> Clientes | None:
 
-        return self.session.scalar(
-            select(Clientes)
-            .where(
-                Clientes.cpf == cpf
-            )
-        )
+        return self.session.scalar(select(Clientes).where(Clientes.cpf == cpf))
 
     # ==========================================================
     # CRIAR USUÁRIO
     # ==========================================================
 
-    def criar_usuario(
-        self,
-        usuario: Usuarios
-    ) -> Usuarios:
+    def criar_usuario(self, usuario: Usuarios) -> Usuarios:
 
         self.session.add(usuario)
 
@@ -79,10 +57,7 @@ class CadastroRepository:
     # CRIAR CLIENTE
     # ==========================================================
 
-    def criar_cliente(
-        self,
-        cliente: Clientes
-    ) -> Clientes:
+    def criar_cliente(self, cliente: Clientes) -> Clientes:
 
         self.session.add(cliente)
 
@@ -92,28 +67,18 @@ class CadastroRepository:
     # FINALIZAR CADASTRO
     # ==========================================================
 
-    def finalizar_cadastro(
-        self,
-        usuario: Usuarios,
-        cliente: Clientes
-    ):
+    def finalizar_cadastro(self, usuario: Usuarios, cliente: Clientes):
 
         try:
-
             self.session.commit()
 
-            self.session.refresh(
-                usuario
-            )
+            self.session.refresh(usuario)
 
-            self.session.refresh(
-                cliente
-            )
+            self.session.refresh(cliente)
 
             return usuario, cliente
 
         except Exception:
-
             self.session.rollback()
 
             raise
@@ -125,4 +90,3 @@ class CadastroRepository:
     def rollback(self):
 
         self.session.rollback()
-

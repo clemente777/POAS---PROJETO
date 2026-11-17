@@ -1,167 +1,133 @@
-from typing import Optional, List, Dict, Any
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict
 
 
 class ProdutoDashboard(BaseModel):
-
-        nome: str
-        preco: float
-
+    nome: str
+    preco: float
 
 
 class AnimalDashboard(BaseModel):
-
-        nome: str
-        idade: int
-
+    nome: str
+    idade: int
 
 
 class ClienteAnimaisDashboard(BaseModel):
-
-        nome: str
-        quantidade: int
-
+    nome: str
+    quantidade: int
 
 
 class VacinaDashboard(BaseModel):
-
-        nome: str
-        quantidade: int
-
-
-
+    nome: str
+    quantidade: int
 
 
 class DashboardResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
 
-        model_config = ConfigDict(
-            from_attributes=True
-        )
+    # ==========================
+    # USUÁRIOS
+    # ==========================
 
+    usuarios: int
 
-        # ==========================
-        # USUÁRIOS
-        # ==========================
+    administradores: int
 
-        usuarios: int
+    veterinarios: int
 
-        administradores: int
+    clientes_sistema: int
 
-        veterinarios: int
+    # ==========================
+    # CADASTROS
+    # ==========================
 
-        clientes_sistema: int
+    clientes: int
 
+    animais: int
 
+    agendamentos: int
 
-        # ==========================
-        # CADASTROS
-        # ==========================
+    atendimentos: int
 
-        clientes: int
+    produtos: int
 
-        animais: int
+    carrinhos: int
 
-        agendamentos: int
+    itens_carrinho: int
 
-        atendimentos: int
+    # ==========================
+    # VACINAS
+    # ==========================
 
-        produtos: int
+    vacinas: int
 
+    aplicacoes_vacina: int
 
-        carrinhos: int
+    proximas_doses: int
 
-        itens_carrinho: int
+    vacina_mais_aplicada: VacinaDashboard | None
 
+    # ==========================
+    # ESTOQUE
+    # ==========================
 
+    valor_total_estoque: float
 
-        # ==========================
-        # VACINAS
-        # ==========================
+    estoque_baixo: int
 
-        vacinas: int
+    produtos_sem_estoque: int
 
-        aplicacoes_vacina: int
+    # ==========================
+    # PRODUTOS
+    # ==========================
 
-        proximas_doses: int
+    produto_mais_caro: ProdutoDashboard | None
 
-        vacina_mais_aplicada: Optional[VacinaDashboard]
+    produto_mais_barato: ProdutoDashboard | None
 
+    # ==========================
+    # ANIMAIS
+    # ==========================
 
+    animal_mais_velho: AnimalDashboard | None
 
-        # ==========================
-        # ESTOQUE
-        # ==========================
+    media_idade_animais: float
 
-        valor_total_estoque: float
+    animais_por_especie: dict[str, int]
 
-        estoque_baixo: int
+    # ==========================
+    # CLIENTES
+    # ==========================
 
-        produtos_sem_estoque: int
+    cliente_com_mais_animais: ClienteAnimaisDashboard | None
 
+    # ==========================
+    # AGENDA
+    # ==========================
 
+    agendamentos_hoje: int
 
-        # ==========================
-        # PRODUTOS
-        # ==========================
+    agendamentos_futuros: int
 
-        produto_mais_caro: Optional[ProdutoDashboard]
+    agendamentos_cancelados: int
 
-        produto_mais_barato: Optional[ProdutoDashboard]
+    agendamentos_semana: list[dict[str, Any]]
 
+    # ==========================
+    # ATENDIMENTOS
+    # ==========================
 
+    atendimentos_hoje: int
 
-        # ==========================
-        # ANIMAIS
-        # ==========================
-
-        animal_mais_velho: Optional[AnimalDashboard]
-
-        media_idade_animais: float
-
-        animais_por_especie: Dict[str, int]
-
-
-
-        # ==========================
-        # CLIENTES
-        # ==========================
-
-        cliente_com_mais_animais: Optional[ClienteAnimaisDashboard]
-
-
-
-        # ==========================
-        # AGENDA
-        # ==========================
-
-        agendamentos_hoje: int
-
-        agendamentos_futuros: int
-
-        agendamentos_cancelados: int
-
-        agendamentos_semana: List[Dict[str, Any]]
+    atendimentos_finalizados: int
 
 
-
-        # ==========================
-        # ATENDIMENTOS
-        # ==========================
-
-
-        atendimentos_hoje: int
-
-        atendimentos_finalizados: int
-        
 from pydantic import BaseModel
 
 
 class DashboardVeterinarioResponse(BaseModel):
-
-    model_config = ConfigDict(
-        from_attributes=True
-    )
+    model_config = ConfigDict(from_attributes=True)
 
     # compartilhados
     animais: int
@@ -174,15 +140,15 @@ class DashboardVeterinarioResponse(BaseModel):
 
     aplicacoes_vacina: int
 
-    animais_por_especie: Dict[str, int]
+    animais_por_especie: dict[str, int]
 
-    animal_mais_velho: Optional[AnimalDashboard]
+    animal_mais_velho: AnimalDashboard | None
 
     media_idade_animais: float
 
-    cliente_com_mais_animais: Optional[ClienteAnimaisDashboard]
+    cliente_com_mais_animais: ClienteAnimaisDashboard | None
 
-    agendamentos_semana: List[Dict[str, Any]]
+    agendamentos_semana: list[dict[str, Any]]
 
     # exclusivos do veterinário
     consultas_hoje: int
@@ -199,25 +165,21 @@ class DashboardVeterinarioResponse(BaseModel):
 
 
 class ProximaConsultaDashboard(BaseModel):
-
     data: str
     descricao: str
     animal: str
 
 
 class DashboardClienteResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
 
-    model_config = ConfigDict(
-        from_attributes=True
-    )
-
-    meus_animais: List[AnimalDashboard]
+    meus_animais: list[AnimalDashboard]
 
     total_animais: int
 
     consultas_agendadas: int
 
-    proxima_consulta: Optional[ProximaConsultaDashboard]
+    proxima_consulta: ProximaConsultaDashboard | None
 
     consultas_realizadas: int
 

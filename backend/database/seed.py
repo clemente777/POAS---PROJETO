@@ -1,43 +1,31 @@
-from sqlalchemy import select
 from pwdlib import PasswordHash
+from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 
 from backend.database.database import SessionLocal
-from backend.models.usuario_model import Usuarios
 from backend.models.produto_model import Produtos
-
+from backend.models.usuario_model import Usuarios
 
 senha_context = PasswordHash.recommended()
 
 
 def criar_admin():
-
     session = SessionLocal()
 
     try:
-
         admin = session.scalar(
-
-            select(Usuarios).where(
-                Usuarios.email == "admin@poas.com"
-            )
-
+            select(Usuarios).where(Usuarios.email == "admin@poas.com")
         )
 
         if admin:
-
             print("Administrador já existe.")
             return
 
         admin = Usuarios(
-
             nome="Administrador",
-
             email="admin@poas.com",
-
             senha_hash=senha_context.hash("admin123"),
-
-            perfil="Administrador"
-
+            perfil="Administrador",
         )
 
         session.add(admin)
@@ -52,15 +40,13 @@ def criar_admin():
         print("Senha : admin123")
         print("====================================")
 
-    except Exception as e:
-
+    except SQLAlchemyError as erro:
         session.rollback()
 
         print("Erro ao criar administrador:")
-        print(e)
+        print(erro)
 
     finally:
-
         session.close()
 
 
@@ -109,9 +95,7 @@ def criar_produtos_teste():
     try:
         for dados in produtos:
             existente = session.scalar(
-                select(Produtos).where(
-                    Produtos.nome == dados["nome"]
-                )
+                select(Produtos).where(Produtos.nome == dados["nome"])
             )
 
             if existente is None:
@@ -120,7 +104,7 @@ def criar_produtos_teste():
         session.commit()
         print("Produtos de teste verificados com sucesso!")
 
-    except Exception as erro:
+    except SQLAlchemyError as erro:
         session.rollback()
         print("Erro ao criar produtos de teste:", erro)
 

@@ -1,10 +1,9 @@
 from datetime import datetime
 
-from pydantic import BaseModel, EmailStr, ConfigDict
+from pydantic import BaseModel, ConfigDict, EmailStr
 
 
 class UsuarioCreate(BaseModel):
-
     nome: str
 
     email: EmailStr
@@ -12,9 +11,7 @@ class UsuarioCreate(BaseModel):
     senha: str
 
 
-
 class UsuarioAdminCreate(BaseModel):
-
     nome: str
 
     email: EmailStr
@@ -24,9 +21,7 @@ class UsuarioAdminCreate(BaseModel):
     perfil: str
 
 
-
 class UsuarioUpdate(BaseModel):
-
     nome: str | None = None
 
     email: EmailStr | None = None
@@ -34,12 +29,8 @@ class UsuarioUpdate(BaseModel):
     senha: str | None = None
 
 
-
 class UsuarioResponse(BaseModel):
-
-    model_config = ConfigDict(
-        from_attributes=True
-    )
+    model_config = ConfigDict(from_attributes=True)
 
     id: int
 

@@ -1,52 +1,32 @@
-from typing import Optional
-
 from pydantic import BaseModel, ConfigDict, Field
 
 
 class VacinaCreate(BaseModel):
+    nome: str = Field(min_length=2, max_length=100)
 
-    nome: str = Field(
-        min_length=2,
-        max_length=100
-    )
+    fabricante: str = Field(min_length=2, max_length=100)
 
-    fabricante: str = Field(
-        min_length=2,
-        max_length=100
-    )
+    quantidade_doses: int = Field(ge=1)
 
-    quantidade_doses: int = Field(
-        ge=1
-    )
+    intervalo_dias: int = Field(ge=1)
 
-    intervalo_dias: int = Field(
-        ge=1
-    )
-
-    descricao: Optional[str] = Field(
-        default=None,
-        max_length=300
-    )
+    descricao: str | None = Field(default=None, max_length=300)
 
 
 class VacinaUpdate(BaseModel):
+    nome: str | None = None
 
-    nome: Optional[str] = None
+    fabricante: str | None = None
 
-    fabricante: Optional[str] = None
+    quantidade_doses: int | None = None
 
-    quantidade_doses: Optional[int] = None
+    intervalo_dias: int | None = None
 
-    intervalo_dias: Optional[int] = None
-
-    descricao: Optional[str] = None
+    descricao: str | None = None
 
 
 class VacinaResponse(BaseModel):
-
-    model_config = ConfigDict(
-        from_attributes=True
-    )
+    model_config = ConfigDict(from_attributes=True)
 
     id: int
 
@@ -58,4 +38,4 @@ class VacinaResponse(BaseModel):
 
     intervalo_dias: int
 
-    descricao: Optional[str]
+    descricao: str | None

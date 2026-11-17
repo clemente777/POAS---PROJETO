@@ -1,11 +1,11 @@
 from datetime import datetime
 
-from sqlalchemy import select, asc, desc, update
+from sqlalchemy import asc, desc, select, update
 from sqlalchemy.orm import Session
 
 from backend.models.carrinho_model import Carrinhos
 from backend.models.cliente_model import Clientes
-from backend.models.pedido_model import Pedidos, ItensPedido
+from backend.models.pedido_model import ItensPedido, Pedidos
 from backend.models.produto_model import Produtos
 from backend.repositories.pedido_repository import PedidoRepository
 
@@ -45,43 +45,24 @@ class CarrinhoRepository:
     # BUSCAR CARRINHO POR ID
     # ==================================================
 
-    def buscar_por_id(
-        self,
-        id: int
-    ):
-        return self.session.scalar(
-            select(Carrinhos).where(
-                Carrinhos.id == id
-            )
-        )
+    def buscar_por_id(self, id: int):
+        return self.session.scalar(select(Carrinhos).where(Carrinhos.id == id))
 
     # ==================================================
     # BUSCAR CARRINHO POR CLIENTE
     # ==================================================
 
-    def buscar_por_cliente(
-        self,
-        cliente_id: int
-    ):
+    def buscar_por_cliente(self, cliente_id: int):
         return self.session.scalar(
-            select(Carrinhos).where(
-                Carrinhos.cliente_id == cliente_id
-            )
+            select(Carrinhos).where(Carrinhos.cliente_id == cliente_id)
         )
 
     # ==================================================
     # BUSCAR CLIENTE
     # ==================================================
 
-    def buscar_cliente(
-        self,
-        cliente_id: int
-    ):
-        return self.session.scalar(
-            select(Clientes).where(
-                Clientes.id == cliente_id
-            )
-        )
+    def buscar_cliente(self, cliente_id: int):
+        return self.session.scalar(select(Clientes).where(Clientes.id == cliente_id))
 
     # ==================================================
     # LISTAR CARRINHOS
@@ -96,7 +77,7 @@ class CarrinhoRepository:
         usuario_id: int | None = None,
         somente_proprio_cliente: bool = False,
         sort_by: str = "data_criacao",
-        order: str = "desc"
+        order: str = "desc",
     ):
         query = select(Carrinhos)
 
@@ -105,16 +86,8 @@ class CarrinhoRepository:
         # --------------------------------------------------
 
         if somente_proprio_cliente and usuario_id is not None:
-
-            query = (
-                query
-                .join(
-                    Clientes,
-                    Carrinhos.cliente_id == Clientes.id
-                )
-                .where(
-                    Clientes.usuario_id == usuario_id
-                )
+            query = query.join(Clientes, Carrinhos.cliente_id == Clientes.id).where(
+                Clientes.usuario_id == usuario_id
             )
 
         # --------------------------------------------------
@@ -122,20 +95,14 @@ class CarrinhoRepository:
         # --------------------------------------------------
 
         elif cliente_id is not None:
-
-            query = query.where(
-                Carrinhos.cliente_id == cliente_id
-            )
+            query = query.where(Carrinhos.cliente_id == cliente_id)
 
         # --------------------------------------------------
         # FILTRO POR DATA
         # --------------------------------------------------
 
         if data_criacao is not None:
-
-            query = query.where(
-                Carrinhos.data_criacao == data_criacao
-            )
+            query = query.where(Carrinhos.data_criacao == data_criacao)
 
         # --------------------------------------------------
         # CAMPOS PERMITIDOS PARA ORDENAÇÃO
@@ -144,68 +111,44 @@ class CarrinhoRepository:
         campos = {
             "id": Carrinhos.id,
             "cliente_id": Carrinhos.cliente_id,
-            "data_criacao": Carrinhos.data_criacao
+            "data_criacao": Carrinhos.data_criacao,
         }
 
-        coluna = campos.get(
-            sort_by,
-            Carrinhos.data_criacao
-        )
+        coluna = campos.get(sort_by, Carrinhos.data_criacao)
 
         # --------------------------------------------------
         # ORDEM
         # --------------------------------------------------
 
         if order.lower() == "asc":
-
-            query = query.order_by(
-                asc(coluna)
-            )
+            query = query.order_by(asc(coluna))
 
         else:
-
-            query = query.order_by(
-                desc(coluna)
-            )
+            query = query.order_by(desc(coluna))
 
         # --------------------------------------------------
         # PAGINAÇÃO
         # --------------------------------------------------
 
-        query = (
-            query
-            .offset(skip)
-            .limit(limit)
-        )
+        query = query.offset(skip).limit(limit)
 
-        return self.session.scalars(
-            query
-        ).all()
+        return self.session.scalars(query).all()
 
     # ==================================================
     # CRIAR
     # ==================================================
 
-    def criar(
-        self,
-        carrinho: Carrinhos
-    ):
+    def criar(self, carrinho: Carrinhos):
         try:
-
-            self.session.add(
-                carrinho
-            )
+            self.session.add(carrinho)
 
             self.session.commit()
 
-            self.session.refresh(
-                carrinho
-            )
+            self.session.refresh(carrinho)
 
             return carrinho
 
         except Exception:
-
             self.session.rollback()
 
             raise
@@ -214,22 +157,15 @@ class CarrinhoRepository:
     # ATUALIZAR
     # ==================================================
 
-    def atualizar(
-        self,
-        carrinho: Carrinhos
-    ):
+    def atualizar(self, carrinho: Carrinhos):
         try:
-
             self.session.commit()
 
-            self.session.refresh(
-                carrinho
-            )
+            self.session.refresh(carrinho)
 
             return carrinho
 
         except Exception:
-
             self.session.rollback()
 
             raise
@@ -238,22 +174,15 @@ class CarrinhoRepository:
     # DELETAR
     # ==================================================
 
-    def deletar(
-        self,
-        carrinho: Carrinhos
-    ):
+    def deletar(self, carrinho: Carrinhos):
         try:
-
-            self.session.delete(
-                carrinho
-            )
+            self.session.delete(carrinho)
 
             self.session.commit()
 
             return True
 
         except Exception:
-
             self.session.rollback()
 
             raise
@@ -262,10 +191,7 @@ class CarrinhoRepository:
     # FINALIZAR COMPRA
     # ==================================================
 
-    def finalizar_compra(
-        self,
-        carrinho: Carrinhos
-    ):
+    def finalizar_compra(self, carrinho: Carrinhos):
         """
         Executa a operação de finalização da compra.
 
@@ -280,7 +206,6 @@ class CarrinhoRepository:
         """
 
         try:
-
             valor_total = 0.0
             quantidade_itens = 0
 
@@ -291,7 +216,6 @@ class CarrinhoRepository:
             # --------------------------------------------------
 
             for item in list(carrinho.itens):
-
                 produto = item.produto
 
                 # Baixa condicional: só desconta se ainda houver
@@ -301,31 +225,17 @@ class CarrinhoRepository:
                 resultado = self.session.execute(
                     update(Produtos)
                     .where(
-                        Produtos.id == produto.id,
-                        Produtos.estoque >= item.quantidade
+                        Produtos.id == produto.id, Produtos.estoque >= item.quantidade
                     )
-                    .values(
-                        estoque=(
-                            Produtos.estoque -
-                            item.quantidade
-                        )
-                    )
+                    .values(estoque=(Produtos.estoque - item.quantidade))
                 )
 
                 if resultado.rowcount == 0:
+                    raise EstoqueInsuficienteError(produto.nome)
 
-                    raise EstoqueInsuficienteError(
-                        produto.nome
-                    )
+                valor_total += produto.preco * item.quantidade
 
-                valor_total += (
-                    produto.preco *
-                    item.quantidade
-                )
-
-                quantidade_itens += (
-                    item.quantidade
-                )
+                quantidade_itens += item.quantidade
 
                 # Nome e preço são copiados agora: o histórico
                 # não muda se o produto for editado depois.
@@ -335,7 +245,7 @@ class CarrinhoRepository:
                         produto_id=produto.id,
                         nome_produto=produto.nome,
                         preco_unitario=produto.preco,
-                        quantidade=item.quantidade
+                        quantidade=item.quantidade,
                     )
                 )
 
@@ -345,13 +255,11 @@ class CarrinhoRepository:
             # REGISTRAR A COMPRA (PEDIDO)
             # --------------------------------------------------
 
-            pedido = PedidoRepository(
-                self.session
-            ).adicionar(
+            pedido = PedidoRepository(self.session).adicionar(
                 Pedidos(
                     cliente_id=carrinho.cliente_id,
                     valor_total=valor_total,
-                    itens=itens_pedido
+                    itens=itens_pedido,
                 )
             )
 
@@ -362,10 +270,7 @@ class CarrinhoRepository:
             # --------------------------------------------------
 
             for item in list(carrinho.itens):
-
-                self.session.delete(
-                    item
-                )
+                self.session.delete(item)
 
             # --------------------------------------------------
             # CONFIRMAR TRANSAÇÃO
@@ -374,21 +279,13 @@ class CarrinhoRepository:
             self.session.commit()
 
             return {
-                "mensagem":
-                    "Compra finalizada com sucesso.",
-
-                "valor_total":
-                    valor_total,
-
-                "quantidade_itens":
-                    quantidade_itens,
-
-                "pedido_id":
-                    pedido_id
+                "mensagem": "Compra finalizada com sucesso.",
+                "valor_total": valor_total,
+                "quantidade_itens": quantidade_itens,
+                "pedido_id": pedido_id,
             }
 
         except Exception:
-
             self.session.rollback()
 
             raise

@@ -22,9 +22,7 @@ class AgendamentoRepository:
     def buscar_por_id(self, agendamento_id: int):
 
         return self.session.scalar(
-            select(Agendamentos).where(
-                Agendamentos.id == agendamento_id
-            )
+            select(Agendamentos).where(Agendamentos.id == agendamento_id)
         )
 
     # ==========================================================
@@ -33,40 +31,26 @@ class AgendamentoRepository:
 
     def buscar_animal(self, animal_id: int):
 
-        return self.session.scalar(
-            select(Animais).where(
-                Animais.id == animal_id
-            )
-        )
+        return self.session.scalar(select(Animais).where(Animais.id == animal_id))
 
     # ==========================================================
     # BUSCAR CLIENTE PELO USUÁRIO
     # ==========================================================
 
-    def buscar_cliente_por_usuario_id(
-        self,
-        usuario_id: int
-    ):
+    def buscar_cliente_por_usuario_id(self, usuario_id: int):
 
         return self.session.scalar(
-            select(Clientes).where(
-                Clientes.usuario_id == usuario_id
-            )
+            select(Clientes).where(Clientes.usuario_id == usuario_id)
         )
 
     # ==========================================================
     # BUSCAR VETERINÁRIO POR ID
     # ==========================================================
 
-    def buscar_veterinario_por_id(
-        self,
-        veterinario_id: int
-    ):
+    def buscar_veterinario_por_id(self, veterinario_id: int):
 
         return self.session.scalar(
-            select(Usuarios).where(
-                Usuarios.id == veterinario_id
-            )
+            select(Usuarios).where(Usuarios.id == veterinario_id)
         )
 
     # ==========================================================
@@ -74,25 +58,17 @@ class AgendamentoRepository:
     # ==========================================================
 
     def buscar_conflito_horario(
-        self,
-        animal_id: int,
-        data: datetime,
-        agendamento_id: int | None = None
+        self, animal_id: int, data: datetime, agendamento_id: int | None = None
     ):
 
-        query = select(
-            Agendamentos
-        ).where(
+        query = select(Agendamentos).where(
             Agendamentos.animal_id == animal_id,
             Agendamentos.data_agendamento == data,
-            Agendamentos.status != "Cancelado"
+            Agendamentos.status != "Cancelado",
         )
 
         if agendamento_id is not None:
-
-            query = query.where(
-                Agendamentos.id != agendamento_id
-            )
+            query = query.where(Agendamentos.id != agendamento_id)
 
         return self.session.scalar(query)
 
@@ -110,7 +86,7 @@ class AgendamentoRepository:
         data: datetime | None = None,
         cliente_id: int | None = None,
         sort_by: str = "data_agendamento",
-        order: str = "asc"
+        order: str = "asc",
     ):
 
         query = select(Agendamentos)
@@ -120,16 +96,8 @@ class AgendamentoRepository:
         # ------------------------------------------------------
 
         if cliente_id is not None:
-
-            query = (
-                query
-                .join(
-                    Animais,
-                    Agendamentos.animal_id == Animais.id
-                )
-                .where(
-                    Animais.cliente_id == cliente_id
-                )
+            query = query.join(Animais, Agendamentos.animal_id == Animais.id).where(
+                Animais.cliente_id == cliente_id
             )
 
         # ------------------------------------------------------
@@ -137,42 +105,28 @@ class AgendamentoRepository:
         # ------------------------------------------------------
 
         if animal_id is not None:
-
-            query = query.where(
-                Agendamentos.animal_id == animal_id
-            )
+            query = query.where(Agendamentos.animal_id == animal_id)
 
         # ------------------------------------------------------
         # FILTRO POR STATUS
         # ------------------------------------------------------
 
         if status is not None:
-
-            query = query.where(
-                Agendamentos.status == status
-            )
+            query = query.where(Agendamentos.status == status)
 
         # ------------------------------------------------------
         # FILTRO POR DESCRIÇÃO
         # ------------------------------------------------------
 
         if descricao:
-
-            query = query.where(
-                Agendamentos.descricao.ilike(
-                    f"%{descricao.strip()}%"
-                )
-            )
+            query = query.where(Agendamentos.descricao.ilike(f"%{descricao.strip()}%"))
 
         # ------------------------------------------------------
         # FILTRO POR DATA
         # ------------------------------------------------------
 
         if data is not None:
-
-            query = query.where(
-                Agendamentos.data_agendamento == data
-            )
+            query = query.where(Agendamentos.data_agendamento == data)
 
         # ------------------------------------------------------
         # ORDENAÇÃO
@@ -180,70 +134,44 @@ class AgendamentoRepository:
 
         campos = {
             "id": Agendamentos.id,
-            "data_agendamento": (
-                Agendamentos.data_agendamento
-            ),
+            "data_agendamento": (Agendamentos.data_agendamento),
             "descricao": Agendamentos.descricao,
             "status": Agendamentos.status,
-            "animal_id": Agendamentos.animal_id
+            "animal_id": Agendamentos.animal_id,
         }
 
-        coluna = campos.get(
-            sort_by,
-            Agendamentos.data_agendamento
-        )
+        coluna = campos.get(sort_by, Agendamentos.data_agendamento)
 
         if order.lower() == "desc":
-
-            query = query.order_by(
-                desc(coluna)
-            )
+            query = query.order_by(desc(coluna))
 
         else:
-
-            query = query.order_by(
-                asc(coluna)
-            )
+            query = query.order_by(asc(coluna))
 
         # ------------------------------------------------------
         # PAGINAÇÃO
         # ------------------------------------------------------
 
-        query = (
-            query
-            .offset(skip)
-            .limit(limit)
-        )
+        query = query.offset(skip).limit(limit)
 
-        return self.session.scalars(
-            query
-        ).all()
+        return self.session.scalars(query).all()
 
     # ==========================================================
     # CRIAR
     # ==========================================================
 
-    def criar(
-        self,
-        agendamento: Agendamentos
-    ):
+    def criar(self, agendamento: Agendamentos):
 
         try:
-
-            self.session.add(
-                agendamento
-            )
+            self.session.add(agendamento)
 
             self.session.commit()
 
-            self.session.refresh(
-                agendamento
-            )
+            self.session.refresh(agendamento)
 
             return agendamento
 
         except Exception:
-
             self.session.rollback()
 
             raise
@@ -252,23 +180,16 @@ class AgendamentoRepository:
     # ATUALIZAR
     # ==========================================================
 
-    def atualizar(
-        self,
-        agendamento: Agendamentos
-    ):
+    def atualizar(self, agendamento: Agendamentos):
 
         try:
-
             self.session.commit()
 
-            self.session.refresh(
-                agendamento
-            )
+            self.session.refresh(agendamento)
 
             return agendamento
 
         except Exception:
-
             self.session.rollback()
 
             raise
@@ -277,23 +198,16 @@ class AgendamentoRepository:
     # CANCELAR
     # ==========================================================
 
-    def cancelar(
-        self,
-        agendamento: Agendamentos
-    ):
+    def cancelar(self, agendamento: Agendamentos):
 
         try:
-
             self.session.commit()
 
-            self.session.refresh(
-                agendamento
-            )
+            self.session.refresh(agendamento)
 
             return agendamento
 
         except Exception:
-
             self.session.rollback()
 
             raise
@@ -308,22 +222,14 @@ class AgendamentoRepository:
     # no Service.
     # ==========================================================
 
-    def deletar(
-        self,
-        agendamento: Agendamentos
-    ):
+    def deletar(self, agendamento: Agendamentos):
 
         try:
-
-            self.session.delete(
-                agendamento
-            )
+            self.session.delete(agendamento)
 
             self.session.commit()
 
         except Exception:
-
             self.session.rollback()
 
             raise
-

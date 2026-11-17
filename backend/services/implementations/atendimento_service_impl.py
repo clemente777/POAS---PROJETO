@@ -1,19 +1,12 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import HTTPException
 
-from backend.models.atendimento_model import Atendimentos
 from backend.models.animal_model import Animais
+from backend.models.atendimento_model import Atendimentos
 from backend.models.usuario_model import Usuarios
-
-from backend.schemas.atendimento_schema import (
-    AtendimentoCreate,
-    AtendimentoUpdate
-)
-
-from backend.repositories.atendimento_repository import (
-    AtendimentoRepository
-)
+from backend.repositories.atendimento_repository import AtendimentoRepository
+from backend.schemas.atendimento_schema import AtendimentoCreate, AtendimentoUpdate
 
 
 class AtendimentoServiceImpl:
@@ -32,11 +25,7 @@ class AtendimentoServiceImpl:
     - Atendimento finalizado não pode ser alterado.
     """
 
-    def __init__(
-        self,
-        repository: AtendimentoRepository,
-        usuario_logado: Usuarios
-    ):
+    def __init__(self, repository: AtendimentoRepository, usuario_logado: Usuarios):
 
         self.repository = repository
         self.usuario_logado = usuario_logado
@@ -62,38 +51,21 @@ class AtendimentoServiceImpl:
 
         perfil = self.obter_perfil()
 
-        if perfil not in (
-            "Veterinário",
-            "Administrador"
-        ):
-
+        if perfil not in ("Veterinário", "Administrador"):
             raise HTTPException(
-                status_code=403,
-                detail=(
-                    "Sem permissão para "
-                    "gerenciar atendimentos."
-                )
+                status_code=403, detail=("Sem permissão para gerenciar atendimentos.")
             )
 
     # ==========================================================
     # USUÁRIO
     # ==========================================================
 
-    def buscar_usuario(
-        self,
-        usuario_id: int
-    ) -> Usuarios:
+    def buscar_usuario(self, usuario_id: int) -> Usuarios:
 
-        usuario = self.repository.buscar_usuario(
-            usuario_id
-        )
+        usuario = self.repository.buscar_usuario(usuario_id)
 
         if not usuario:
-
-            raise HTTPException(
-                status_code=404,
-                detail="Usuário não encontrado."
-            )
+            raise HTTPException(status_code=404, detail="Usuário não encontrado.")
 
         return usuario
 
@@ -101,70 +73,38 @@ class AtendimentoServiceImpl:
     # USUÁRIO ATIVO
     # ==========================================================
 
-    def validar_usuario_ativo(
-        self,
-        usuario: Usuarios
-    ):
-
-        if hasattr(usuario, "ativo"):
-
-            if not usuario.ativo:
-
-                raise HTTPException(
-                    status_code=403,
-                    detail="Usuário desativado."
-                )
+    def validar_usuario_ativo(self, usuario: Usuarios):
+        if hasattr(usuario, "ativo") and not usuario.ativo:
+            raise HTTPException(status_code=403, detail="Usuário desativado.")
 
     # ==========================================================
     # VETERINÁRIO
     # ==========================================================
 
-    def validar_veterinario(
-        self,
-        usuario: Usuarios
-    ):
+    def validar_veterinario(self, usuario: Usuarios):
 
         perfil = usuario.perfil
 
         if hasattr(perfil, "nome"):
             perfil = perfil.nome
 
-        if perfil not in (
-            "Veterinário",
-            "Administrador"
-        ):
-
+        if perfil not in ("Veterinário", "Administrador"):
             raise HTTPException(
-                status_code=403,
-                detail=(
-                    "Usuário informado "
-                    "não é veterinário."
-                )
+                status_code=403, detail=("Usuário informado não é veterinário.")
             )
 
     # ==========================================================
     # ANIMAL
     # ==========================================================
 
-    def buscar_animal(
-        self,
-        animal_id: int
-    ) -> Animais:
+    def buscar_animal(self, animal_id: int) -> Animais:
 
-        animal = self.repository.buscar_animal(
-            animal_id
-        )
+        animal = self.repository.buscar_animal(animal_id)
 
         if not animal:
+            raise HTTPException(status_code=404, detail="Animal não encontrado.")
 
-            raise HTTPException(
-                status_code=404,
-                detail="Animal não encontrado."
-            )
-
-        self.validar_acesso_animal(
-            animal
-        )
+        self.validar_acesso_animal(animal)
 
         return animal
 
@@ -172,84 +112,47 @@ class AtendimentoServiceImpl:
     # ACESSO AO ANIMAL
     # ==========================================================
 
-    def validar_acesso_animal(
-        self,
-        animal: Animais
-    ):
+    def validar_acesso_animal(self, animal: Animais):
 
         perfil = self.obter_perfil()
 
         # Veterinário e Administrador possuem acesso total.
 
-        if perfil in (
-            "Veterinário",
-            "Administrador"
-        ):
-
+        if perfil in ("Veterinário", "Administrador"):
             return
 
         # Cliente só pode acessar seus próprios animais.
 
         if perfil == "Cliente":
-
-            cliente = (
-                self.repository
-                .buscar_cliente_por_usuario(
-                    self.usuario_logado.id
-                )
-            )
+            cliente = self.repository.buscar_cliente_por_usuario(self.usuario_logado.id)
 
             if not cliente:
-
-                raise HTTPException(
-                    status_code=403,
-                    detail="Cliente não encontrado."
-                )
+                raise HTTPException(status_code=403, detail="Cliente não encontrado.")
 
             if animal.cliente_id != cliente.id:
-
                 raise HTTPException(
-                    status_code=403,
-                    detail=(
-                        "Você não possui acesso "
-                        "a este animal."
-                    )
+                    status_code=403, detail=("Você não possui acesso a este animal.")
                 )
 
             return
 
-        raise HTTPException(
-            status_code=403,
-            detail="Perfil sem permissão."
-        )
+        raise HTTPException(status_code=403, detail="Perfil sem permissão.")
 
     # ==========================================================
     # BUSCAR ATENDIMENTO
     # ==========================================================
 
-    def buscar_por_id(
-        self,
-        id: int
-    ) -> Atendimentos:
+    def buscar_por_id(self, id: int) -> Atendimentos:
 
-        atendimento = (
-            self.repository
-            .buscar_por_id(id)
-        )
+        atendimento = self.repository.buscar_por_id(id)
 
         if not atendimento:
-
-            raise HTTPException(
-                status_code=404,
-                detail="Atendimento não encontrado."
-            )
+            raise HTTPException(status_code=404, detail="Atendimento não encontrado.")
 
         # Também verifica se o usuário pode acessar
         # o animal relacionado ao atendimento.
 
-        self.buscar_animal(
-            atendimento.animal_id
-        )
+        self.buscar_animal(atendimento.animal_id)
 
         return atendimento
 
@@ -257,67 +160,37 @@ class AtendimentoServiceImpl:
     # VALIDAÇÃO DO DIAGNÓSTICO
     # ==========================================================
 
-    def validar_diagnostico(
-        self,
-        diagnostico: str
-    ):
+    def validar_diagnostico(self, diagnostico: str):
 
-        if (
-            not diagnostico
-            or not diagnostico.strip()
-        ):
-
-            raise HTTPException(
-                status_code=400,
-                detail="Diagnóstico obrigatório."
-            )
+        if not diagnostico or not diagnostico.strip():
+            raise HTTPException(status_code=400, detail="Diagnóstico obrigatório.")
 
     # ==========================================================
     # VALIDAÇÃO DAS OBSERVAÇÕES
     # ==========================================================
 
-    def validar_observacoes(
-        self,
-        observacoes: str | None
-    ):
+    def validar_observacoes(self, observacoes: str | None):
 
         if observacoes is None:
             return
 
         if not observacoes.strip():
-
-            raise HTTPException(
-                status_code=400,
-                detail="Observações inválidas."
-            )
+            raise HTTPException(status_code=400, detail="Observações inválidas.")
 
     # ==========================================================
     # VALIDAÇÃO DA DATA
     # ==========================================================
 
-    def validar_data(
-        self,
-        data: datetime
-    ):
+    def validar_data(self, data: datetime):
 
-        agora = datetime.now(
-            timezone.utc
-        )
+        agora = datetime.now(UTC)
 
         if data.tzinfo is None:
-
-            data = data.replace(
-                tzinfo=timezone.utc
-            )
+            data = data.replace(tzinfo=UTC)
 
         if data > agora:
-
             raise HTTPException(
-                status_code=400,
-                detail=(
-                    "A data do atendimento "
-                    "não pode ser futura."
-                )
+                status_code=400, detail=("A data do atendimento não pode ser futura.")
             )
 
     # ==========================================================
@@ -325,29 +198,14 @@ class AtendimentoServiceImpl:
     # ==========================================================
 
     def validar_duplicidade(
-        self,
-        animal_id: int,
-        data: datetime,
-        excluir_id: int | None = None
+        self, animal_id: int, data: datetime, excluir_id: int | None = None
     ):
 
-        existe = (
-            self.repository
-            .buscar_duplicado(
-                animal_id,
-                data,
-                excluir_id
-            )
-        )
+        existe = self.repository.buscar_duplicado(animal_id, data, excluir_id)
 
         if existe:
-
             raise HTTPException(
-                status_code=409,
-                detail=(
-                    "Já existe atendimento "
-                    "registrado nesta data."
-                )
+                status_code=409, detail=("Já existe atendimento registrado nesta data.")
             )
 
     # ==========================================================
@@ -355,114 +213,76 @@ class AtendimentoServiceImpl:
     # ==========================================================
 
     def validar_finalizado(
-        self,
-        atendimento: Atendimentos,
-        campos: list[str] | None = None
+        self, atendimento: Atendimentos, campos: list[str] | None = None
     ):
 
         if atendimento.status != "Finalizado":
             return
 
-        campos_bloqueados = [
-            "data_atendimento",
-            "usuario_id",
-            "animal_id",
-            "status"
-        ]
+        campos_bloqueados = ["data_atendimento", "usuario_id", "animal_id", "status"]
 
         if not campos:
             return
 
         for campo in campos:
-
             if campo in campos_bloqueados:
-
                 raise HTTPException(
                     status_code=409,
-                    detail=(
-                        "Atendimento finalizado "
-                        "não pode ser alterado."
-                    )
+                    detail=("Atendimento finalizado não pode ser alterado."),
                 )
 
     # ==========================================================
     # CRIAR
     # ==========================================================
 
-    def criar(
-        self,
-        atendimento: AtendimentoCreate
-    ):
+    def criar(self, atendimento: AtendimentoCreate):
 
         self.validar_permissao()
 
         # Verifica animal e acesso.
 
-        self.buscar_animal(
-            atendimento.animal_id
-        )
+        self.buscar_animal(atendimento.animal_id)
 
         # Valida diagnóstico.
 
-        self.validar_diagnostico(
-            atendimento.diagnostico
-        )
+        self.validar_diagnostico(atendimento.diagnostico)
 
         # Valida observações.
 
-        self.validar_observacoes(
-            atendimento.observacoes
-        )
+        self.validar_observacoes(atendimento.observacoes)
 
         # Sem data informada, usa o momento atual.
         # (Antes, data_atendimento=None quebrava a validação
         # abaixo com erro 500.)
 
         if atendimento.data_atendimento is None:
-
-            atendimento.data_atendimento = (
-                datetime.now(timezone.utc)
-                .replace(tzinfo=None, microsecond=0)
+            atendimento.data_atendimento = datetime.now(UTC).replace(
+                tzinfo=None, microsecond=0
             )
 
         # A data não pode ser futura.
 
-        self.validar_data(
-            atendimento.data_atendimento
-        )
+        self.validar_data(atendimento.data_atendimento)
 
         # Busca o veterinário informado.
 
-        veterinario = self.buscar_usuario(
-            atendimento.usuario_id
-        )
+        veterinario = self.buscar_usuario(atendimento.usuario_id)
 
-        self.validar_usuario_ativo(
-            veterinario
-        )
+        self.validar_usuario_ativo(veterinario)
 
-        self.validar_veterinario(
-            veterinario
-        )
+        self.validar_veterinario(veterinario)
 
         # Impede duplicidade.
 
-        self.validar_duplicidade(
-            atendimento.animal_id,
-            atendimento.data_atendimento
-        )
+        self.validar_duplicidade(atendimento.animal_id, atendimento.data_atendimento)
 
         # Cria o objeto.
 
-        novo = Atendimentos(
-            **atendimento.model_dump()
-        )
+        novo = Atendimentos(**atendimento.model_dump())
 
         # Repository realiza a persistência.
 
-        return self.repository.criar(
-            novo
-        )
+        return self.repository.criar(novo)
 
     # ==========================================================
     # LISTAR
@@ -477,7 +297,7 @@ class AtendimentoServiceImpl:
         diagnostico: str | None = None,
         data: datetime | None = None,
         sort_by: str = "data_atendimento",
-        order: str = "asc"
+        order: str = "asc",
     ):
 
         perfil = self.obter_perfil()
@@ -486,14 +306,12 @@ class AtendimentoServiceImpl:
         # PAGINAÇÃO
         # ------------------------------------------------------
 
-        if skip < 0:
-            skip = 0
+        skip = max(skip, 0)
 
         if limit <= 0:
             limit = 10
 
-        if limit > 100:
-            limit = 100
+        limit = min(limit, 100)
 
         # ------------------------------------------------------
         # CLIENTE
@@ -502,32 +320,15 @@ class AtendimentoServiceImpl:
         cliente_id = None
 
         if perfil == "Cliente":
-
-            cliente = (
-                self.repository
-                .buscar_cliente_por_usuario(
-                    self.usuario_logado.id
-                )
-            )
+            cliente = self.repository.buscar_cliente_por_usuario(self.usuario_logado.id)
 
             if not cliente:
-
-                raise HTTPException(
-                    status_code=403,
-                    detail="Cliente não encontrado."
-                )
+                raise HTTPException(status_code=403, detail="Cliente não encontrado.")
 
             cliente_id = cliente.id
 
-        elif perfil not in (
-            "Veterinário",
-            "Administrador"
-        ):
-
-            raise HTTPException(
-                status_code=403,
-                detail="Perfil sem permissão."
-            )
+        elif perfil not in ("Veterinário", "Administrador"):
+            raise HTTPException(status_code=403, detail="Perfil sem permissão.")
 
         # ------------------------------------------------------
         # BUSCA
@@ -542,67 +343,43 @@ class AtendimentoServiceImpl:
             data=data,
             cliente_id=cliente_id,
             sort_by=sort_by,
-            order=order
+            order=order,
         )
 
     # ==========================================================
     # ATUALIZAR
     # ==========================================================
 
-    def atualizar(
-        self,
-        id: int,
-        atendimento: AtendimentoUpdate
-    ):
+    def atualizar(self, id: int, atendimento: AtendimentoUpdate):
 
         self.validar_permissao()
 
-        db = self.buscar_por_id(
-            id
-        )
+        db = self.buscar_por_id(id)
 
-        dados = atendimento.model_dump(
-            exclude_unset=True
-        )
+        dados = atendimento.model_dump(exclude_unset=True)
 
         if not dados:
-
             raise HTTPException(
-                status_code=400,
-                detail=(
-                    "Nenhum dado foi informado "
-                    "para atualização."
-                )
+                status_code=400, detail=("Nenhum dado foi informado para atualização.")
             )
 
-        self.validar_finalizado(
-            db,
-            list(dados.keys())
-        )
+        self.validar_finalizado(db, list(dados.keys()))
 
         # ------------------------------------------------------
         # DIAGNÓSTICO
         # ------------------------------------------------------
 
         if "diagnostico" in dados:
+            self.validar_diagnostico(dados["diagnostico"])
 
-            self.validar_diagnostico(
-                dados["diagnostico"]
-            )
-
-            db.diagnostico = (
-                dados["diagnostico"].strip()
-            )
+            db.diagnostico = dados["diagnostico"].strip()
 
         # ------------------------------------------------------
         # OBSERVAÇÕES
         # ------------------------------------------------------
 
         if "observacoes" in dados:
-
-            self.validar_observacoes(
-                dados["observacoes"]
-            )
+            self.validar_observacoes(dados["observacoes"])
 
             db.observacoes = dados["observacoes"]
 
@@ -611,38 +388,24 @@ class AtendimentoServiceImpl:
         # ------------------------------------------------------
 
         if "data_atendimento" in dados:
-
-            self.validar_data(
-                dados["data_atendimento"]
-            )
+            self.validar_data(dados["data_atendimento"])
 
             self.validar_duplicidade(
-                db.animal_id,
-                dados["data_atendimento"],
-                excluir_id=db.id
+                db.animal_id, dados["data_atendimento"], excluir_id=db.id
             )
 
-            db.data_atendimento = (
-                dados["data_atendimento"]
-            )
+            db.data_atendimento = dados["data_atendimento"]
 
         # ------------------------------------------------------
         # VETERINÁRIO
         # ------------------------------------------------------
 
         if "usuario_id" in dados:
+            veterinario = self.buscar_usuario(dados["usuario_id"])
 
-            veterinario = self.buscar_usuario(
-                dados["usuario_id"]
-            )
+            self.validar_usuario_ativo(veterinario)
 
-            self.validar_usuario_ativo(
-                veterinario
-            )
-
-            self.validar_veterinario(
-                veterinario
-            )
+            self.validar_veterinario(veterinario)
 
             db.usuario_id = dados["usuario_id"]
 
@@ -651,147 +414,96 @@ class AtendimentoServiceImpl:
         # ------------------------------------------------------
 
         if "status" in dados:
-
             db.status = dados["status"]
 
-        return self.repository.atualizar(
-            db
-        )
+        return self.repository.atualizar(db)
 
     # ==========================================================
     # CANCELAR
     # ==========================================================
 
-    def cancelar(
-        self,
-        id: int
-    ):
+    def cancelar(self, id: int):
 
         self.validar_permissao()
 
-        atendimento = self.buscar_por_id(
-            id
-        )
+        atendimento = self.buscar_por_id(id)
 
         if atendimento.status == "Finalizado":
-
             raise HTTPException(
                 status_code=409,
-                detail=(
-                    "Não é possível cancelar "
-                    "atendimento finalizado."
-                )
+                detail=("Não é possível cancelar atendimento finalizado."),
             )
 
         if atendimento.status == "Cancelado":
-
             raise HTTPException(
-                status_code=409,
-                detail=(
-                    "Este atendimento "
-                    "já está cancelado."
-                )
+                status_code=409, detail=("Este atendimento já está cancelado.")
             )
 
         atendimento.status = "Cancelado"
 
-        return self.repository.atualizar(
-            atendimento
-        )
+        return self.repository.atualizar(atendimento)
 
     # ==========================================================
     # DELETAR
     # ==========================================================
 
-    def deletar(
-        self,
-        id: int
-    ):
+    def deletar(self, id: int):
 
         self.validar_permissao()
 
         # Busca também valida o acesso ao animal.
 
-        self.buscar_por_id(
-            id
-        )
+        self.buscar_por_id(id)
 
         # Histórico deve ser preservado.
 
         raise HTTPException(
             status_code=409,
             detail=(
-                "Atendimentos não podem ser "
-                "excluídos. Histórico deve ser preservado."
-            )
+                "Atendimentos não podem ser excluídos. Histórico deve ser preservado."
+            ),
         )
 
     # ==========================================================
     # HISTÓRICO COMPLETO
     # ==========================================================
 
-    def historico_completo(
-        self,
-        animal_id: int,
-        skip: int = 0,
-        limit: int = 10
-    ):
+    def historico_completo(self, animal_id: int, skip: int = 0, limit: int = 10):
 
-        animal = self.buscar_animal(
-            animal_id
-        )
+        animal = self.buscar_animal(animal_id)
 
         # ------------------------------------------------------
         # PAGINAÇÃO
         # ------------------------------------------------------
 
-        if skip < 0:
-            skip = 0
+        skip = max(skip, 0)
 
         if limit <= 0:
             limit = 10
 
-        if limit > 100:
-            limit = 100
+        limit = min(limit, 100)
 
         # ------------------------------------------------------
         # BUSCA HISTÓRICO
         # ------------------------------------------------------
 
-        atendimentos = (
-            self.repository
-            .listar_historico(
-                animal_id,
-                skip,
-                limit
-            )
-        )
+        atendimentos = self.repository.listar_historico(animal_id, skip, limit)
 
         historico = []
 
         for atendimento in atendimentos:
-
             veterinario = None
 
             if atendimento.usuario:
-
-                veterinario = (
-                    atendimento.usuario.nome
-                )
+                veterinario = atendimento.usuario.nome
 
             historico.append(
                 {
                     "id": atendimento.id,
-                    "data": (
-                        atendimento.data_atendimento
-                    ),
+                    "data": (atendimento.data_atendimento),
                     "veterinario": veterinario,
-                    "diagnostico": (
-                        atendimento.diagnostico
-                    ),
-                    "observacoes": (
-                        atendimento.observacoes
-                    )
+                    "diagnostico": (atendimento.diagnostico),
+                    "observacoes": (atendimento.observacoes),
                 }
             )
 
@@ -807,22 +519,16 @@ class AtendimentoServiceImpl:
                 "nome": animal.nome,
                 "especie": animal.especie,
                 "raca": animal.raca,
-                "idade": animal.idade
+                "idade": animal.idade,
             },
-
             "cliente": {
                 "id": cliente.id,
                 "nome": cliente.nome,
                 "telefone": cliente.telefone,
-                "email": cliente.email
-            } if cliente else None,
-
-            "paginacao": {
-                "skip": skip,
-                "limit": limit,
-                "quantidade": len(historico)
-            },
-
-            "historico": historico
+                "email": cliente.email,
+            }
+            if cliente
+            else None,
+            "paginacao": {"skip": skip, "limit": limit, "quantidade": len(historico)},
+            "historico": historico,
         }
-

@@ -24,6 +24,7 @@ import sys
 
 from pwdlib import PasswordHash
 from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 
 import backend.models
 from backend.database.database import SessionLocal
@@ -38,13 +39,12 @@ for modulo in pkgutil.iter_modules(backend.models.__path__):
 NOME_PADRAO = "Dra. Ana Souza"
 EMAIL_PADRAO = "ana.vet@poas.com"
 SENHA_PADRAO = "vet12345"
-PERFIL = "Veterinário"  # exatamente assim: com acento e inicial maiúscula
+PERFIL = "Veterinário"
 
 senha_context = PasswordHash.recommended()
 
 
 def main():
-
     nome = sys.argv[1] if len(sys.argv) > 1 else NOME_PADRAO
     email = (sys.argv[2] if len(sys.argv) > 2 else EMAIL_PADRAO).strip().lower()
     senha = sys.argv[3] if len(sys.argv) > 3 else SENHA_PADRAO
@@ -52,13 +52,9 @@ def main():
     session = SessionLocal()
 
     try:
-
-        usuario = session.scalar(
-            select(Usuarios).where(Usuarios.email == email)
-        )
+        usuario = session.scalar(select(Usuarios).where(Usuarios.email == email))
 
         if usuario:
-
             usuario.nome = nome
             usuario.senha_hash = senha_context.hash(senha)
             usuario.perfil = PERFIL
@@ -66,7 +62,6 @@ def main():
             acao = "atualizado"
 
         else:
-
             session.add(
                 Usuarios(
                     nome=nome,
@@ -82,13 +77,11 @@ def main():
 
         print(f"Veterinário {acao}: {email} / {senha}")
 
-    except Exception as erro:
-
+    except SQLAlchemyError as erro:
         session.rollback()
         print("Erro ao salvar veterinário:", erro)
 
     finally:
-
         session.close()
 
 

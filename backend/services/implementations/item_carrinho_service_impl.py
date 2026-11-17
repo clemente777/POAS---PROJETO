@@ -1,26 +1,14 @@
 from fastapi import HTTPException
 
-from backend.models.item_carrinho_model import ItensCarrinho
 from backend.models.carrinho_model import Carrinhos
+from backend.models.item_carrinho_model import ItensCarrinho
 from backend.models.usuario_model import Usuarios
-
-from backend.schemas.item_carrinho_schema import (
-    ItemCarrinhoCreate,
-    ItemCarrinhoUpdate
-)
-
-from backend.repositories.item_carrinho_repository import (
-    ItemCarrinhoRepository
-)
+from backend.repositories.item_carrinho_repository import ItemCarrinhoRepository
+from backend.schemas.item_carrinho_schema import ItemCarrinhoCreate, ItemCarrinhoUpdate
 
 
 class ItemCarrinhoServiceImpl:
-
-    def __init__(
-        self,
-        repository: ItemCarrinhoRepository,
-        usuario_logado: Usuarios
-    ):
+    def __init__(self, repository: ItemCarrinhoRepository, usuario_logado: Usuarios):
         self.repository = repository
         self.usuario_logado = usuario_logado
 
@@ -29,26 +17,20 @@ class ItemCarrinhoServiceImpl:
     # ==================================================
 
     def validar_perfil_permitido(self):
-        if self.usuario_logado.perfil not in [
-            "Administrador",
-            "Cliente"
-        ]:
+        if self.usuario_logado.perfil not in ["Administrador", "Cliente"]:
             raise HTTPException(
                 status_code=403,
                 detail=(
                     "Apenas clientes e administradores "
                     "podem acessar os itens do carrinho."
-                )
+                ),
             )
 
     # ==================================================
     # VALIDAR PROPRIETÁRIO
     # ==================================================
 
-    def validar_proprietario(
-        self,
-        carrinho: Carrinhos
-    ):
+    def validar_proprietario(self, carrinho: Carrinhos):
         # Administrador pode acessar qualquer carrinho
         if self.usuario_logado.perfil == "Administrador":
             return
@@ -56,44 +38,29 @@ class ItemCarrinhoServiceImpl:
         # Cliente precisa ter um carrinho associado
         if not carrinho.cliente:
             raise HTTPException(
-                status_code=404,
-                detail="Cliente do carrinho não encontrado."
+                status_code=404, detail="Cliente do carrinho não encontrado."
             )
 
         # Cliente só pode acessar o próprio carrinho
-        if (
-            carrinho.cliente.usuario_id
-            != self.usuario_logado.id
-        ):
+        if carrinho.cliente.usuario_id != self.usuario_logado.id:
             raise HTTPException(
                 status_code=403,
-                detail=(
-                    "Você não possui permissão para "
-                    "acessar este carrinho."
-                )
+                detail=("Você não possui permissão para acessar este carrinho."),
             )
 
     # ==================================================
     # BUSCAR ITEM POR ID
     # ==================================================
 
-    def buscar_por_id(
-        self,
-        id: int
-    ):
+    def buscar_por_id(self, id: int):
         self.validar_perfil_permitido()
 
         item = self.repository.buscar_por_id(id)
 
         if not item:
-            raise HTTPException(
-                status_code=404,
-                detail="Item não encontrado."
-            )
+            raise HTTPException(status_code=404, detail="Item não encontrado.")
 
-        self.validar_proprietario(
-            item.carrinho
-        )
+        self.validar_proprietario(item.carrinho)
 
         return item
 
@@ -101,25 +68,15 @@ class ItemCarrinhoServiceImpl:
     # BUSCAR CARRINHO
     # ==================================================
 
-    def buscar_carrinho(
-        self,
-        carrinho_id: int
-    ):
+    def buscar_carrinho(self, carrinho_id: int):
         self.validar_perfil_permitido()
 
-        carrinho = self.repository.buscar_carrinho(
-            carrinho_id
-        )
+        carrinho = self.repository.buscar_carrinho(carrinho_id)
 
         if not carrinho:
-            raise HTTPException(
-                status_code=404,
-                detail="Carrinho não encontrado."
-            )
+            raise HTTPException(status_code=404, detail="Carrinho não encontrado.")
 
-        self.validar_proprietario(
-            carrinho
-        )
+        self.validar_proprietario(carrinho)
 
         return carrinho
 
@@ -127,19 +84,11 @@ class ItemCarrinhoServiceImpl:
     # BUSCAR PRODUTO
     # ==================================================
 
-    def buscar_produto(
-        self,
-        produto_id: int
-    ):
-        produto = self.repository.buscar_produto(
-            produto_id
-        )
+    def buscar_produto(self, produto_id: int):
+        produto = self.repository.buscar_produto(produto_id)
 
         if not produto:
-            raise HTTPException(
-                status_code=404,
-                detail="Produto não encontrado."
-            )
+            raise HTTPException(status_code=404, detail="Produto não encontrado.")
 
         return produto
 
@@ -147,10 +96,7 @@ class ItemCarrinhoServiceImpl:
     # CRIAR ITEM NO CARRINHO
     # ==================================================
 
-    def criar(
-        self,
-        item: ItemCarrinhoCreate
-    ):
+    def criar(self, item: ItemCarrinhoCreate):
         """
         Adiciona um produto ao carrinho.
 
@@ -173,25 +119,20 @@ class ItemCarrinhoServiceImpl:
 
         if item.quantidade <= 0:
             raise HTTPException(
-                status_code=400,
-                detail="Quantidade deve ser maior que zero."
+                status_code=400, detail="Quantidade deve ser maior que zero."
             )
 
         # --------------------------------------------------
-        # BUSCAR CARRINHO
+        # BUSCAR CARRINHO E VALIDAR ACESSO
         # --------------------------------------------------
 
-        carrinho = self.buscar_carrinho(
-            item.carrinho_id
-        )
+        self.buscar_carrinho(item.carrinho_id)
 
         # --------------------------------------------------
         # BUSCAR PRODUTO
         # --------------------------------------------------
 
-        produto = self.buscar_produto(
-            item.produto_id
-        )
+        produto = self.buscar_produto(item.produto_id)
 
         # --------------------------------------------------
         # VALIDAR ESTOQUE
@@ -199,22 +140,15 @@ class ItemCarrinhoServiceImpl:
 
         if item.quantidade > produto.estoque:
             raise HTTPException(
-                status_code=400,
-                detail=(
-                    "Quantidade maior que "
-                    "estoque disponível."
-                )
+                status_code=400, detail=("Quantidade maior que estoque disponível.")
             )
 
         # --------------------------------------------------
         # VERIFICAR SE O PRODUTO JÁ ESTÁ NO CARRINHO
         # --------------------------------------------------
 
-        item_existente = (
-            self.repository.buscar_item_existente(
-                carrinho_id=item.carrinho_id,
-                produto_id=item.produto_id
-            )
+        item_existente = self.repository.buscar_item_existente(
+            carrinho_id=item.carrinho_id, produto_id=item.produto_id
         )
 
         # --------------------------------------------------
@@ -222,38 +156,24 @@ class ItemCarrinhoServiceImpl:
         # --------------------------------------------------
 
         if item_existente:
-
-            nova_quantidade = (
-                item_existente.quantidade
-                + item.quantidade
-            )
+            nova_quantidade = item_existente.quantidade + item.quantidade
 
             if nova_quantidade > produto.estoque:
                 raise HTTPException(
-                    status_code=400,
-                    detail=(
-                        "Quantidade total "
-                        "ultrapassa estoque."
-                    )
+                    status_code=400, detail=("Quantidade total ultrapassa estoque.")
                 )
 
             item_existente.quantidade = nova_quantidade
 
-            return self.repository.atualizar(
-                item_existente
-            )
+            return self.repository.atualizar(item_existente)
 
         # --------------------------------------------------
         # CRIAR NOVO ITEM
         # --------------------------------------------------
 
-        novo_item = ItensCarrinho(
-            **item.model_dump()
-        )
+        novo_item = ItensCarrinho(**item.model_dump())
 
-        return self.repository.criar(
-            novo_item
-        )
+        return self.repository.criar(novo_item)
 
     # ==================================================
     # LISTAR ITENS
@@ -268,13 +188,11 @@ class ItemCarrinhoServiceImpl:
         quantidade_min: int | None = None,
         quantidade_max: int | None = None,
         sort_by: str = "id",
-        order: str = "asc"
+        order: str = "asc",
     ):
         self.validar_perfil_permitido()
 
-        somente_proprio_cliente = (
-            self.usuario_logado.perfil == "Cliente"
-        )
+        somente_proprio_cliente = self.usuario_logado.perfil == "Cliente"
 
         return self.repository.listar(
             skip=skip,
@@ -286,25 +204,19 @@ class ItemCarrinhoServiceImpl:
             usuario_id=self.usuario_logado.id,
             somente_proprio_cliente=somente_proprio_cliente,
             sort_by=sort_by,
-            order=order
+            order=order,
         )
 
     # ==================================================
     # ATUALIZAR ITEM
     # ==================================================
 
-    def atualizar(
-        self,
-        id: int,
-        item: ItemCarrinhoUpdate
-    ):
+    def atualizar(self, id: int, item: ItemCarrinhoUpdate):
         self.validar_perfil_permitido()
 
         item_db = self.buscar_por_id(id)
 
-        dados = item.model_dump(
-            exclude_unset=True
-        )
+        dados = item.model_dump(exclude_unset=True)
 
         # --------------------------------------------------
         # NÃO HÁ NENHUM DADO PARA ATUALIZAR
@@ -312,8 +224,7 @@ class ItemCarrinhoServiceImpl:
 
         if not dados:
             raise HTTPException(
-                status_code=400,
-                detail="Nenhum dado foi informado para atualização."
+                status_code=400, detail="Nenhum dado foi informado para atualização."
             )
 
         # --------------------------------------------------
@@ -321,52 +232,33 @@ class ItemCarrinhoServiceImpl:
         # --------------------------------------------------
 
         if "quantidade" in dados:
-
             quantidade = dados["quantidade"]
 
             if quantidade <= 0:
                 raise HTTPException(
-                    status_code=400,
-                    detail=(
-                        "Quantidade deve ser "
-                        "maior que zero."
-                    )
+                    status_code=400, detail=("Quantidade deve ser maior que zero.")
                 )
 
-            produto = self.buscar_produto(
-                item_db.produto_id
-            )
+            produto = self.buscar_produto(item_db.produto_id)
 
             if quantidade > produto.estoque:
                 raise HTTPException(
-                    status_code=400,
-                    detail=(
-                        "Quantidade maior que "
-                        "estoque disponível."
-                    )
+                    status_code=400, detail=("Quantidade maior que estoque disponível.")
                 )
 
             item_db.quantidade = quantidade
 
-        return self.repository.atualizar(
-            item_db
-        )
+        return self.repository.atualizar(item_db)
 
     # ==================================================
     # DELETAR ITEM
     # ==================================================
 
-    def deletar(
-        self,
-        id: int
-    ):
+    def deletar(self, id: int):
         self.validar_perfil_permitido()
 
         item = self.buscar_por_id(id)
 
-        self.repository.deletar(
-            item
-        )
+        self.repository.deletar(item)
 
         return True
-

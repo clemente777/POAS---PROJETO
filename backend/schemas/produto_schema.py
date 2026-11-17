@@ -26,7 +26,9 @@ class ProdutoResponse(BaseModel):
     descricao: str
     preco: float
     estoque: int
-from pydantic import BaseModel, EmailStr, ConfigDict
+
+
+from pydantic import BaseModel, ConfigDict, EmailStr
 
 
 # CREATE
