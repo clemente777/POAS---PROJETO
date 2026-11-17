@@ -547,7 +547,53 @@ pytest
 Os testes permitem verificar o funcionamento dos recursos do backend e identificar possíveis falhas durante o desenvolvimento.
 
 ---
+# 📲 Aplicativo Web Progressivo (PWA)
 
+O Petonline24h possui suporte a Progressive Web App (PWA), permitindo que o sistema seja instalado em dispositivos compatíveis e aberto em uma janela independente, semelhante a um aplicativo convencional.
+
+## 1. Recursos implementados
+
+- Manifesto da aplicação (`manifest.webmanifest`).
+- Ícones para diferentes dispositivos e tamanhos de tela.
+- Configuração de instalação em modo `standalone`.
+- Service Worker para gerenciamento de recursos em cache.
+- Atualização automática da aplicação.
+- Pré-cache dos arquivos estáticos do frontend.
+- Redirecionamento para a tela de login quando não existe uma sessão autenticada.
+
+## 2. Tecnologias utilizadas
+
+- `vite-plugin-pwa`
+- Workbox
+- Service Worker
+- Web App Manifest
+
+## 3. Arquivos relacionados
+
+| Arquivo | Finalidade |
+|---|---|
+| `frontend/public/manifest.webmanifest` | Define os dados e as configurações da aplicação. |
+| `frontend/public/icon-192.png` | Ícone de 192 × 192 pixels. |
+| `frontend/public/icon-512.png` | Ícone de 512 × 512 pixels. |
+| `frontend/public/apple-touch-icon.png` | Ícone para dispositivos Apple. |
+| `frontend/vite.config.js` | Configura a integração do PWA com o Vite. |
+| `frontend/index.html` | Referencia o manifesto e os ícones. |
+
+## 4. Instalação
+
+Em navegadores compatíveis, o usuário pode instalar o Petonline24h utilizando a opção de instalação disponibilizada pelo navegador.
+
+Após instalado, o sistema pode ser aberto diretamente pelo ícone criado no dispositivo.
+
+## 5. Funcionamento offline
+
+O Service Worker permite armazenar arquivos estáticos do frontend em cache, possibilitando carregar a estrutura básica da aplicação mesmo sem conexão.
+
+Entretanto, funcionalidades que dependem da API e do banco de dados precisam de conexão com o backend.
+
+## 6. Requisitos para produção
+
+Para disponibilizar a instalação em dispositivos móveis e outros computadores pela internet, é necessário hospedar a aplicação em um ambiente com HTTPS e configurar corretamente o endereço da API.
 # 📌 Considerações Finais
 
 O **Petonline24h** tem como objetivo oferecer uma solução integrada para o gerenciamento de uma clínica veterinária, reunindo funcionalidades administrativas, atendimento veterinário, controle de animais, agendamentos, vacinas, produtos e pedidos.
