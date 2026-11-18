@@ -1,6 +1,14 @@
+
 import './DashboardCard.css'
 
-function DashboardCard({ titulo, valor, icone: Icone, cor = 'var(--color-brand)' }) {
+function DashboardCard({
+  titulo,
+  valor,
+  icone: Icone,
+  cor = 'var(--color-brand)',
+}) {
+  const valorExibido = valor ?? '-'
+
   return (
     <div className="dashboard-card">
       <div className="card-icon" style={{ background: cor }}>
@@ -9,7 +17,11 @@ function DashboardCard({ titulo, valor, icone: Icone, cor = 'var(--color-brand)'
 
       <div className="card-info">
         <h3>{titulo}</h3>
-        <strong>{valor ?? '-'}</strong>
+        <strong>{valorExibido}</strong>
+      </div>
+
+      <div className="card-detalhes" role="tooltip">
+        <strong>{titulo}:</strong> {valorExibido}
       </div>
     </div>
   )

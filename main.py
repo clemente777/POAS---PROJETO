@@ -2,6 +2,7 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.database.database import create_db_and_tables
@@ -9,22 +10,23 @@ from backend.database.seed import (
     criar_admin,
     criar_produtos_teste,
 )
+from backend.exceptions.handlers import tratar_validacao
 from backend.models import *
 from backend.routes import (
+    agendamento_routes,
+    animal_routes,
+    aplicacao_vacina_routes,
+    atendimento_routes,
     cadastro_routes,
-    pedido_routes,
-    usuario_routes,
+    carrinho_routes,
+    cliente_routes,
+    dashboard_routes,
+    item_carrinho_routes,
     login_routes,
     logout_routes,
-    cliente_routes,
-    animal_routes,
-    agendamento_routes,
-    atendimento_routes,
+    pedido_routes,
     produto_routes,
-    carrinho_routes,
-    item_carrinho_routes,
-    dashboard_routes,
-    aplicacao_vacina_routes,
+    usuario_routes,
     vacina_routes,
 )
 
@@ -40,17 +42,27 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+# Tratamento personalizado de erros de validação.
+app.add_exception_handler(
+    RequestValidationError,
+    tratar_validacao,
+)
+
+# Configuração de acesso do frontend.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
         "http://127.0.0.1:5173",
-        "http://10.145.6.7:5173"
+        "http://10.144.8.227:5173",
+        "http://10.145.6.7:5173",
+        "http://172.20.10.2:5173",
+        "http://localhost:4173",
+        "http://127.0.0.1:4173",
     ],
-    # Libera o front-end aberto pelo IP da rede local.
     allow_origin_regex=(
         r"^http://(192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\."
-        r"(1[6-9]|2\d|3[01])\.\d+\.\d+):5173$"
+        r"(1[6-9]|2\d|3[01])\.\d+\.\d+):(5173|4173)$"
     ),
     allow_credentials=True,
     allow_methods=["*"],

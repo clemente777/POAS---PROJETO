@@ -1,25 +1,33 @@
+
 .dashboard-card {
+  position: relative;
+  min-width: 0;
+  min-height: 112px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  padding: 22px;
+  padding: 20px;
   display: flex;
   align-items: center;
   gap: 16px;
   transition:
     transform 0.2s ease,
-    box-shadow 0.2s ease;
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
 }
 
-.dashboard-card:hover {
-  transform: translateY(-4px);
+.dashboard-card:hover,
+.dashboard-card:focus-within {
+  transform: translateY(-3px);
   box-shadow: var(--shadow-sm);
+  border-color: var(--color-brand);
+  z-index: 5;
 }
 
 .card-icon {
-  width: 56px;
-  height: 56px;
-  min-width: 56px;
+  width: 52px;
+  height: 52px;
+  min-width: 52px;
   border-radius: var(--radius-sm);
   display: flex;
   justify-content: center;
@@ -31,21 +39,79 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  flex: 1;
+  gap: 5px;
 }
 
 .card-info h3 {
   font-family: var(--font-body);
   color: var(--color-text-muted);
-  font-size: 14px;
-  font-weight: 500;
-  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  margin: 0;
 }
 
 .card-info strong {
   color: var(--color-ink);
-  font-size: 26px;
+  font-family: var(--font-body);
+  font-size: clamp(20px, 2vw, 26px);
   font-weight: 700;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+/* Painel com o conteúdo completo */
+.card-detalhes {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: calc(100% - 4px);
+  padding: 12px 14px;
+  background: var(--color-ink);
+  color: white;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-5px);
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease,
+    visibility 0.2s ease;
+  z-index: 20;
+}
+
+.dashboard-card:hover .card-detalhes,
+.dashboard-card:focus-within .card-detalhes {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  .dashboard-card {
+    padding: 14px;
+    gap: 12px;
+    min-height: 96px;
+  }
+
+  .card-icon {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+  }
+
+  .card-info strong {
+    font-size: 21px;
+  }
+
+  .card-detalhes {
+    display: none;
+  }
 }
