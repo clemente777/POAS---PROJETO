@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from backend.auth.dependencies import get_current_user
@@ -136,17 +136,17 @@ def atualizar(
     return service.atualizar(id, cliente)
 
 
-# ==========================================================
-# DELETAR
-# ==========================================================
+# # ==========================================================
+# # DELETAR
+# # ==========================================================
 
 
-@router.delete("/{id}", status_code=204)
-def deletar(
-    id: int,
-    usuario_logado: DeletarClienteDep,
-    service: ClienteServiceDep,
-):
-    service.deletar(id)
+# @router.delete("/{id}", status_code=204)
+# def deletar(
+#     id: int,
+#     usuario_logado: DeletarClienteDep,
+#     service: ClienteServiceDep,
+# ):
+#     service.deletar(id)
 
-    return Response(status_code=204)
+#     return Response(status_code=204)

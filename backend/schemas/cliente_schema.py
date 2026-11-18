@@ -1,27 +1,26 @@
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
-# CREATE
 class ClienteCreate(BaseModel):
-    nome: str
+    nome: str = Field(min_length=3, max_length=100)
     cpf: str
     telefone: str
     email: EmailStr
-    endereco: str
+    endereco: str = Field(min_length=1, max_length=255)
+    senha: str | None = Field(default=None, min_length=6)
 
 
-# UPDATE
 class ClienteUpdate(BaseModel):
-    nome: str | None = None
+    nome: str | None = Field(default=None, min_length=3, max_length=100)
     cpf: str | None = None
     telefone: str | None = None
     email: EmailStr | None = None
-    endereco: str | None = None
+    endereco: str | None = Field(default=None, max_length=255)
 
 
-# RESPONSE
 class ClienteResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
+
     id: int
     nome: str
     cpf: str

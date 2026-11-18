@@ -15,13 +15,19 @@ class ClienteRepository:
         self.session = session
 
     def buscar_por_id(self, cliente_id: int):
-        return self.session.scalar(select(Clientes).where(Clientes.id == cliente_id))
+        return self.session.scalar(
+            select(Clientes).where(Clientes.id == cliente_id)
+        )
 
     def buscar_por_cpf(self, cpf: str):
-        return self.session.scalar(select(Clientes).where(Clientes.cpf == cpf))
+        return self.session.scalar(
+            select(Clientes).where(Clientes.cpf == cpf)
+        )
 
     def buscar_por_email(self, email: str):
-        return self.session.scalar(select(Clientes).where(Clientes.email == email))
+        return self.session.scalar(
+            select(Clientes).where(Clientes.email == email)
+        )
 
     def buscar_por_usuario_id(self, usuario_id: int):
         return self.session.scalar(
@@ -29,7 +35,14 @@ class ClienteRepository:
         )
 
     def buscar_usuario_por_id(self, usuario_id: int):
-        return self.session.scalar(select(Usuarios).where(Usuarios.id == usuario_id))
+        return self.session.scalar(
+            select(Usuarios).where(Usuarios.id == usuario_id)
+        )
+
+    def buscar_usuario_por_email(self, email: str):
+        return self.session.scalar(
+            select(Usuarios).where(Usuarios.email == email)
+        )
 
     def listar(
         self,
@@ -48,13 +61,17 @@ class ClienteRepository:
             query = query.where(Clientes.usuario_id == usuario_id)
 
         if nome:
-            query = query.where(Clientes.nome.ilike(f"%{nome.strip()}%"))
+            query = query.where(
+                Clientes.nome.ilike(f"%{nome.strip()}%")
+            )
 
         if cpf:
             query = query.where(Clientes.cpf == cpf)
 
         if email:
-            query = query.where(Clientes.email == email)
+            query = query.where(
+                Clientes.email.ilike(f"%{email.strip()}%")
+            )
 
         campos = {
             "id": Clientes.id,
@@ -65,15 +82,71 @@ class ClienteRepository:
 
         coluna = campos.get(sort_by, Clientes.nome)
 
-        query = query.order_by(desc(coluna) if order.lower() == "desc" else asc(coluna))
+        if order.lower() == "desc":
+            query = query.order_by(desc(coluna))
+        else:
+            query = query.order_by(asc(coluna))
 
-        return self.session.scalars(query.offset(skip).limit(limit)).all()
+        return self.session.scalars(
+            query.offset(skip).limit(limit)
+        ).all()
+
+    # ==========================================================
+    # CADASTRO ATÔMICO DE USUÁRIO + CLIENTE
+    # ==========================================================
+
+    def criar_com_usuario(
+        self,
+        usuario: Usuarios,
+        cliente: Clientes,
+    ):
+        try:
+            self.session.add(usuario)
+            self.session.flush()
+
+            cliente.usuario_id = usuario.id
+
+            self.session.add(cliente)
+            self.session.flush()
+
+            self.session.commit()
+            self.session.refresh(cliente)
+
+            return cliente
+
+        except Exception:
+            self.session.rollback()
+            raise
+
+    # ==========================================================
+    # CRIAR CLIENTE DE USUÁRIO JÁ EXISTENTE
+    # ==========================================================
 
     def criar(self, cliente: Clientes):
         try:
             self.session.add(cliente)
             self.session.commit()
             self.session.refresh(cliente)
+
+            return cliente
+
+        except Exception:
+            self.session.rollback()
+            raise
+
+    # ==========================================================
+    # ATUALIZAR CLIENTE E USUÁRIO NA MESMA TRANSAÇÃO
+    # ==========================================================
+
+    def atualizar_com_usuario(
+        self,
+        cliente: Clientes,
+        usuario: Usuarios,
+    ):
+        try:
+            self.session.commit()
+            self.session.refresh(cliente)
+            self.session.refresh(usuario)
 
             return cliente
 
@@ -92,27 +165,47 @@ class ClienteRepository:
             self.session.rollback()
             raise
 
+    # ==========================================================
+    # VERIFICAÇÕES DE VÍNCULOS
+    # ==========================================================
+
     def possui_animais(self, cliente_id: int):
         return self.session.scalar(
-            select(Animais).where(Animais.cliente_id == cliente_id)
+            select(Animais).where(
+                Animais.cliente_id == cliente_id
+            )
         )
 
     def possui_atendimentos(self, cliente_id: int):
         return self.session.scalar(
             select(Atendimentos)
-            .join(Animais, Atendimentos.animal_id == Animais.id)
+            .join(
+                Animais,
+                Atendimentos.animal_id == Animais.id,
+            )
             .where(Animais.cliente_id == cliente_id)
         )
 
     def possui_carrinhos(self, cliente_id: int):
         return self.session.scalar(
-            select(Carrinhos).where(Carrinhos.cliente_id == cliente_id)
+            select(Carrinhos).where(
+                Carrinhos.cliente_id == cliente_id
+            )
         )
-
-    def deletar(self, cliente: Clientes):
+    def criar_cliente_com_usuario_existente(
+    self,
+        cliente: Clientes,
+        usuario: Usuarios,
+    ):
         try:
-            self.session.delete(cliente)
+            self.session.add(cliente)
+            self.session.flush()
+
             self.session.commit()
+            self.session.refresh(cliente)
+            self.session.refresh(usuario)
+
+            return cliente
 
         except Exception:
             self.session.rollback()
