@@ -1,43 +1,51 @@
-
 /*
 |--------------------------------------------------------------------------
 | Arquivo: vite.config.js
 | Projeto: Petonline24h
 |--------------------------------------------------------------------------
 |
-| Configura o ambiente de desenvolvimento e a compilação do frontend.
-| Integra React e habilita recursos PWA por meio do Service Worker.
+| Finalidade:
+| Configurar o Vite, ferramenta responsável pelo ambiente de
+| desenvolvimento e pela compilação do frontend para produção.
+|
+| Responsabilidades:
+| - Definir as configurações do ambiente Vite.
+| - Integrar o React ao processo de desenvolvimento.
+| - Habilitar o processamento de componentes JSX.
+| - Disponibilizar os recursos necessários para a compilação.
+|
+| Tecnologia:
+| - Vite: ferramenta de desenvolvimento e build.
+| - @vitejs/plugin-react: plugin de integração com React.
+|
+|--------------------------------------------------------------------------
+*/
+
+// Importa a função responsável por definir a configuração do Vite.
+import { defineConfig } from 'vite'
+
+// Importa o plugin responsável pela integração com React.
+import react from '@vitejs/plugin-react'
+
+/*
+|--------------------------------------------------------------------------
+| CONFIGURAÇÃO PRINCIPAL DO VITE
+|--------------------------------------------------------------------------
+|
+| A função defineConfig organiza as configurações do projeto.
+|
+| A propriedade plugins registra os plugins utilizados durante
+| o desenvolvimento e a compilação.
+|
+| O plugin react habilita os recursos necessários para trabalhar
+| com componentes React e arquivos JSX.
 |
 */
 
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import { VitePWA } from 'vite-plugin-pwa'
-
 export default defineConfig({
-  plugins: [
-    react(),
+  plugins: [react()],
 
-    VitePWA({
-      // Mantém o manifesto existente em frontend/public.
-      manifest: false,
-
-      // Atualiza o Service Worker automaticamente.
-      registerType: 'autoUpdate',
-
-      // Arquivos estáticos que poderão funcionar offline.
-      workbox: {
-        globPatterns: [
-          '**/*.{js,css,html,ico,png,svg,webmanifest,woff2}',
-        ],
-
-        // Remove caches antigos após atualizações.
-        cleanupOutdatedCaches: true,
-      },
-    }),
-  ],
-
-  // Mantém o acesso pela rede local.
+  // host: true libera o acesso pela rede local (ex.: celular no mesmo Wi-Fi).
   server: {
     host: true,
     port: 5173,

@@ -27,7 +27,7 @@ const ITENS_MENU = [
   { chave: "dashboard", label: "Dashboard", curto: "Início", Icone: LayoutDashboard, rota: "/dashboard" },
   { chave: "animais", label: "Animais", curto: "Animais", Icone: PawPrint, rota: "/animais" },
   { chave: "meus_animais", label: "Meus Animais", curto: "Pets", Icone: Dog, rota: "/meus-animais" },
-  { chave: "clientes", label: "Clientes", curto: "Clientes", Icone: Users, rota: null },
+  { chave: "clientes", label: "Clientes", curto: "Clientes", Icone: Users, rota: "/clientes" },
   { chave: "agendamentos", label: "Agendamentos", curto: "Agenda", Icone: CalendarCheck, rota: "/agendamentos" },
   { chave: "minhas_consultas", label: "Minhas Consultas", curto: "Consultas", Icone: CalendarCheck, rota: "/minhas-consultas" },
   { chave: "atendimentos", label: "Atendimentos", curto: "Atend.", Icone: Stethoscope, rota: "/atendimentos" },

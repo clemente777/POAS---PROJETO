@@ -1,173 +1,106 @@
+import "./Dashboard.css";
 
-import './Dashboard.css'
+import { useEffect, useState } from "react";
+import { RefreshCw } from "lucide-react";
 
-import { Navigate } from 'react-router-dom'
-import { useEffect, useState } from 'react'
-import { RefreshCw } from 'lucide-react'
+import api from "../../services/api";
+import Sidebar from "../../components/Sidebar/Sidebar";
 
-import api from '../../services/api'
-import Sidebar from '../../components/Sidebar/Sidebar'
+import { useAuth } from "../../contexts/AuthContext";
 
-import { useAuth } from '../../contexts/AuthContext'
-
-import AdminDashboard from './AdminDashboard'
-import VeterinarioDashboard from './VeterinarioDashboard'
-import ClienteDashboard from './ClienteDashboard'
+import AdminDashboard from "./AdminDashboard";
+import VeterinarioDashboard from "./VeterinarioDashboard";
+import ClienteDashboard from "./ClienteDashboard";
 
 const ENDPOINT_POR_PERFIL = {
-  Administrador: '/dashboard/admin',
-  Veterinário: '/dashboard/veterinario',
-  Cliente: '/dashboard/cliente',
-}
+  Administrador: "/dashboard/admin",
+  "Veterinário": "/dashboard/veterinario",
+  Cliente: "/dashboard/cliente",
+};
 
 function Dashboard() {
-  const { usuario } = useAuth()
+  const { usuario } = useAuth();
 
-  const [sidebarAberto, setSidebarAberto] = useState(true)
-  const [recarga, setRecarga] = useState(0)
-
-  const perfil = usuario?.perfil
-  const endpoint = ENDPOINT_POR_PERFIL[perfil]
-
-  const [resultado, setResultado] = useState({
-    chave: null,
-    dados: {},
-    erro: '',
-  })
-
-  const chaveBusca = `${perfil}|${recarga}`
+  const [sidebarAberto, setSidebarAberto] = useState(true);
+  const [dados, setDados] = useState({});
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState("");
 
   useEffect(() => {
-    // Sem endpoint, não existe requisição a realizar.
-    if (!endpoint) return
+    if (usuario) {
+      carregarDashboard();
+    }
+  }, [usuario]);
 
-    let ignorar = false
+  async function carregarDashboard() {
+    const endpoint = ENDPOINT_POR_PERFIL[usuario?.perfil];
 
-    async function buscarDashboard() {
-      try {
-        const resposta = await api.get(endpoint)
-
-        if (ignorar) return
-
-        setResultado({
-          chave: chaveBusca,
-          dados: resposta.data,
-          erro: '',
-        })
-      } catch (error) {
-        if (ignorar) return
-
-        console.error('Erro ao carregar dashboard:', error)
-
-        setResultado({
-          chave: chaveBusca,
-          dados: {},
-          erro: 'Erro ao carregar o Dashboard.',
-        })
-      }
+    if (!endpoint) {
+      setDados({});
+      setCarregando(false);
+      return;
     }
 
-    buscarDashboard()
-
-    return () => {
-      ignorar = true
+    try {
+      const resposta = await api.get(endpoint);
+      setDados(resposta.data);
+      setErro("");
+    } catch (error) {
+      console.error(error);
+      setErro("Erro ao carregar o Dashboard.");
+    } finally {
+      setCarregando(false);
     }
-  }, [endpoint, chaveBusca])
-
-  const carregando =
-    !usuario ||
-    (Boolean(endpoint) && resultado.chave !== chaveBusca)
-
-  const dados = endpoint ? resultado.dados : {}
-  const erro = carregando ? '' : endpoint ? resultado.erro : ''
-
-  const ehCliente = perfil === 'Cliente'
-
-  const primeiroNome = (
-    usuario?.nome || usuario?.name || ''
-  ).trim().split(' ')[0]
-
-    // Impede acesso ao dashboard sem usuário autenticado.
-  if (!usuario || !localStorage.getItem('token')) {
-    return <Navigate to="/login" replace />
   }
 
   if (carregando) {
-    return (
-      <div className="loading-dashboard">
-        Carregando dashboard...
-      </div>
-    )
+    return <div className="loading-dashboard">Carregando dashboard...</div>;
   }
+
+  const ehCliente = usuario?.perfil === "Cliente";
+  const primeiroNome = (usuario?.nome || usuario?.name || "").trim().split(" ")[0];
 
   return (
     <div className="dashboard">
-      <Sidebar
-        perfil={perfil}
-        setSidebarAberto={setSidebarAberto}
-      />
+      <Sidebar perfil={usuario?.perfil} setSidebarAberto={setSidebarAberto} />
 
-      <main
-        className={`dashboard-content ${
-          sidebarAberto ? 'aberto' : 'fechado'
-        }`}
-      >
+      <main className={`dashboard-content ${sidebarAberto ? "aberto" : "fechado"}`}>
         <header className="dashboard-header">
           <div className="dashboard-title">
             {ehCliente ? (
               <>
-                <h1>
-                  Olá{primeiroNome ? `, ${primeiroNome}` : ''}!
-                </h1>
-
-                <p>
-                  O que você precisa para o seu pet hoje?
-                </p>
+                <h1>Olá{primeiroNome ? `, ${primeiroNome}` : ""}!</h1>
+                <p>O que você precisa para o seu pet hoje?</p>
               </>
             ) : (
               <>
-                <h1>Dashboard {perfil}</h1>
-
-                <p>
-                  Bem-vindo ao sistema Petonline24h
-                </p>
+                <h1>Dashboard {usuario?.perfil}</h1>
+                <p>Bem-vindo ao sistema Petonline24h</p>
               </>
             )}
           </div>
 
           <button
             className="btn-refresh"
-            type="button"
             aria-label="Atualizar dashboard"
-            onClick={() => setRecarga((atual) => atual + 1)}
+            onClick={() => {
+              setCarregando(true);
+              carregarDashboard();
+            }}
           >
             <RefreshCw size={16} />
-            <span className="btn-refresh-texto">
-              Atualizar
-            </span>
+            <span className="btn-refresh-texto">Atualizar</span>
           </button>
         </header>
 
-        {erro && (
-          <p className="dashboard-erro">
-            {erro}
-          </p>
-        )}
+        {erro && <p className="dashboard-erro">{erro}</p>}
 
-        {perfil === 'Administrador' && (
-          <AdminDashboard dados={dados} />
-        )}
-
-        {perfil === 'Veterinário' && (
-          <VeterinarioDashboard dados={dados} />
-        )}
-
-        {perfil === 'Cliente' && (
-          <ClienteDashboard dados={dados} />
-        )}
+        {usuario?.perfil === "Administrador" && <AdminDashboard dados={dados} />}
+        {usuario?.perfil === "Veterinário" && <VeterinarioDashboard dados={dados} />}
+        {usuario?.perfil === "Cliente" && <ClienteDashboard dados={dados} />}
       </main>
     </div>
-  )
+  );
 }
 
-export default Dashboard
+export default Dashboard;

@@ -52,6 +52,7 @@ const Cadastro = lazy(() => import('./pages/Cadastro/Cadastro'))
 // Painel administrativo e gerenciamento
 const Dashboard = lazy(() => import('./pages/Dashboard/Dashboard'))
 const Animais = lazy(() => import('./pages/Animais/Animais'))
+const Clientes = lazy(() => import('./pages/Clientes/Clientes'))
 
 // Funcionalidades destinadas aos clientes
 const MeusAnimais = lazy(() => import('./pages/MeusAnimais/MeusAnimais'))
@@ -96,7 +97,7 @@ function App() {
           {/* Painel e gerenciamento de animais */}
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/animais" element={<Animais />} />
-
+          <Route path="/clientes" element={<Clientes />} />
           {/* Área do cliente */}
           <Route path="/meus-animais" element={<MeusAnimais />} />
           <Route path="/minhas-consultas" element={<MinhasConsultas />} />

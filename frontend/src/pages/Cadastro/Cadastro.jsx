@@ -1,220 +1,366 @@
+import "./Cadastro.css";
 
-import './Cadastro.css'
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { API_URL } from "../../services/api";
 
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import logo from "../../assets/logo.png";
 
-import api from '../../services/api'
+import Input from "../../components/Input/Input";
+import Button from "../../components/button/Button";
 
-import logo from '../../assets/logo.png'
+function Cadastro(){
 
-import Input from '../../components/Input/Input'
-import Button from '../../components/button/Button'
+    const navigate = useNavigate();
 
-function Cadastro() {
-  const navigate = useNavigate()
 
-  const [nome, setNome] = useState('')
-  const [cpf, setCpf] = useState('')
-  const [telefone, setTelefone] = useState('')
-  const [email, setEmail] = useState('')
-  const [endereco, setEndereco] = useState('')
-  const [senha, setSenha] = useState('')
+    const [nome,setNome] = useState("");
+    const [cpf,setCpf] = useState("");
+    const [telefone,setTelefone] = useState("");
+    const [email,setEmail] = useState("");
+    const [endereco,setEndereco] = useState("");
+    const [senha,setSenha] = useState("");
 
-  const [erro, setErro] = useState('')
-  const [sucesso, setSucesso] = useState('')
-  const [carregando, setCarregando] = useState(false)
+    const [erro,setErro] = useState("");
+    const [sucesso,setSucesso] = useState("");
 
-  async function cadastrar(evento) {
-    evento.preventDefault()
+    const [carregando,setCarregando] = useState(false);
 
-    if (carregando) return
 
-    setErro('')
-    setSucesso('')
-    setCarregando(true)
 
-    try {
-      const dados = {
-        nome: nome.trim(),
-        cpf: cpf.trim(),
-        telefone: telefone.trim(),
-        email: email.trim().toLowerCase(),
-        endereco: endereco.trim(),
-        senha,
-      }
+    async function cadastrar(e){
 
-      await api.post('/cadastro/', dados)
+        e.preventDefault();
 
-      setSucesso('Cadastro realizado com sucesso!')
 
-      // Aguarda a atualização da interface antes de navegar.
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+        setErro("");
+        setSucesso("");
+        setCarregando(true);
 
-      navigate('/login', { replace: true })
-    } catch (error) {
-      console.error('Erro ao realizar cadastro:', error)
 
-      if (error.response) {
-        const detalhe = error.response.data?.detail
+        try{
 
-        if (Array.isArray(detalhe)) {
-          setErro(
-            detalhe
-              .map((item) => {
-                if (item.campo) {
-                  return `${item.campo}: ${item.mensagem}`
+
+            await axios.post(
+
+                `${API_URL}/cadastro/`,
+
+                {
+                    nome,
+                    cpf,
+                    telefone,
+                    email,
+                    endereco,
+                    senha
                 }
 
-                return item.msg || 'Erro de validação.'
-              })
-              .join('\n')
-          )
-        } else {
-          setErro(
-            detalhe || `Não foi possível cadastrar. Erro ${error.response.status}.`
-          )
-        }
-      } else if (error.request) {
-        setErro(
-          'Não foi possível conectar ao servidor. Verifique se o backend está funcionando.'
-        )
-      } else {
-        setErro(
-          error.message || 'Ocorreu um erro ao realizar o cadastro.'
-        )
-      }
-    } finally {
-      setCarregando(false)
-    }
-  }
+            );
 
-  return (
+
+            setSucesso(
+                "Cadastro realizado com sucesso!"
+            );
+
+
+            setTimeout(()=>{
+
+                navigate("/login");
+
+            },2000);
+
+
+
+        }
+
+
+        catch(error){
+
+
+            console.error(
+                "Erro cadastro:",
+                error.response
+            );
+
+
+
+            if(error.response){
+
+
+                const detalhe =
+                error.response.data?.detail;
+
+
+
+                // Erros de validação FastAPI
+                if(Array.isArray(detalhe)){
+
+
+                    setErro(
+
+                        detalhe
+                        .map(item => {
+
+                            if(item.campo){
+
+                                return `${item.campo}: ${item.mensagem}`;
+
+                            }
+
+
+                            return item.msg;
+
+                        })
+
+                        .join("\n")
+
+                    );
+
+
+                }
+
+
+
+                // Erros das regras de negócio
+                else if(detalhe){
+
+
+                    setErro(
+                        detalhe
+                    );
+
+
+                }
+
+
+
+                else{
+
+
+                    setErro(
+                        `Erro ${error.response.status}: Não foi possível cadastrar.`
+                    );
+
+
+                }
+
+
+
+            }
+
+
+            else{
+
+
+                setErro(
+                    "Servidor indisponível."
+                );
+
+
+            }
+
+
+
+        }
+
+
+        finally{
+
+            setCarregando(false);
+
+        }
+
+
+    }
+
+
+
+return (
+
     <div className="cadastro">
 
-      <div className="cadastro-info">
 
-        <img
-          src={logo}
-          className="logo-poas"
-          alt="Logo Petonline24h"
-        />
+        <div className="cadastro-info">
 
-        <h2>
-          Cuidado completo para seu pet
-        </h2>
 
-        <p className="descricao-poas">
-          Agende consultas, acompanhe históricos e cuide melhor
-          do seu animal.
-        </p>
+            <img 
+                src={logo}
+                className="logo-poas"
+                alt="Logo POAS"
+            />
 
-      </div>
 
-      <div className="cadastro-box">
+            <h2>
+                Cuidado completo para seu pet
+            </h2>
 
-        <h1>Criar Conta</h1>
 
-        <p className="subtitulo">
-          Cadastre-se no Petonline24h
-        </p>
+            <p className="descricao-poas">
 
-        <form onSubmit={cadastrar}>
+                Agende consultas, acompanhe
+                históricos e cuide melhor
+                do seu animal.
 
-          {erro && (
-            <div className="mensagem erro" role="alert">
-              <strong>Erro:</strong>
-              <span style={{ whiteSpace: 'pre-line' }}>
-                {erro}
-              </span>
-            </div>
-          )}
+            </p>
 
-          {sucesso && (
-            <div className="mensagem sucesso" role="status">
-              {sucesso}
-            </div>
-          )}
 
-          <Input
-            type="text"
-            placeholder="Nome completo"
-            autoComplete="name"
-            required
-            value={nome}
-            onChange={(e) => setNome(e.target.value)}
-            disabled={carregando}
-          />
+        </div>
 
-          <Input
-            type="text"
-            placeholder="CPF"
-            autoComplete="off"
-            required
-            value={cpf}
-            onChange={(e) => setCpf(e.target.value)}
-            disabled={carregando}
-          />
 
-          <Input
-            type="tel"
-            placeholder="Telefone"
-            autoComplete="tel"
-            required
-            value={telefone}
-            onChange={(e) => setTelefone(e.target.value)}
-            disabled={carregando}
-          />
 
-          <Input
-            type="email"
-            placeholder="Email"
-            autoComplete="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            disabled={carregando}
-          />
 
-          <Input
-            type="text"
-            placeholder="Endereço"
-            autoComplete="street-address"
-            required
-            value={endereco}
-            onChange={(e) => setEndereco(e.target.value)}
-            disabled={carregando}
-          />
+        <div className="cadastro-box">
 
-          <Input
-            type="password"
-            placeholder="Senha"
-            autoComplete="new-password"
-            required
-            value={senha}
-            onChange={(e) => setSenha(e.target.value)}
-            disabled={carregando}
-          />
 
-          <Button disabled={carregando}>
-            {carregando ? 'Cadastrando...' : 'Criar conta'}
-          </Button>
+            <h1>
+                Criar Conta
+            </h1>
 
-        </form>
 
-        <button
-          className="voltar"
-          type="button"
-          onClick={() => navigate('/login')}
-          disabled={carregando}
-        >
-          Já tenho conta
-        </button>
+            <p className="subtitulo">
 
-      </div>
+                Cadastre-se no Petonline24
+
+            </p>
+
+
+
+
+            <form onSubmit={cadastrar}>
+
+
+                {erro && (
+
+                    <div className="mensagem erro">
+
+                        <strong>
+                            ❌ Erro:
+                        </strong>
+
+                        <span>
+                            {erro}
+                        </span>
+
+                    </div>
+
+                )}
+
+
+
+
+                {sucesso && (
+
+                    <div className="mensagem sucesso">
+
+                        ✅ {sucesso}
+
+                    </div>
+
+                )}
+
+
+
+
+                <Input
+                    placeholder="Nome completo"
+                    value={nome}
+                    onChange={
+                        e=>setNome(e.target.value)
+                    }
+                />
+
+
+
+                <Input
+                    placeholder="CPF"
+                    value={cpf}
+                    onChange={
+                        e=>setCpf(e.target.value)
+                    }
+                />
+
+
+
+                <Input
+                    placeholder="Telefone"
+                    value={telefone}
+                    onChange={
+                        e=>setTelefone(e.target.value)
+                    }
+                />
+
+
+
+                <Input
+                    placeholder="Email"
+                    type="email"
+                    value={email}
+                    onChange={
+                        e=>setEmail(e.target.value)
+                    }
+                />
+
+
+
+                <Input
+                    placeholder="Endereço"
+                    value={endereco}
+                    onChange={
+                        e=>setEndereco(e.target.value)
+                    }
+                />
+
+
+
+                <Input
+                    placeholder="Senha"
+                    type="password"
+                    value={senha}
+                    onChange={
+                        e=>setSenha(e.target.value)
+                    }
+                />
+
+
+
+
+                <Button disabled={carregando}>
+
+                    {
+                        carregando
+                        ?
+                        "Cadastrando..."
+                        :
+                        "Criar conta"
+                    }
+
+                </Button>
+
+
+            </form>
+
+
+
+
+            <button
+
+                className="voltar"
+
+                onClick={()=>navigate("/login")}
+
+            >
+
+                Já tenho conta
+
+            </button>
+
+
+
+        </div>
+
 
     </div>
-  )
-}
 
-export default Cadastro
+    );
+}
+export default Cadastro;

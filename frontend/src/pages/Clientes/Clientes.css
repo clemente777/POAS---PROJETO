@@ -1,0 +1,243 @@
+
+.clientes-page {
+  min-height: 100vh;
+}
+
+.clientes-aviso {
+  padding: 13px 16px;
+  margin: 0 0 18px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.clientes-aviso-sucesso {
+  color: #087f5b;
+  background: #e6fcf5;
+  border: 1px solid #96f2d7;
+}
+
+.clientes-resumo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  color: #475569;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.clientes-resumo svg {
+  color: #18a999;
+}
+
+.clientes-tabela {
+  min-width: 950px;
+}
+
+.clientes-tabela td {
+  vertical-align: middle;
+}
+
+.clientes-email {
+  min-width: 190px;
+  overflow-wrap: anywhere;
+}
+
+.cliente-endereco {
+  min-width: 180px;
+  max-width: 260px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.clientes-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgb(15 23 42 / 55%);
+  overflow-y: auto;
+}
+
+.clientes-modal {
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgb(0 0 0 / 20%);
+}
+
+.clientes-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 22px 24px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.clientes-modal-header h2 {
+  margin: 0;
+  color: #172033;
+  font-size: 21px;
+}
+
+.clientes-modal-header p {
+  margin: 7px 0 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.clientes-modal-fechar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 8px;
+  color: #64748b;
+  background: #f1f5f9;
+  cursor: pointer;
+}
+
+.clientes-modal-fechar:hover {
+  color: #0f172a;
+  background: #e2e8f0;
+}
+
+.clientes-form {
+  display: flex;
+  flex-direction: column;
+  gap: 17px;
+  padding: 22px 24px 24px;
+}
+
+.clientes-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.clientes-form input {
+  width: 100%;
+  min-height: 43px;
+  padding: 10px 12px;
+  color: #1e293b;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  outline: none;
+  font: inherit;
+  font-weight: 400;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.clientes-form input:focus {
+  border-color: #18a999;
+  box-shadow: 0 0 0 3px rgb(24 169 153 / 13%);
+}
+
+.clientes-form-erro {
+  margin: 0;
+  padding: 11px 13px;
+  color: #b42318;
+  background: #fef3f2;
+  border: 1px solid #fecdca;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.clientes-form-acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 8px;
+}
+
+.clientes-btn-cancelar,
+.clientes-btn-salvar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 10px 17px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.clientes-btn-cancelar {
+  color: #475569;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+}
+
+.clientes-btn-cancelar:hover {
+  background: #f8fafc;
+}
+
+.clientes-btn-salvar {
+  color: #fff;
+  background: #18a999;
+  border: 1px solid #18a999;
+}
+
+.clientes-btn-salvar:hover {
+  background: #128b7e;
+  border-color: #128b7e;
+}
+
+.clientes-btn-salvar:disabled,
+.clientes-btn-cancelar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.clientes-form-acoes button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+@media (max-width: 768px) {
+  .clientes-modal-overlay {
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  .clientes-modal {
+    margin: auto 0;
+    max-height: calc(100vh - 24px);
+  }
+
+  .clientes-modal-header,
+  .clientes-form {
+    padding-left: 17px;
+    padding-right: 17px;
+  }
+
+  .clientes-modal-header h2 {
+    font-size: 19px;
+  }
+
+  .clientes-form-acoes {
+    flex-direction: column-reverse;
+  }
+
+  .clientes-form-acoes button {
+    width: 100%;
+  }
+}

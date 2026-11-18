@@ -1,140 +1,198 @@
+import "./Login.css";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { API_URL } from "../../services/api";
 
-import './Login.css'
+import logo from "../../assets/logo.png";
+import Input from "../../components/Input/Input";
+import Button from "../../components/button/Button";
 
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from "../../contexts/AuthContext";
 
-import api from '../../services/api'
-
-import logo from '../../assets/logo.png'
-import Input from '../../components/Input/Input'
-import Button from '../../components/button/Button'
-
-import { useAuth } from '../../contexts/AuthContext'
 
 function Login() {
-  const navigate = useNavigate()
-  const { login } = useAuth()
 
-  const [email, setEmail] = useState('')
-  const [senha, setSenha] = useState('')
-  const [mensagemErro, setMensagemErro] = useState('')
-  const [carregando, setCarregando] = useState(false)
+    const navigate = useNavigate();
+    
+    const { login } = useAuth();
 
-  async function entrar(e) {
-    e.preventDefault()
+    const [email, setEmail] = useState("");
+    const [senha, setSenha] = useState("");
+    const [mensagemErro, setMensagemErro] = useState("");
 
-    if (carregando) return
+    async function entrar(e) {
 
-    setMensagemErro('')
-    setCarregando(true)
+        e.preventDefault();
 
-    try {
-      const dados = new URLSearchParams()
+        try {
 
-      dados.append('username', email.trim().toLowerCase())
-      dados.append('password', senha)
+            const dados = new URLSearchParams();
 
-      const resposta = await api.post('/login/', dados, {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      })
+            dados.append("username", email);
+            dados.append("password", senha);
 
-      const { access_token, usuario } = resposta.data
+            const resposta = await axios.post(
 
-      if (!access_token || !usuario) {
-        throw new Error('Resposta de autenticação inválida.')
-      }
+                `${API_URL}/login/`,
 
-      localStorage.setItem('token', access_token)
+                dados,
 
-      login(usuario)
+                {
 
-      navigate('/dashboard', { replace: true })
-    } catch (erro) {
-      console.error('Erro ao realizar login:', erro)
+                    headers: {
 
-      if (erro.response) {
-        const detalhe = erro.response.data?.detail
+                        "Content-Type":
+                        "application/x-www-form-urlencoded"
 
-        if (Array.isArray(detalhe)) {
-          setMensagemErro(
-            detalhe.map((item) => item.msg).join(', ')
-          )
-        } else {
-          setMensagemErro(
-            detalhe || `Não foi possível entrar. Erro ${erro.response.status}.`
-          )
+                    }
+
+                }
+
+            );
+
+            localStorage.setItem(
+                "token",
+                resposta.data.access_token
+            );
+
+
+            login(
+                resposta.data.usuario
+            );
+
+            setMensagemErro("");
+
+            navigate("/dashboard");
+
         }
-      } else if (erro.request) {
-        setMensagemErro(
-          'Não foi possível conectar ao servidor. Verifique se o backend está funcionando.'
-        )
-      } else {
-        setMensagemErro(
-          erro.message || 'Ocorreu um erro ao realizar o login.'
-        )
-      }
-    } finally {
-      setCarregando(false)
-    }
-  }
 
-  return (
-    <div className="login">
-      <div className="left">
-        <img src={logo} alt="Logo Petonline24h" />
-      </div>
+        catch (erro) {
 
-      <div className="right">
-        <div className="box">
-          <h1>Bem-Vindo!</h1>
+            console.error(
+                "Erro login:",
+                erro.response
+            );
 
-          <form onSubmit={entrar}>
-            {mensagemErro && (
-              <p className="erro-login" role="alert">
-                {mensagemErro}
-              </p>
-            )}
 
-            <Input
-              type="email"
-              placeholder="Email"
-              autoComplete="email"
-              inputMode="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={carregando}
-            />
+            if (erro.response) {
 
-            <Input
-              type="password"
-              placeholder="Senha"
-              autoComplete="current-password"
-              required
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
-              disabled={carregando}
-            />
 
-            <Button>
-              {carregando ? 'Entrando...' : 'Entrar'}
-            </Button>
-          </form>
+                const detalhe = erro.response.data?.detail;
 
-          <div className="links">
-            <Link to="/cadastro">Criar conta</Link>
 
-            <a href="#" onClick={(e) => e.preventDefault()}>
-              Esqueci minha senha
-            </a>
-          </div>
+                if (Array.isArray(detalhe)) {
+
+                    setMensagemErro(
+                        detalhe
+                        .map(item => item.msg)
+                        .join(", ")
+                    );
+
+                }
+
+
+                else if (detalhe) {
+
+                    setMensagemErro(detalhe);
+
+                }
+
+
+                else {
+
+                    setMensagemErro(
+                        `Erro ${erro.response.status}`
+                    );
+
+                }
+
+
+            } 
+            
+            else {
+
+                setMensagemErro(
+                    "Servidor indisponível."
+                );
+
+            }
+
+        }
+}
+    return (
+
+        <div className="login">
+
+            <div className="left">
+
+                <img
+                    src={logo}
+                    alt="Logo"
+                />
+
+            </div>
+
+            <div className="right">
+
+                <div className="box">
+
+                    <h1>Bem-Vindo!</h1>
+
+                    <form onSubmit={entrar}>
+                        
+                        {mensagemErro && (
+                            <p className="erro-login">
+                                {mensagemErro}
+                            </p>
+                        )}
+
+                        <Input
+                            type="email"
+                            placeholder="Email"
+                            autoComplete="email"
+                            inputMode="email"
+                            required
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                        />
+
+                        <Input
+                            type="password"
+                            placeholder="Senha"
+                            autoComplete="current-password"
+                            required
+                            value={senha}
+                            onChange={(e) => setSenha(e.target.value)}
+                        />
+
+                        <Button>
+
+                            Entrar
+
+                        </Button>
+
+                    
+                    </form>
+
+                    <div className="links">
+
+                        <a href="/cadastro">
+                            Criar conta
+                        </a>
+
+                        <a href="#">Esqueci minha senha</a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
         </div>
-      </div>
-    </div>
-  )
+
+    );
+
 }
 
-export default Login
+export default Login;

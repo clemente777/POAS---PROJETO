@@ -201,3 +201,212 @@
     font-size: 13px;
   }
 }
+
+/* =========================================
+   GERENCIAMENTO ADMINISTRATIVO
+========================================= */
+
+.produtos-novo,
+.produto-editar,
+.produto-excluir,
+.produto-salvar,
+.produto-cancelar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 16px;
+  border: none;
+  border-radius: var(--radius-pill);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, opacity 0.2s ease;
+}
+
+.produtos-novo,
+.produto-salvar {
+  background: var(--color-brand);
+  color: white;
+}
+
+.produtos-novo:hover,
+.produto-salvar:hover {
+  background: var(--color-brand-dark);
+}
+
+.produto-admin-acoes {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.produto-admin-acoes button {
+  flex: 1;
+}
+
+.produto-editar {
+  background: var(--color-brand-light);
+  color: var(--color-brand-dark);
+}
+
+.produto-editar:hover {
+  background: var(--color-brand);
+  color: white;
+}
+
+.produto-excluir {
+  background: #FDECEC;
+  color: #B42318;
+}
+
+.produto-excluir:hover {
+  background: #F8D7D7;
+}
+
+/* =========================================
+   MODAL DE CADASTRO E EDIÇÃO
+========================================= */
+
+.produto-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 30, 35, 0.55);
+  overflow-y: auto;
+}
+
+.produto-modal {
+  width: 100%;
+  max-width: 520px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  padding: 26px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.produto-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.produto-modal-header h2 {
+  color: var(--color-ink);
+  font-size: 21px;
+}
+
+.produto-modal-header p {
+  margin-top: 5px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.produto-modal-header > button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: var(--color-brand-light);
+  color: var(--color-ink);
+  cursor: pointer;
+}
+
+.produto-modal form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.produto-modal label {
+  margin-top: 8px;
+  color: var(--color-ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.produto-modal input,
+.produto-modal textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  outline: none;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 14px;
+}
+
+.produto-modal input:focus,
+.produto-modal textarea:focus {
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 3px rgba(24, 169, 153, 0.12);
+}
+
+.produto-modal textarea {
+  resize: vertical;
+}
+
+.produto-modal-campos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.produto-modal-campos > div {
+  min-width: 0;
+}
+
+.produto-modal-acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.produto-cancelar {
+  background: #EDF1F2;
+  color: var(--color-ink);
+}
+
+.produto-cancelar:hover {
+  background: #DCE5E7;
+}
+
+.produto-modal button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .produto-modal {
+    padding: 20px;
+  }
+
+  .produto-modal-campos {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .produto-modal-acoes {
+    flex-direction: column-reverse;
+  }
+
+  .produto-modal-acoes button {
+    width: 100%;
+  }
+}
