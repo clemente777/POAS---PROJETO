@@ -1,4 +1,3 @@
-
 import axios from 'axios'
 
 // URL dinâmica da API.

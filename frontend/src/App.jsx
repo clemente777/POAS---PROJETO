@@ -58,6 +58,7 @@ const Clientes = lazy(() => import('./pages/Clientes/Clientes'))
 const MeusAnimais = lazy(() => import('./pages/MeusAnimais/MeusAnimais'))
 const MinhasConsultas = lazy(() => import('./pages/MinhasConsultas/MinhasConsultas'))
 const Compras = lazy(() => import('./pages/Compras/Compras'))
+const Perfil = lazy(() => import('./pages/Perfil/Perfil'))
 
 // Produtos e serviços veterinários
 const Produtos = lazy(() => import('./pages/Produtos/Produtos'))
@@ -102,7 +103,7 @@ function App() {
           <Route path="/meus-animais" element={<MeusAnimais />} />
           <Route path="/minhas-consultas" element={<MinhasConsultas />} />
           <Route path="/compras" element={<Compras />} />
-
+          <Route path="/perfil" element={<Perfil />} />
           {/* Produtos e funcionalidades veterinárias */}
           <Route path="/produtos" element={<Produtos />} />
           <Route path="/vacinas" element={<Vacinas />} />

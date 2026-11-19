@@ -5,11 +5,14 @@ from sqlalchemy.exc import SQLAlchemyError
 from backend.models.usuario_model import Usuarios
 from backend.repositories.cliente_repository import ClienteRepository
 from backend.repositories.usuario_repository import UsuarioRepository
+from backend.schemas.cliente_schema import ClienteUpdate
+from backend.schemas.perfil_schema import PerfilUpdate
 from backend.schemas.usuario_schema import (
     UsuarioAdminCreate,
     UsuarioCreate,
     UsuarioUpdate,
 )
+from backend.services.implementations.cliente_service_impl import ClienteServiceImpl
 
 senha_context = PasswordHash.recommended()
 
@@ -420,3 +423,158 @@ class UsuarioServiceImpl:
                 status_code=500,
                 detail="Erro ao excluir usuário.",
             ) from erro
+
+    def obter_meu_perfil(self):
+        if not self.usuario_logado:
+            raise HTTPException(
+                status_code=401,
+                detail="Usuário não autenticado.",
+            )
+
+        usuario = self.repository.buscar_por_id(self.usuario_logado.id)
+
+        if not usuario:
+            raise HTTPException(
+                status_code=404,
+                detail="Usuário não encontrado.",
+            )
+
+        cliente = None
+
+        if usuario.perfil == "Cliente":
+            cliente = self.cliente_repository.buscar_por_usuario_id(usuario.id)
+
+        return {
+            "id": usuario.id,
+            "nome": usuario.nome,
+            "email": usuario.email,
+            "perfil": usuario.perfil,
+            "cliente_id": cliente.id if cliente else None,
+            "cpf": cliente.cpf if cliente else None,
+            "telefone": cliente.telefone if cliente else None,
+            "endereco": cliente.endereco if cliente else None,
+        }
+
+    def atualizar_meu_perfil(self, dados: PerfilUpdate):
+        if not self.usuario_logado:
+            raise HTTPException(
+                status_code=401,
+                detail="Usuário não autenticado.",
+            )
+
+        usuario = self.repository.buscar_por_id(self.usuario_logado.id)
+
+        if not usuario:
+            raise HTTPException(
+                status_code=404,
+                detail="Usuário não encontrado.",
+            )
+
+        dados_dict = dados.model_dump(exclude_unset=True)
+
+        if not dados_dict:
+            raise HTTPException(
+                status_code=400,
+                detail="Informe pelo menos um campo para atualizar.",
+            )
+
+        if usuario.perfil == "Cliente":
+            cliente = self.cliente_repository.buscar_por_usuario_id(usuario.id)
+
+            if not cliente:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Cadastro de cliente não encontrado.",
+                )
+
+            cliente_dados = ClienteUpdate(**dados_dict)
+
+            cliente_service = ClienteServiceImpl(
+                self.cliente_repository,
+                usuario,
+            )
+
+            cliente_service.atualizar(
+                cliente.id,
+                cliente_dados,
+            )
+
+        else:
+            campos_permitidos = {"nome", "email"}
+
+            campos_invalidos = set(dados_dict) - campos_permitidos
+
+            if campos_invalidos:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        "Administradores e veterinários podem "
+                        "alterar somente nome e e-mail."
+                    ),
+                )
+
+            if "nome" in dados_dict:
+                nome = dados_dict["nome"].strip()
+
+                if len(nome) < 3:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="O nome deve possuir pelo menos 3 caracteres.",
+                    )
+
+                usuario.nome = nome
+
+            if "email" in dados_dict:
+                email = str(dados_dict["email"]).strip().lower()
+
+                usuario_existente = self.repository.buscar_por_email(email)
+
+                if usuario_existente and usuario_existente.id != usuario.id:
+                    raise HTTPException(
+                        status_code=409,
+                        detail="Este e-mail já está cadastrado.",
+                    )
+
+                usuario.email = email
+
+            self.repository.atualizar(usuario)
+
+        return self.obter_meu_perfil()
+
+    def alterar_minha_senha(self, senha_atual: str, nova_senha: str):
+        if not self.usuario_logado:
+            raise HTTPException(
+                status_code=401,
+                detail="Usuário não autenticado.",
+            )
+
+        usuario = self.repository.buscar_por_id(self.usuario_logado.id)
+
+        if not usuario:
+            raise HTTPException(
+                status_code=404,
+                detail="Usuário não encontrado.",
+            )
+
+        password_hash = PasswordHash.recommended()
+
+        if not password_hash.verify(
+            senha_atual,
+            usuario.senha_hash,
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail="A senha atual está incorreta.",
+            )
+
+        if senha_atual == nova_senha:
+            raise HTTPException(
+                status_code=400,
+                detail="A nova senha deve ser diferente da senha atual.",
+            )
+
+        usuario.senha_hash = password_hash.hash(nova_senha)
+
+        self.repository.atualizar(usuario)
+
+        return {"mensagem": "Senha alterada com sucesso."}

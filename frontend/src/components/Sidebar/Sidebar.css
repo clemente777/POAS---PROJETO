@@ -42,7 +42,7 @@
   font-size: 20px;
   font-weight: 600;
   margin-bottom: var(--space-lg);
-  color: #6FC9D9;
+  color: #6fc9d9;
 }
 
 nav {
@@ -56,7 +56,7 @@ nav a {
   align-items: center;
   gap: 12px;
   padding: 10px 12px;
-  color: #D7E2E4;
+  color: #d7e2e4;
   text-decoration: none;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -82,7 +82,7 @@ nav a.em-breve {
 
 nav a.em-breve:hover {
   background: none;
-  color: #D7E2E4;
+  color: #d7e2e4;
 }
 
 .logout {
@@ -137,8 +137,7 @@ nav a.em-breve:hover {
   }
 
   .sidebar .toggle,
-  .sidebar .brand,
-  .sidebar nav a.item-perfil {
+  .sidebar .brand {
     display: none;
   }
 
@@ -196,7 +195,7 @@ nav a.em-breve:hover {
   }
 
   .sidebar .logout:hover {
-    background: #FDECEA;
+    background: #fdecea;
   }
 
   .rotulo-longo {

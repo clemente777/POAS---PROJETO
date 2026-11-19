@@ -15,19 +15,13 @@ class ClienteRepository:
         self.session = session
 
     def buscar_por_id(self, cliente_id: int):
-        return self.session.scalar(
-            select(Clientes).where(Clientes.id == cliente_id)
-        )
+        return self.session.scalar(select(Clientes).where(Clientes.id == cliente_id))
 
     def buscar_por_cpf(self, cpf: str):
-        return self.session.scalar(
-            select(Clientes).where(Clientes.cpf == cpf)
-        )
+        return self.session.scalar(select(Clientes).where(Clientes.cpf == cpf))
 
     def buscar_por_email(self, email: str):
-        return self.session.scalar(
-            select(Clientes).where(Clientes.email == email)
-        )
+        return self.session.scalar(select(Clientes).where(Clientes.email == email))
 
     def buscar_por_usuario_id(self, usuario_id: int):
         return self.session.scalar(
@@ -35,14 +29,10 @@ class ClienteRepository:
         )
 
     def buscar_usuario_por_id(self, usuario_id: int):
-        return self.session.scalar(
-            select(Usuarios).where(Usuarios.id == usuario_id)
-        )
+        return self.session.scalar(select(Usuarios).where(Usuarios.id == usuario_id))
 
     def buscar_usuario_por_email(self, email: str):
-        return self.session.scalar(
-            select(Usuarios).where(Usuarios.email == email)
-        )
+        return self.session.scalar(select(Usuarios).where(Usuarios.email == email))
 
     def listar(
         self,
@@ -61,17 +51,13 @@ class ClienteRepository:
             query = query.where(Clientes.usuario_id == usuario_id)
 
         if nome:
-            query = query.where(
-                Clientes.nome.ilike(f"%{nome.strip()}%")
-            )
+            query = query.where(Clientes.nome.ilike(f"%{nome.strip()}%"))
 
         if cpf:
             query = query.where(Clientes.cpf == cpf)
 
         if email:
-            query = query.where(
-                Clientes.email.ilike(f"%{email.strip()}%")
-            )
+            query = query.where(Clientes.email.ilike(f"%{email.strip()}%"))
 
         campos = {
             "id": Clientes.id,
@@ -87,9 +73,7 @@ class ClienteRepository:
         else:
             query = query.order_by(asc(coluna))
 
-        return self.session.scalars(
-            query.offset(skip).limit(limit)
-        ).all()
+        return self.session.scalars(query.offset(skip).limit(limit)).all()
 
     # ==========================================================
     # CADASTRO ATÔMICO DE USUÁRIO + CLIENTE
@@ -171,9 +155,7 @@ class ClienteRepository:
 
     def possui_animais(self, cliente_id: int):
         return self.session.scalar(
-            select(Animais).where(
-                Animais.cliente_id == cliente_id
-            )
+            select(Animais).where(Animais.cliente_id == cliente_id)
         )
 
     def possui_atendimentos(self, cliente_id: int):
@@ -188,12 +170,11 @@ class ClienteRepository:
 
     def possui_carrinhos(self, cliente_id: int):
         return self.session.scalar(
-            select(Carrinhos).where(
-                Carrinhos.cliente_id == cliente_id
-            )
+            select(Carrinhos).where(Carrinhos.cliente_id == cliente_id)
         )
+
     def criar_cliente_com_usuario_existente(
-    self,
+        self,
         cliente: Clientes,
         usuario: Usuarios,
     ):

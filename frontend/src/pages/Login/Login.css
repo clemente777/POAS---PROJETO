@@ -1,146 +1,126 @@
-*{
-
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:Arial, Helvetica, sans-serif;
-
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
-.login{
-
-display:flex;
-height:100vh;
-
+.login {
+  display: flex;
+  height: 100vh;
 }
 
-.left{
+.left {
+  width: 58%;
+  background: white;
 
-width:58%;
-background:white;
-
-display:flex;
-justify-content:center;
-align-items:center;
-
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.left img{
-
-width:420px;
-
+.left img {
+  width: 420px;
 }
 
-.right{
+.right {
+  width: 42%;
 
-width:42%;
+  background: #0d8297;
 
-background:#0d8297;
-
-display:flex;
-justify-content:center;
-align-items:center;
-
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.box{
-
-width:420px;
-
+.box {
+  width: 420px;
 }
 
-.box h1{
+.box h1 {
+  color: white;
 
-color:white;
+  font-size: 60px;
 
-font-size:60px;
-
-margin-bottom:50px;
-
+  margin-bottom: 50px;
 }
 
-.links{
+.links {
+  margin-top: 30px;
 
-margin-top:30px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 
-display:flex;
-flex-direction:column;
-gap:15px;
-
-align-items:center;
-
+  align-items: center;
 }
 
-.links a{
+.links a {
+  color: white;
 
-color:white;
+  text-decoration: none;
 
-text-decoration:none;
+  font-size: 22px;
 
-font-size:22px;
-
-font-weight:bold;
-
+  font-weight: bold;
 }
 
 .erro-login {
-    width: 100%;
-    margin-top: 10px;
-    margin-bottom: 10px;
+  width: 100%;
+  margin-top: 10px;
+  margin-bottom: 10px;
 
-    padding: 12px;
+  padding: 12px;
 
-    background: #bd0f0fcc;
-    color: #ff0000;
+  background: #bd0f0fcc;
+  color: #ff0000;
 
-    border: 1px solid #ffb3b3;
-    border-radius: 12px;
+  border: 1px solid #ffb3b3;
+  border-radius: 12px;
 
-    font-size: 16px;
-    text-align: center;
+  font-size: 16px;
+  text-align: center;
 
-    box-sizing: border-box;
+  box-sizing: border-box;
 }
-
 
 /* ---------- Celular e tablet: logo em cima, formulário embaixo ---------- */
 @media (max-width: 800px) {
+  .login {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
 
-    .login {
-        flex-direction: column;
-        height: auto;
-        min-height: 100vh;
-        min-height: 100dvh;
-    }
+  .left {
+    width: 100%;
+    padding: 32px 24px 16px;
+  }
 
-    .left {
-        width: 100%;
-        padding: 32px 24px 16px;
-    }
+  .left img {
+    width: min(240px, 65%);
+  }
 
-    .left img {
-        width: min(240px, 65%);
-    }
+  .right {
+    width: 100%;
+    flex: 1;
+    align-items: flex-start;
+    padding: 32px 24px calc(32px + env(safe-area-inset-bottom, 0px));
+  }
 
-    .right {
-        width: 100%;
-        flex: 1;
-        align-items: flex-start;
-        padding: 32px 24px calc(32px + env(safe-area-inset-bottom, 0px));
-    }
+  .box {
+    width: 100%;
+    max-width: 420px;
+  }
 
-    .box {
-        width: 100%;
-        max-width: 420px;
-    }
+  .box h1 {
+    font-size: 36px;
+    margin-bottom: 24px;
+    text-align: center;
+  }
 
-    .box h1 {
-        font-size: 36px;
-        margin-bottom: 24px;
-        text-align: center;
-    }
-
-    .links a {
-        font-size: 17px;
-    }
+  .links a {
+    font-size: 17px;
+  }
 }

@@ -32,23 +32,13 @@ class ClienteServiceImpl:
         return email.strip().lower() if email else ""
 
     def normalizar_cpf(self, cpf: str):
-        return (
-            cpf.replace(".", "")
-            .replace("-", "")
-            .strip()
-            if cpf
-            else ""
-        )
+        return cpf.replace(".", "").replace("-", "").strip() if cpf else ""
 
     def normalizar_telefone(self, telefone: str):
         if not telefone:
             return ""
 
-        return "".join(
-            caractere
-            for caractere in telefone
-            if caractere.isdigit()
-        )
+        return "".join(caractere for caractere in telefone if caractere.isdigit())
 
     def obter_perfil(self):
         perfil = self.usuario_logado.perfil
@@ -84,36 +74,23 @@ class ClienteServiceImpl:
             )
 
     def validar_cpf(self, cpf: str):
-        if (
-            len(cpf) != 11
-            or not cpf.isdigit()
-            or cpf == cpf[0] * 11
-        ):
+        if len(cpf) != 11 or not cpf.isdigit() or cpf == cpf[0] * 11:
             raise HTTPException(
                 status_code=400,
                 detail="CPF inválido.",
             )
 
-        soma = sum(
-            int(cpf[i]) * (10 - i)
-            for i in range(9)
-        )
+        soma = sum(int(cpf[i]) * (10 - i) for i in range(9))
 
         resto = soma % 11
         digito1 = 0 if resto < 2 else 11 - resto
 
-        soma = sum(
-            int(cpf[i]) * (11 - i)
-            for i in range(10)
-        )
+        soma = sum(int(cpf[i]) * (11 - i) for i in range(10))
 
         resto = soma % 11
         digito2 = 0 if resto < 2 else 11 - resto
 
-        if (
-            int(cpf[9]) != digito1
-            or int(cpf[10]) != digito2
-        ):
+        if int(cpf[9]) != digito1 or int(cpf[10]) != digito2:
             raise HTTPException(
                 status_code=400,
                 detail="CPF inválido.",
@@ -173,19 +150,13 @@ class ClienteServiceImpl:
         return cliente
 
     def buscar_por_cpf(self, cpf: str):
-        return self.repository.buscar_por_cpf(
-            self.normalizar_cpf(cpf)
-        )
+        return self.repository.buscar_por_cpf(self.normalizar_cpf(cpf))
 
     def buscar_por_email(self, email: str):
-        return self.repository.buscar_por_email(
-            self.normalizar_email(email)
-        )
+        return self.repository.buscar_por_email(self.normalizar_email(email))
 
     def buscar_por_usuario(self):
-        return self.repository.buscar_por_usuario_id(
-            self.usuario_logado.id
-        )
+        return self.repository.buscar_por_usuario_id(self.usuario_logado.id)
 
     # ==========================================================
     # CRIAR
@@ -273,9 +244,7 @@ class ClienteServiceImpl:
         # ------------------------------------------------------
 
         if perfil == "Cliente":
-            usuario = self.repository.buscar_usuario_por_id(
-                self.usuario_logado.id
-            )
+            usuario = self.repository.buscar_usuario_por_id(self.usuario_logado.id)
 
             if not usuario:
                 raise HTTPException(
@@ -316,7 +285,10 @@ class ClienteServiceImpl:
             usuario.email = email
 
             try:
-                return self.repository.criar_cliente_com_usuario_existente(novo,usuario,)
+                return self.repository.criar_cliente_com_usuario_existente(
+                    novo,
+                    usuario,
+                )
 
             except SQLAlchemyError as erro:
                 raise HTTPException(
@@ -390,9 +362,7 @@ class ClienteServiceImpl:
             if campos_proibidos:
                 raise HTTPException(
                     status_code=403,
-                    detail=(
-                        "Administrador só pode alterar telefone e endereço."
-                    ),
+                    detail=("Administrador só pode alterar telefone e endereço."),
                 )
 
         elif perfil != "Cliente":
@@ -401,9 +371,7 @@ class ClienteServiceImpl:
                 detail="Perfil sem permissão para atualizar clientes.",
             )
 
-        usuario = self.repository.buscar_usuario_por_id(
-            db.usuario_id
-        )
+        usuario = self.repository.buscar_usuario_por_id(db.usuario_id)
 
         if not usuario:
             raise HTTPException(

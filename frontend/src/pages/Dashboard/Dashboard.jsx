@@ -1,75 +1,75 @@
-import "./Dashboard.css";
+import './Dashboard.css'
 
-import { useEffect, useState } from "react";
-import { RefreshCw } from "lucide-react";
+import { useEffect, useState } from 'react'
+import { RefreshCw } from 'lucide-react'
 
-import api from "../../services/api";
-import Sidebar from "../../components/Sidebar/Sidebar";
+import api from '../../services/api'
+import Sidebar from '../../components/Sidebar/Sidebar'
 
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from '../../contexts/AuthContext'
 
-import AdminDashboard from "./AdminDashboard";
-import VeterinarioDashboard from "./VeterinarioDashboard";
-import ClienteDashboard from "./ClienteDashboard";
+import AdminDashboard from './AdminDashboard'
+import VeterinarioDashboard from './VeterinarioDashboard'
+import ClienteDashboard from './ClienteDashboard'
 
 const ENDPOINT_POR_PERFIL = {
-  Administrador: "/dashboard/admin",
-  "Veterinário": "/dashboard/veterinario",
-  Cliente: "/dashboard/cliente",
-};
+  Administrador: '/dashboard/admin',
+  Veterinário: '/dashboard/veterinario',
+  Cliente: '/dashboard/cliente',
+}
 
 function Dashboard() {
-  const { usuario } = useAuth();
+  const { usuario } = useAuth()
 
-  const [sidebarAberto, setSidebarAberto] = useState(true);
-  const [dados, setDados] = useState({});
-  const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState("");
+  const [sidebarAberto, setSidebarAberto] = useState(true)
+  const [dados, setDados] = useState({})
+  const [carregando, setCarregando] = useState(true)
+  const [erro, setErro] = useState('')
 
   useEffect(() => {
     if (usuario) {
-      carregarDashboard();
+      carregarDashboard()
     }
-  }, [usuario]);
+  }, [usuario])
 
   async function carregarDashboard() {
-    const endpoint = ENDPOINT_POR_PERFIL[usuario?.perfil];
+    const endpoint = ENDPOINT_POR_PERFIL[usuario?.perfil]
 
     if (!endpoint) {
-      setDados({});
-      setCarregando(false);
-      return;
+      setDados({})
+      setCarregando(false)
+      return
     }
 
     try {
-      const resposta = await api.get(endpoint);
-      setDados(resposta.data);
-      setErro("");
+      const resposta = await api.get(endpoint)
+      setDados(resposta.data)
+      setErro('')
     } catch (error) {
-      console.error(error);
-      setErro("Erro ao carregar o Dashboard.");
+      console.error(error)
+      setErro('Erro ao carregar o Dashboard.')
     } finally {
-      setCarregando(false);
+      setCarregando(false)
     }
   }
 
   if (carregando) {
-    return <div className="loading-dashboard">Carregando dashboard...</div>;
+    return <div className="loading-dashboard">Carregando dashboard...</div>
   }
 
-  const ehCliente = usuario?.perfil === "Cliente";
-  const primeiroNome = (usuario?.nome || usuario?.name || "").trim().split(" ")[0];
+  const ehCliente = usuario?.perfil === 'Cliente'
+  const primeiroNome = (usuario?.nome || usuario?.name || '').trim().split(' ')[0]
 
   return (
     <div className="dashboard">
       <Sidebar perfil={usuario?.perfil} setSidebarAberto={setSidebarAberto} />
 
-      <main className={`dashboard-content ${sidebarAberto ? "aberto" : "fechado"}`}>
+      <main className={`dashboard-content ${sidebarAberto ? 'aberto' : 'fechado'}`}>
         <header className="dashboard-header">
           <div className="dashboard-title">
             {ehCliente ? (
               <>
-                <h1>Olá{primeiroNome ? `, ${primeiroNome}` : ""}!</h1>
+                <h1>Olá{primeiroNome ? `, ${primeiroNome}` : ''}!</h1>
                 <p>O que você precisa para o seu pet hoje?</p>
               </>
             ) : (
@@ -84,8 +84,8 @@ function Dashboard() {
             className="btn-refresh"
             aria-label="Atualizar dashboard"
             onClick={() => {
-              setCarregando(true);
-              carregarDashboard();
+              setCarregando(true)
+              carregarDashboard()
             }}
           >
             <RefreshCw size={16} />
@@ -95,12 +95,12 @@ function Dashboard() {
 
         {erro && <p className="dashboard-erro">{erro}</p>}
 
-        {usuario?.perfil === "Administrador" && <AdminDashboard dados={dados} />}
-        {usuario?.perfil === "Veterinário" && <VeterinarioDashboard dados={dados} />}
-        {usuario?.perfil === "Cliente" && <ClienteDashboard dados={dados} />}
+        {usuario?.perfil === 'Administrador' && <AdminDashboard dados={dados} />}
+        {usuario?.perfil === 'Veterinário' && <VeterinarioDashboard dados={dados} />}
+        {usuario?.perfil === 'Cliente' && <ClienteDashboard dados={dados} />}
       </main>
     </div>
-  );
+  )
 }
 
-export default Dashboard;
+export default Dashboard

@@ -1,0 +1,343 @@
+.perfil-layout {
+  min-height: 100vh;
+  background: var(--color-background, #f5f7fa);
+}
+
+.perfil-conteudo {
+  min-height: 100vh;
+  margin-left: 250px;
+  padding: 36px;
+  transition: margin-left 0.2s ease;
+  box-sizing: border-box;
+}
+
+.perfil-conteudo.fechado {
+  margin-left: 76px;
+}
+
+.perfil-cabecalho {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 30px;
+}
+
+.perfil-subtitulo {
+  color: #18a999;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+
+.perfil-cabecalho h1 {
+  margin: 7px 0;
+  color: var(--color-text, #24313b);
+  font-size: 28px;
+  font-weight: 750;
+}
+
+.perfil-cabecalho p {
+  margin: 0;
+  color: var(--color-text-muted, #74808b);
+  font-size: 14px;
+}
+
+.perfil-identificacao {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 17px;
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e5e9ed);
+  border-radius: 12px;
+  color: #18a999;
+}
+
+.perfil-identificacao div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.perfil-identificacao strong {
+  color: var(--color-text, #24313b);
+  font-size: 13px;
+}
+
+.perfil-identificacao span {
+  color: var(--color-text-muted, #74808b);
+  font-size: 12px;
+}
+
+.perfil-card {
+  max-width: 1050px;
+  margin-bottom: 22px;
+  padding: 26px;
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e5e9ed);
+  border-radius: 15px;
+  box-shadow: 0 3px 12px rgb(0 0 0 / 3%);
+}
+
+.perfil-card-titulo {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin-bottom: 26px;
+}
+
+.perfil-icone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  color: #18a999;
+  background: rgb(24 169 153 / 10%);
+  border-radius: 11px;
+}
+
+.perfil-card-titulo h2 {
+  margin: 0 0 5px;
+  color: var(--color-text, #24313b);
+  font-size: 17px;
+}
+
+.perfil-card-titulo p {
+  margin: 0;
+  color: var(--color-text-muted, #74808b);
+  font-size: 13px;
+}
+
+.perfil-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.perfil-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.perfil-campo > span {
+  color: var(--color-text, #35434e);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.perfil-campo input {
+  width: 100%;
+  height: 45px;
+  box-sizing: border-box;
+  padding: 0 13px;
+  color: var(--color-text, #24313b);
+  background: var(--color-background, #fff);
+  border: 1px solid var(--color-border, #dfe4e8);
+  border-radius: 9px;
+  outline: none;
+  font-family: inherit;
+  font-size: 14px;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.perfil-campo input:focus {
+  border-color: #18a999;
+  box-shadow: 0 0 0 3px rgb(24 169 153 / 10%);
+}
+
+.perfil-campo-largo {
+  grid-column: 1 / -1;
+}
+
+.perfil-input-icone {
+  position: relative;
+}
+
+.perfil-input-icone svg {
+  position: absolute;
+  top: 50%;
+  left: 13px;
+  color: var(--color-text-muted, #74808b);
+  transform: translateY(-50%);
+}
+
+.perfil-input-icone input {
+  padding-left: 40px;
+}
+
+.perfil-card-rodape {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-border, #e5e9ed);
+}
+
+.perfil-botao {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 9px;
+  min-height: 43px;
+  padding: 0 19px;
+  color: #fff;
+  background: #18a999;
+  border: none;
+  border-radius: 9px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    transform 0.2s;
+}
+
+.perfil-botao:hover:not(:disabled) {
+  background: #128d80;
+  transform: translateY(-1px);
+}
+
+.perfil-botao:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.perfil-botao-secundario {
+  background: #243746;
+}
+
+.perfil-botao-secundario:hover:not(:disabled) {
+  background: #172a37;
+}
+
+.perfil-mensagem {
+  max-width: 1050px;
+  margin-bottom: 18px;
+  padding: 13px 16px;
+  border-radius: 9px;
+  font-size: 13px;
+}
+
+.perfil-mensagem.erro {
+  color: #a12b35;
+  background: #fff0f1;
+  border: 1px solid #f3c6ca;
+}
+
+.perfil-mensagem.sucesso {
+  color: #14775c;
+  background: #eaf8f2;
+  border: 1px solid #bce7d4;
+}
+
+.perfil-nota {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 1050px;
+  padding: 15px 17px;
+  color: var(--color-text-muted, #74808b);
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e5e9ed);
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+.perfil-nota svg {
+  flex-shrink: 0;
+  color: #18a999;
+}
+
+.perfil-nota p {
+  margin: 0;
+}
+
+.perfil-carregando {
+  display: flex;
+  min-height: 100vh;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  color: var(--color-text-muted, #74808b);
+}
+
+.perfil-spinner {
+  animation: perfil-girar 1s linear infinite;
+}
+
+@keyframes perfil-girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 768px) {
+  .perfil-conteudo,
+  .perfil-conteudo.fechado {
+    min-height: calc(100vh - 70px);
+    margin-left: 0;
+    padding: 22px 16px 95px;
+  }
+
+  .perfil-cabecalho {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 22px;
+  }
+
+  .perfil-cabecalho h1 {
+    font-size: 24px;
+  }
+
+  .perfil-identificacao {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .perfil-card {
+    padding: 19px 16px;
+    margin-bottom: 16px;
+  }
+
+  .perfil-form-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .perfil-campo-largo {
+    grid-column: auto;
+  }
+
+  .perfil-card-rodape {
+    margin-top: 20px;
+  }
+
+  .perfil-botao {
+    width: 100%;
+  }
+}
+
+@media (max-width: 380px) {
+  .perfil-conteudo,
+  .perfil-conteudo.fechado {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+
+  .perfil-card {
+    padding: 16px 13px;
+  }
+
+  .perfil-card-titulo h2 {
+    font-size: 15px;
+  }
+}

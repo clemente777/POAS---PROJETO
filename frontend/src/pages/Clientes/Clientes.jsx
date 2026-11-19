@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import {
@@ -174,9 +173,7 @@ function Clientes() {
           </button>
         </header>
 
-        {aviso && (
-          <p className="clientes-aviso clientes-aviso-sucesso">{aviso}</p>
-        )}
+        {aviso && <p className="clientes-aviso clientes-aviso-sucesso">{aviso}</p>}
 
         <div className="animais-toolbar">
           <form className="busca-form" onSubmit={handleBuscar}>
@@ -414,9 +411,7 @@ function Clientes() {
                 </>
               )}
 
-              {erroFormulario && (
-                <p className="clientes-form-erro">{erroFormulario}</p>
-              )}
+              {erroFormulario && <p className="clientes-form-erro">{erroFormulario}</p>}
 
               <footer className="clientes-form-acoes">
                 <button

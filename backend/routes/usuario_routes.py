@@ -9,6 +9,11 @@ from backend.database.database import get_session
 from backend.models.usuario_model import Usuarios
 from backend.repositories.cliente_repository import ClienteRepository
 from backend.repositories.usuario_repository import UsuarioRepository
+from backend.schemas.perfil_schema import (
+    PerfilResponse,
+    PerfilUpdate,
+    SenhaUpdate,
+)
 from backend.schemas.usuario_schema import (
     UsuarioAdminCreate,
     UsuarioCreate,
@@ -142,6 +147,37 @@ def listar(
         perfil=perfil,
         sort_by=sort_by,
         order=order,
+    )
+
+
+# ==========================================================
+# PERFIL DO USUÁRIO AUTENTICADO
+# ==========================================================
+
+
+@router.get("/me", response_model=PerfilResponse)
+def obter_meu_perfil(
+    service: UsuarioServiceDep,
+):
+    return service.obter_meu_perfil()
+
+
+@router.put("/me", response_model=PerfilResponse)
+def atualizar_meu_perfil(
+    dados: PerfilUpdate,
+    service: UsuarioServiceDep,
+):
+    return service.atualizar_meu_perfil(dados)
+
+
+@router.put("/me/senha")
+def alterar_minha_senha(
+    dados: SenhaUpdate,
+    service: UsuarioServiceDep,
+):
+    return service.alterar_minha_senha(
+        senha_atual=dados.senha_atual,
+        nova_senha=dados.nova_senha,
     )
 
 

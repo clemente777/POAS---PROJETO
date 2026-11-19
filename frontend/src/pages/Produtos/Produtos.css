@@ -222,7 +222,9 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s ease, opacity 0.2s ease;
+  transition:
+    background 0.2s ease,
+    opacity 0.2s ease;
 }
 
 .produtos-novo,
@@ -258,12 +260,12 @@
 }
 
 .produto-excluir {
-  background: #FDECEC;
-  color: #B42318;
+  background: #fdecec;
+  color: #b42318;
 }
 
 .produto-excluir:hover {
-  background: #F8D7D7;
+  background: #f8d7d7;
 }
 
 /* =========================================
@@ -379,12 +381,12 @@
 }
 
 .produto-cancelar {
-  background: #EDF1F2;
+  background: #edf1f2;
   color: var(--color-ink);
 }
 
 .produto-cancelar:hover {
-  background: #DCE5E7;
+  background: #dce5e7;
 }
 
 .produto-modal button:disabled {

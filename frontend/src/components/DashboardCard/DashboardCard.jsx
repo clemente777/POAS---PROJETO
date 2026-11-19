@@ -1,12 +1,6 @@
-
 import './DashboardCard.css'
 
-function DashboardCard({
-  titulo,
-  valor,
-  icone: Icone,
-  cor = 'var(--color-brand)',
-}) {
+function DashboardCard({ titulo, valor, icone: Icone, cor = 'var(--color-brand)' }) {
   const valorExibido = valor ?? '-'
 
   return (

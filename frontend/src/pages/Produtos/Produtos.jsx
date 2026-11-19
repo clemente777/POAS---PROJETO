@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import {
@@ -47,7 +46,7 @@ function Produtos() {
   const [quantidades, setQuantidades] = useState({})
   const [carregando, setCarregando] = useState(true)
   const [adicionando, setAdicionando] = useState(null)
-  
+
   const [erro, setErro] = useState('')
   const [aviso, setAviso] = useState('')
 
@@ -265,9 +264,7 @@ function Produtos() {
         [produto.id]: 1,
       }))
 
-      setAviso(
-        `${quantidade} × "${produto.nome}" adicionado ao carrinho.`
-      )
+      setAviso(`${quantidade} × "${produto.nome}" adicionado ao carrinho.`)
     } catch (error) {
       setErro(tratarErro(error).mensagem)
     } finally {
@@ -277,16 +274,9 @@ function Produtos() {
 
   return (
     <div className="dashboard">
-      <Sidebar
-        perfil={usuario.perfil}
-        setSidebarAberto={setSidebarAberto}
-      />
+      <Sidebar perfil={usuario.perfil} setSidebarAberto={setSidebarAberto} />
 
-      <main
-        className={`dashboard-content ${
-          sidebarAberto ? 'aberto' : 'fechado'
-        }`}
-      >
+      <main className={`dashboard-content ${sidebarAberto ? 'aberto' : 'fechado'}`}>
         <header className="dashboard-header">
           <div className="dashboard-title">
             <h1>{ehAdmin ? 'Gerenciamento de produtos' : 'Nossos produtos'}</h1>
@@ -299,11 +289,7 @@ function Produtos() {
           </div>
 
           {ehAdmin ? (
-            <button
-              type="button"
-              className="produtos-novo"
-              onClick={abrirCadastro}
-            >
+            <button type="button" className="produtos-novo" onClick={abrirCadastro}>
               <Plus size={18} />
               Novo produto
             </button>
@@ -358,10 +344,7 @@ function Produtos() {
             </p>
           </div>
         ) : (
-          <section
-            className="produtos-grade"
-            aria-label="Produtos disponíveis"
-          >
+          <section className="produtos-grade" aria-label="Produtos disponíveis">
             {produtosFiltrados.map((produto) => (
               <article className="produto-card" key={produto.id}>
                 <div className="produto-imagem">
@@ -371,9 +354,7 @@ function Produtos() {
                 <div className="produto-conteudo">
                   <h2>{produto.nome}</h2>
 
-                  <p className="produto-descricao">
-                    {produto.descricao}
-                  </p>
+                  <p className="produto-descricao">{produto.descricao}</p>
 
                   <strong className="produto-preco">
                     {moeda.format(produto.preco)}
@@ -416,10 +397,7 @@ function Produtos() {
                           onClick={() =>
                             setQuantidades((atual) => ({
                               ...atual,
-                              [produto.id]: Math.max(
-                                1,
-                                (atual[produto.id] || 1) - 1
-                              ),
+                              [produto.id]: Math.max(1, (atual[produto.id] || 1) - 1),
                             }))
                           }
                         >
@@ -431,9 +409,7 @@ function Produtos() {
                         <button
                           type="button"
                           aria-label={`Aumentar quantidade de ${produto.nome}`}
-                          disabled={
-                            (quantidades[produto.id] || 1) >= produto.estoque
-                          }
+                          disabled={(quantidades[produto.id] || 1) >= produto.estoque}
                           onClick={() =>
                             setQuantidades((atual) => ({
                               ...atual,
@@ -451,15 +427,11 @@ function Produtos() {
                       <button
                         type="button"
                         className="produto-adicionar"
-                        disabled={
-                          adicionando === produto.id || produto.estoque <= 0
-                        }
+                        disabled={adicionando === produto.id || produto.estoque <= 0}
                         onClick={() => adicionarAoCarrinho(produto)}
                       >
                         <ShoppingCart size={16} />
-                        {adicionando === produto.id
-                          ? 'Adicionando...'
-                          : 'Adicionar'}
+                        {adicionando === produto.id ? 'Adicionando...' : 'Adicionar'}
                       </button>
                     </div>
                   )}
@@ -564,11 +536,7 @@ function Produtos() {
                   Cancelar
                 </button>
 
-                <button
-                  type="submit"
-                  className="produto-salvar"
-                  disabled={salvando}
-                >
+                <button type="submit" className="produto-salvar" disabled={salvando}>
                   <Save size={17} />
                   {salvando ? 'Salvando...' : 'Salvar produto'}
                 </button>

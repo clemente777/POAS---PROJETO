@@ -1,5 +1,4 @@
-
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from 'react'
 import {
   Plus,
   Search,
@@ -10,100 +9,99 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowUpDown,
-} from "lucide-react";
+} from 'lucide-react'
 
-import api from "../../services/api";
-import { useAuth } from "../../contexts/AuthContext";
+import api from '../../services/api'
+import { useAuth } from '../../contexts/AuthContext'
 
-import Sidebar from "../../components/Sidebar/Sidebar";
-import AnimalFormModal from "../../components/AnimalFormModal/AnimalFormModal";
-import AnimalHistoricoModal from "../../components/AnimalHistoricoModal/AnimalHistoricoModal";
-import AnimalVacinasModal from "../../components/AnimalVacinasModal/AnimalVacinasModal";
-import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
+import Sidebar from '../../components/Sidebar/Sidebar'
+import AnimalFormModal from '../../components/AnimalFormModal/AnimalFormModal'
+import AnimalHistoricoModal from '../../components/AnimalHistoricoModal/AnimalHistoricoModal'
+import AnimalVacinasModal from '../../components/AnimalVacinasModal/AnimalVacinasModal'
+import ConfirmDialog from '../../components/ConfirmDialog/ConfirmDialog'
 
-import "../Animais/Animais.css";
+import '../Animais/Animais.css'
 
-const LIMITE_POR_PAGINA = 10;
+const LIMITE_POR_PAGINA = 10
 
 function MeusAnimais() {
-  const { usuario } = useAuth();
+  const { usuario } = useAuth()
 
-  const [sidebarAberto, setSidebarAberto] = useState(true);
+  const [sidebarAberto, setSidebarAberto] = useState(true)
 
-  const [meuCliente, setMeuCliente] = useState(null);
-  const [carregandoCliente, setCarregandoCliente] = useState(true);
-  const [erroCliente, setErroCliente] = useState("");
+  const [meuCliente, setMeuCliente] = useState(null)
+  const [carregandoCliente, setCarregandoCliente] = useState(true)
+  const [erroCliente, setErroCliente] = useState('')
 
-  const [animais, setAnimais] = useState([]);
-  const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState("");
+  const [animais, setAnimais] = useState([])
+  const [carregando, setCarregando] = useState(true)
+  const [erro, setErro] = useState('')
 
-  const [busca, setBusca] = useState("");
-  const [buscaAplicada, setBuscaAplicada] = useState("");
-  const [ordem, setOrdem] = useState("asc");
-  const [pagina, setPagina] = useState(1);
+  const [busca, setBusca] = useState('')
+  const [buscaAplicada, setBuscaAplicada] = useState('')
+  const [ordem, setOrdem] = useState('asc')
+  const [pagina, setPagina] = useState(1)
 
-  const [modalForm, setModalForm] = useState(null);
-  const [modalHistoricoId, setModalHistoricoId] = useState(null);
-  const [animalVacinas, setAnimalVacinas] = useState(null);
-  const [animalParaExcluir, setAnimalParaExcluir] = useState(null);
-  const [excluindo, setExcluindo] = useState(false);
-  const [erroExclusao, setErroExclusao] = useState("");
+  const [modalForm, setModalForm] = useState(null)
+  const [modalHistoricoId, setModalHistoricoId] = useState(null)
+  const [animalVacinas, setAnimalVacinas] = useState(null)
+  const [animalParaExcluir, setAnimalParaExcluir] = useState(null)
+  const [excluindo, setExcluindo] = useState(false)
+  const [erroExclusao, setErroExclusao] = useState('')
 
   useEffect(() => {
     if (!usuario?.email) {
-      setMeuCliente(null);
-      setErroCliente("Não foi possível identificar o usuário conectado.");
-      setCarregandoCliente(false);
-      return;
+      setMeuCliente(null)
+      setErroCliente('Não foi possível identificar o usuário conectado.')
+      setCarregandoCliente(false)
+      return
     }
 
-    setCarregandoCliente(true);
-    setErroCliente("");
+    setCarregandoCliente(true)
+    setErroCliente('')
 
     api
-      .get("/clientes/", {
+      .get('/clientes/', {
         params: { email: usuario.email, limit: 1 },
       })
       .then((res) => {
         const clientes = Array.isArray(res.data)
           ? res.data
-          : res.data?.items || res.data?.clientes || [];
+          : res.data?.items || res.data?.clientes || []
 
-        const encontrado = clientes.find(
-          (cliente) => cliente.email === usuario.email
-        ) || clientes[0];
+        const encontrado =
+          clientes.find((cliente) => cliente.email === usuario.email) || clientes[0]
 
         if (encontrado) {
-          setMeuCliente(encontrado);
-          setErroCliente("");
+          setMeuCliente(encontrado)
+          setErroCliente('')
         } else {
-          setMeuCliente(null);
-          setErroCliente("Não encontramos seu cadastro de cliente.");
+          setMeuCliente(null)
+          setErroCliente('Não encontramos seu cadastro de cliente.')
         }
       })
       .catch(() => {
-        setMeuCliente(null);
-        setErroCliente("Não foi possível carregar seus dados.");
+        setMeuCliente(null)
+        setErroCliente('Não foi possível carregar seus dados.')
       })
       .finally(() => {
-        setCarregandoCliente(false);
-      });
-  }, [usuario?.email]);
+        setCarregandoCliente(false)
+      })
+  }, [usuario?.email])
 
   const carregarAnimais = useCallback(async () => {
-    setCarregando(true);
-    setErro("");
+    setCarregando(true)
+    setErro('')
 
     try {
-      const res = await api.get("/animais/", {
+      const res = await api.get('/animais/', {
         params: {
           pagina,
           limite: LIMITE_POR_PAGINA,
           nome: buscaAplicada || undefined,
           ordem,
         },
-      });
+      })
 
       const dados = Array.isArray(res.data)
         ? res.data
@@ -111,61 +109,57 @@ function MeusAnimais() {
           ? res.data.items
           : Array.isArray(res.data?.animais)
             ? res.data.animais
-            : [];
+            : []
 
-      setAnimais(dados);
+      setAnimais(dados)
     } catch (err) {
-      setAnimais([]);
-      setErro(
-        err?.response?.data?.detail ||
-          "Não foi possível carregar seus animais."
-      );
+      setAnimais([])
+      setErro(err?.response?.data?.detail || 'Não foi possível carregar seus animais.')
     } finally {
-      setCarregando(false);
+      setCarregando(false)
     }
-  }, [pagina, buscaAplicada, ordem]);
+  }, [pagina, buscaAplicada, ordem])
 
   useEffect(() => {
-    carregarAnimais();
-  }, [carregarAnimais]);
+    carregarAnimais()
+  }, [carregarAnimais])
 
   function handleBuscar(e) {
-    e.preventDefault();
-    setPagina(1);
-    setBuscaAplicada(busca.trim());
+    e.preventDefault()
+    setPagina(1)
+    setBuscaAplicada(busca.trim())
   }
 
   function alternarOrdem() {
-    setOrdem((atual) => (atual === "asc" ? "desc" : "asc"));
-    setPagina(1);
+    setOrdem((atual) => (atual === 'asc' ? 'desc' : 'asc'))
+    setPagina(1)
   }
 
   function fecharForm() {
-    setModalForm(null);
+    setModalForm(null)
   }
 
   function salvouForm() {
-    setModalForm(null);
-    carregarAnimais();
+    setModalForm(null)
+    carregarAnimais()
   }
 
   async function confirmarExclusao() {
-    if (!animalParaExcluir) return;
+    if (!animalParaExcluir) return
 
-    setExcluindo(true);
-    setErroExclusao("");
+    setExcluindo(true)
+    setErroExclusao('')
 
     try {
-      await api.delete(`/animais/${animalParaExcluir.id}`);
-      setAnimalParaExcluir(null);
-      await carregarAnimais();
+      await api.delete(`/animais/${animalParaExcluir.id}`)
+      setAnimalParaExcluir(null)
+      await carregarAnimais()
     } catch (err) {
       setErroExclusao(
-        err?.response?.data?.detail ||
-          "Não foi possível excluir este animal."
-      );
+        err?.response?.data?.detail || 'Não foi possível excluir este animal.'
+      )
     } finally {
-      setExcluindo(false);
+      setExcluindo(false)
     }
   }
 
@@ -174,20 +168,13 @@ function MeusAnimais() {
     usuario?.nome_completo ||
     usuario?.nomeCompleto ||
     usuario?.name ||
-    "usuário";
+    'usuário'
 
   return (
     <div className="animais-page">
-      <Sidebar
-        perfil={usuario?.perfil}
-        setSidebarAberto={setSidebarAberto}
-      />
+      <Sidebar perfil={usuario?.perfil} setSidebarAberto={setSidebarAberto} />
 
-      <main
-        className={`animais-content ${
-          sidebarAberto ? "aberto" : "fechado"
-        }`}
-      >
+      <main className={`animais-content ${sidebarAberto ? 'aberto' : 'fechado'}`}>
         <header className="animais-header">
           <div>
             <h1>Olá, {nomeUsuario}!</h1>
@@ -196,18 +183,16 @@ function MeusAnimais() {
 
           <button
             className="btn-novo"
-            onClick={() => setModalForm("novo")}
+            onClick={() => setModalForm('novo')}
             disabled={carregandoCliente || !meuCliente}
-            title={erroCliente || ""}
+            title={erroCliente || ''}
           >
             <Plus size={18} />
             Novo animal
           </button>
         </header>
 
-        {erroCliente && (
-          <p className="animais-erro">{erroCliente}</p>
-        )}
+        {erroCliente && <p className="animais-erro">{erroCliente}</p>}
 
         <div className="animais-toolbar">
           <form className="busca-form" onSubmit={handleBuscar}>
@@ -220,13 +205,9 @@ function MeusAnimais() {
             />
           </form>
 
-          <button
-            className="btn-ordem"
-            onClick={alternarOrdem}
-            type="button"
-          >
+          <button className="btn-ordem" onClick={alternarOrdem} type="button">
             <ArrowUpDown size={16} />
-            Nome ({ordem === "asc" ? "A-Z" : "Z-A"})
+            Nome ({ordem === 'asc' ? 'A-Z' : 'Z-A'})
           </button>
         </div>
 
@@ -258,7 +239,7 @@ function MeusAnimais() {
                   <td
                     colSpan={5}
                     className="tabela-status"
-                    style={{ textAlign: "center", padding: "24px" }}
+                    style={{ textAlign: 'center', padding: '24px' }}
                   >
                     Animal não encontrado.
                   </td>
@@ -269,7 +250,9 @@ function MeusAnimais() {
                 !erro &&
                 animais.map((animal) => (
                   <tr key={animal.id}>
-                    <td className="col-nome" data-label="Nome">{animal.nome}</td>
+                    <td className="col-nome" data-label="Nome">
+                      {animal.nome}
+                    </td>
                     <td data-label="Espécie">{animal.especie}</td>
                     <td data-label="Raça">{animal.raca}</td>
                     <td data-label="Idade">{animal.idade} anos</td>
@@ -304,8 +287,8 @@ function MeusAnimais() {
                         className="btn-icone btn-icone-perigo"
                         title="Excluir"
                         onClick={() => {
-                          setAnimalParaExcluir(animal);
-                          setErroExclusao("");
+                          setAnimalParaExcluir(animal)
+                          setErroExclusao('')
                         }}
                       >
                         <Trash2 size={16} />
@@ -340,8 +323,8 @@ function MeusAnimais() {
 
       {modalForm && (
         <AnimalFormModal
-          animal={modalForm === "novo" ? null : modalForm}
-          clienteFixo={modalForm === "novo" ? meuCliente : null}
+          animal={modalForm === 'novo' ? null : modalForm}
+          clienteFixo={modalForm === 'novo' ? meuCliente : null}
           onClose={fecharForm}
           onSalvo={salvouForm}
         />
@@ -373,7 +356,7 @@ function MeusAnimais() {
         />
       )}
     </div>
-  );
+  )
 }
 
-export default MeusAnimais;
+export default MeusAnimais

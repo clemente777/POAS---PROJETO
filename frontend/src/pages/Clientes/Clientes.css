@@ -1,4 +1,3 @@
-
 .clientes-page {
   min-height: 100vh;
 }
@@ -141,7 +140,9 @@
   outline: none;
   font: inherit;
   font-weight: 400;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
 
 .clientes-form input:focus {
@@ -178,7 +179,9 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s, transform 0.2s;
+  transition:
+    background 0.2s,
+    transform 0.2s;
 }
 
 .clientes-btn-cancelar {

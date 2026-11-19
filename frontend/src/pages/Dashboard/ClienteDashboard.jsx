@@ -9,56 +9,56 @@ import {
   Wallet,
   Syringe,
   ArrowRight,
-} from "lucide-react";
+} from 'lucide-react'
 
-import { Link } from "react-router-dom";
-import DashboardCard from "../../components/DashboardCard/DashboardCard";
-import DashboardSection from "../../components/DashboardSection/DashboardSection";
+import { Link } from 'react-router-dom'
+import DashboardCard from '../../components/DashboardCard/DashboardCard'
+import DashboardSection from '../../components/DashboardSection/DashboardSection'
 
 function formatarData(isoString) {
-  if (!isoString) return null;
+  if (!isoString) return null
 
-  const data = new Date(isoString);
+  const data = new Date(isoString)
 
-  return data.toLocaleString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return data.toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 }
 
 // Ações mais usadas pelo cliente, a um toque de distância.
 const ATALHOS = [
   {
-    rota: "/minhas-consultas?agendar=1",
-    titulo: "Agendar consulta",
-    descricao: "Escolha o pet e o horário",
+    rota: '/minhas-consultas?agendar=1',
+    titulo: 'Agendar consulta',
+    descricao: 'Escolha o pet e o horário',
     Icone: CalendarPlus,
     destaque: true,
   },
   {
-    rota: "/meus-animais",
-    titulo: "Vacinas e pets",
-    descricao: "Carteira de vacinação",
+    rota: '/meus-animais',
+    titulo: 'Vacinas e pets',
+    descricao: 'Carteira de vacinação',
     Icone: Syringe,
   },
   {
-    rota: "/produtos",
-    titulo: "Comprar produtos",
-    descricao: "Veja o que está disponível",
+    rota: '/produtos',
+    titulo: 'Comprar produtos',
+    descricao: 'Veja o que está disponível',
     Icone: ShoppingCart,
   },
   {
-    rota: "/compras",
-    titulo: "Minhas compras",
-    descricao: "Acompanhe seus pedidos",
+    rota: '/compras',
+    titulo: 'Minhas compras',
+    descricao: 'Acompanhe seus pedidos',
     Icone: ShoppingBag,
   },
-];
+]
 
 function ClienteDashboard({ dados }) {
-  const proxima = dados.proxima_consulta;
+  const proxima = dados.proxima_consulta
 
   return (
     <>
@@ -88,9 +88,9 @@ function ClienteDashboard({ dados }) {
 
         <Link
           className="cliente-hero-botao"
-          to={proxima ? "/minhas-consultas" : "/minhas-consultas?agendar=1"}
+          to={proxima ? '/minhas-consultas' : '/minhas-consultas?agendar=1'}
         >
-          {proxima ? "Ver consultas" : "Agendar agora"}
+          {proxima ? 'Ver consultas' : 'Agendar agora'}
           <ArrowRight size={16} />
         </Link>
       </section>
@@ -101,7 +101,7 @@ function ClienteDashboard({ dados }) {
           <Link
             key={rota}
             to={rota}
-            className={`atalho ${destaque ? "atalho-destaque" : ""}`}
+            className={`atalho ${destaque ? 'atalho-destaque' : ''}`}
           >
             <span className="atalho-icone">
               <Icone size={22} />
@@ -187,7 +187,7 @@ function ClienteDashboard({ dados }) {
         </DashboardSection>
       )}
     </>
-  );
+  )
 }
 
-export default ClienteDashboard;
+export default ClienteDashboard
