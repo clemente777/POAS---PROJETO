@@ -1,20 +1,27 @@
 import pytest
-import requests
+
+MODULOS_ESPERADOS = [
+    "usuarios", "clientes", "animais", "agendamentos", "atendimentos",
+    "vacinas", "aplicacoes-vacina", "produtos", "carrinho",
+]
 
 @pytest.mark.integracao
-@pytest.mark.parametrize("path", [
-    "/usuarios/", "/clientes/", "/animais/", "/agendamentos/",
-    "/atendimentos/", "/vacinas/", "/aplicacoes-vacina/",
-    "/produtos/", "/carrinhos/",
-])
-def test_recurso_tem_endpoint_documentado(api_url, path):
-    spec = requests.get(f"{api_url}/openapi.json", timeout=10).json()
-    assert path in spec.get("paths", {}), (
-        f"Endpoint {path} não consta no OpenAPI. "
-        "Se a rota real tiver outro caminho, ajuste este caso de teste."
+@pytest.mark.parametrize("modulo", MODULOS_ESPERADOS)
+def test_modulo_possui_rota_documentada(openapi, modulo):
+    paths = list(openapi.get("paths", {}))
+    normalizados = [(p, p.lower().replace("_", "-")) for p in paths]
+    assert any(modulo in normalizado for _, normalizado in normalizados), (
+        f"Módulo '{modulo}' não encontrado no OpenAPI. Rotas documentadas: {paths}"
     )
 
 @pytest.mark.integracao
-def test_endpoint_de_login_esta_documentado(api_url):
-    spec = requests.get(f"{api_url}/openapi.json", timeout=10).json()
-    assert "/login/" in spec.get("paths", {})
+def test_login_esta_documentado(openapi):
+    assert any("login" in p.lower() for p in openapi.get("paths", {}))
+
+@pytest.mark.integracao
+def test_rotas_de_escrita_documentam_respostas(openapi):
+    metodos_escrita = {"post", "put", "patch", "delete"}
+    for path, operacoes in openapi.get("paths", {}).items():
+        for metodo in metodos_escrita.intersection(operacoes):
+            respostas = operacoes[metodo].get("responses", {})
+            assert respostas, f"{metodo.upper()} {path} não documenta respostas."

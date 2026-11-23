@@ -1,3 +1,4 @@
+"""Fixtures para testes unitários sem acesso ao banco real."""
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 import pytest

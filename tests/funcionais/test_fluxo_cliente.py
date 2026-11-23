@@ -1,13 +1,27 @@
 import pytest
 
 @pytest.mark.funcional
-def test_fluxo_cliente_autenticado_consegue_consultar_propria_area(api_url, sessao_http, token_cliente):
-    r = sessao_http.get(
-        f"{api_url}/clientes/me",
+def test_cliente_autenticado_acessa_animais(api_url, cliente_http, token_cliente):
+    response = cliente_http.get(
+        f"{api_url}/animais/",
         headers={"Authorization": f"Bearer {token_cliente}"},
-        timeout=10,
+        timeout=15,
     )
-    # A rota /clientes/me é uma convenção a confirmar no OpenAPI do POAS.
-    assert r.status_code in (200, 404, 405), (
-        f"Falha ao consultar área do cliente: {r.status_code} - {r.text}"
+    assert response.status_code == 200, (
+        f"Cliente autenticado não conseguiu consultar animais: "
+        f"HTTP {response.status_code} - {response.text[:500]}"
     )
+    assert isinstance(response.json(), (list, dict))
+
+@pytest.mark.funcional
+def test_cliente_autenticado_acessa_agendamentos(api_url, cliente_http, token_cliente):
+    response = cliente_http.get(
+        f"{api_url}/agendamentos/",
+        headers={"Authorization": f"Bearer {token_cliente}"},
+        timeout=15,
+    )
+    assert response.status_code == 200, (
+        f"Cliente autenticado não conseguiu consultar agendamentos: "
+        f"HTTP {response.status_code} - {response.text[:500]}"
+    )
+    assert isinstance(response.json(), (list, dict))
